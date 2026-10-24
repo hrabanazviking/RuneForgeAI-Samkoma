@@ -8,7 +8,7 @@ role, never a fake user (roadmap D-35).
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from gpa.db import Base
@@ -42,6 +42,10 @@ class Group(Base):
     visibility: Mapped[str] = mapped_column(String(16), default="private")
     home_timezone: Mapped[str] = mapped_column(String(64), default="UTC")
     default_place: Mapped[str] = mapped_column(String(240), default="")
+    # The per-group daily AI budget (Phase 3, B-047), in integer
+    # micro-units of currency to match the AiUsage ledger. NULL
+    # means "no cap set" — the soft-stop has nothing to stop at.
+    ai_daily_budget_micros: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 
@@ -79,12 +83,16 @@ class AgentSeat(Base):
 
 
 class Candidate(Base):
-    """A draft awaiting the review queue — minimal stub (B-018).
+    """A draft awaiting the review queue (B-018 stub, grown by
+    Phase 3 into the full candidate of roadmap §4).
 
-    Phase 3 grows this into the full candidate of roadmap §4; here it
-    exists so Phase 1 can already prove the founding permission rule:
-    a draft-scope seat can create candidates and can never approve
-    one (B-014/B-018).
+    A candidate is the ONLY thing AI pipelines may create: fields
+    drafted from a source, each with its confidence and (through
+    ``Provenance`` rows) the exact quote that supports it. A person
+    approves, edits, rejects, or merges it; approval is the only
+    path from draft to published entity (Phase 4 mints the entity
+    and fills ``resulting_entity_*`` — until then the link stays
+    empty, honestly).
     """
 
     __tablename__ = "candidates"
@@ -95,10 +103,48 @@ class Candidate(Base):
     title: Mapped[str] = mapped_column(String(240), default="")
     # Who drafted it, as an audit-friendly label: "user:<id>" or
     # "seat:<id>" — a seat's work is never attributed to its owner.
+    # Machine-drafted candidates say "system:extraction"; the
+    # person who requested the run is on the job + audit rows.
     created_by: Mapped[str] = mapped_column(String(80))
-    # pending -> approved | rejected (later phases add edited/merged).
+    # pending | edited -> approved | rejected | merged; a re-run's
+    # fresh drafts mark the old undecided ones superseded (B-045).
     status: Mapped[str] = mapped_column(String(16), default="pending")
     approved_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    # The draft itself, as JSON (B-040): the kind's fields at top
+    # level (title / starts_at / place …) plus a "fields" map —
+    # per field: value, confidence, quote, supported — so the
+    # queue can show exactly what the model claimed and what the
+    # source actually backs. Plain text column; services own the
+    # shape (ai/extraction.py writes it, services/quality.py reads
+    # it for flags).
+    draft_json: Mapped[str] = mapped_column(Text, default="{}")
+    # Candidate-level confidence: the mean of its supported fields'
+    # confidences (per-field numbers live in the draft; this is the
+    # queue's sort/filter number, B-043). NULL for hand-made stubs.
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Server-computed quality flags (B-044), a JSON list of closed
+    # vocabulary strings the frontend renders verbatim.
+    flags_json: Mapped[str] = mapped_column(Text, default="[]")
+    # Which prompt (name + version) produced this draft (B-038) —
+    # a candidate can always answer "which instructions made you?"
+    prompt_name: Mapped[str] = mapped_column(String(64), default="")
+    prompt_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # The extraction job that produced this draft (B-045); plain
+    # string, like the audit's entity references.
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # When this candidate was merged into another (B-043): the
+    # survivor's id. The merged row keeps its draft + provenance —
+    # merging decides, it does not erase.
+    merged_into_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # The published entity approval minted (Phase 4, B-049). Until
+    # Phase 4 exists these stay NULL on purpose: approval records
+    # the DECISION here; minting is the events module's job, and a
+    # filled link before then would be a lie in the database.
+    resulting_entity_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    resulting_entity_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=now_utc, onupdate=now_utc
+    )
     # The source this draft was drawn from (Phase 2, B-023). A
     # PLAIN STRING, not a foreign key, on purpose: deleting a
     # source must never cascade-delete an approved candidate — the

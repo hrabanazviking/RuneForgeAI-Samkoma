@@ -17,6 +17,7 @@ import uuid
 from fastapi import FastAPI, Request
 
 from gpa import __version__
+from gpa.ai import client as ai_client
 from gpa.config import Settings, get_settings
 from gpa.db import Database
 from gpa.errors import install_error_handlers
@@ -69,6 +70,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Everything a handler might need, owned by this app instance.
     app.state.settings = settings
+    # The AI driver this process speaks through (B-035): built from
+    # settings here, shared via the ai.client registry so job
+    # handlers (which receive only db + payload) reach the same one.
+    ai_client.set_client(ai_client.build_client(settings))
     app.state.db = Database(settings.database_url)
     app.state.storage = LocalStorage(settings.storage_dir)
     app.state.auth_limiter = TokenBucketLimiter(settings.auth_rate_per_minute)

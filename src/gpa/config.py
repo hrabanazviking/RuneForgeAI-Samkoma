@@ -70,6 +70,40 @@ class Settings(BaseSettings):
     # runs Alembic migrations and sets this to false.
     auto_create_tables: bool = True
 
+    # AI adapter (Phase 3, B-035 → B-037, decision D-18). Which
+    # driver sits behind the MetaModelClient protocol: "mock"
+    # (schema-valid canned output, the default — the whole suite
+    # and demo run offline with no key), "fixture" (recorded
+    # responses keyed by prompt hash), or "live" (the Meta Model
+    # API over httpx). Swapping drivers is a config change, never
+    # a code change.
+    ai_driver: str = "mock"
+
+    # Fixture driver: directory of recorded responses. Empty means
+    # the package's own ai/fixtures directory.
+    ai_fixtures_dir: str = ""
+
+    # Live driver: base URL + API key. The key is a SECRET and is
+    # read from the environment only (GPA_AI_API_KEY) — it never
+    # appears in the repo, a ZIP, or a log line.
+    ai_api_base: str = ""
+    ai_api_key: str = ""
+
+    # Live driver: the model id each tier names, the per-call
+    # timeout, and how many attempts a call gets (retries happen on
+    # 429/5xx only — B-037).
+    ai_model_spark: str = "muse-spark"
+    ai_model_wonder: str = "muse-wonder"
+    ai_live_timeout_seconds: float = 30.0
+    ai_live_max_attempts: int = 3
+
+    # Live driver cost accounting (B-037): price per 1k tokens, in
+    # micro-units of currency (1/1,000,000), so the usage ledger
+    # stays integer-exact. Zero means "price not configured" — the
+    # ledger then records tokens truthfully and cost as 0.
+    ai_price_spark_micros_per_1k: int = 0
+    ai_price_wonder_micros_per_1k: int = 0
+
     @field_validator("secret_key")
     @classmethod
     def _secret_must_be_real_in_prod(cls, value: str, info) -> str:

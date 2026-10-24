@@ -8,14 +8,17 @@ Alembic and the test fixtures both rely on that. Domain files:
     core.py      jobs, the append-only audit log, file assets
     sources.py   sources, ordered chunks, provenance, flyers,
                  inbound email addresses
+    ai.py        the AI usage ledger (Phase 3)
 """
 
+from gpa.models.ai import AiUsage
 from gpa.models.core import AuditLog, FileAsset, Job
 from gpa.models.groups import AgentSeat, Candidate, Group, Membership
 from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User
 from gpa.models.sources import Flyer, InboundAddress, Provenance, Source, SourceChunk
 
 __all__ = [
+    "AiUsage",
     "ApiKey",
     "AgentSeat",
     "AuditLog",

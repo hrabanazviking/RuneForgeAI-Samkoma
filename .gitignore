@@ -33,3 +33,6 @@ backups/
 # Release outputs (ZIPs are built artifacts, not source).
 releases/
 *.zip
+
+# Forge coordination lock (a live timestamp, never source).
+.forge-lock

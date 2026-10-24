@@ -10,6 +10,7 @@ two safe to run side by side.
 import time
 import uuid
 
+from gpa.ai import client as ai_client
 from gpa.config import get_settings
 from gpa.db import Database
 from gpa.services import jobs as job_service
@@ -19,6 +20,7 @@ from gpa.services import transcribe as _transcribe  # noqa: F401 — registers i
 def main() -> None:
     """Poll the queue forever, processing jobs as they come due."""
     settings = get_settings()
+    ai_client.set_client(ai_client.build_client(settings))
     db = Database(settings.database_url)
     db.create_all()
     worker_id = f"worker-{uuid.uuid4().hex[:8]}"
