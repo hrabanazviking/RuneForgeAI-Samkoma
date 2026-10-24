@@ -50,6 +50,7 @@ export interface ChunkIn {
 export interface ChunkResponse {
   id: string;
   position: number;
+  region_json?: string | unknown | null | null;
   sender?: string | unknown | null | null;
   sent_at?: string | unknown | null | null;
   text: string;
@@ -58,6 +59,24 @@ export interface ChunkResponse {
 
 export interface EmailChangeRequest {
   new_email: string;
+}
+
+export interface EmailInRequest {
+  from: string;
+  html?: string;
+  subject?: string;
+  text?: string;
+}
+
+export interface FlyerResponse {
+  alt_text: string;
+  alt_text_status: string;
+  height: number;
+  id: string;
+  source_id: string;
+  thumbnail_key?: string;
+  transcript?: string;
+  width: number;
 }
 
 export interface GroupCreateRequest {
@@ -97,6 +116,15 @@ export interface HealthResponse {
   version: string;
 }
 
+export interface InboundAddressResponse {
+  address?: string | unknown | null | null;
+  created_at: string;
+  group_id: string;
+  id: string;
+  token?: string | unknown | null | null;
+  token_prefix: string;
+}
+
 export interface InviteRequest {
   email: string;
   role?: string;
@@ -108,8 +136,22 @@ export interface JobResponse {
   kind: string;
   last_error: string;
   max_attempts: number;
+  progress?: number;
   run_at: string;
   status: string;
+}
+
+export interface LinkIngestRequest {
+  granted_scope?: string;
+  title?: string;
+  url: string;
+}
+
+export interface LiveSourceRequest {
+  connector_kind: string;
+  external_id: string;
+  granted_scope?: string;
+  title?: string;
 }
 
 export interface LoginRequest {
@@ -202,30 +244,41 @@ export interface SourceCreateRequest {
 export interface SourceDetailResponse {
   chunk_count: number;
   chunks?: ChunkResponse[];
+  connector_kind?: string;
   created_at: string;
+  external_id?: string;
   file_asset_id?: string | unknown | null | null;
+  flyer?: FlyerResponse | unknown | null | null;
   granted_by: string;
   granted_scope: string;
   group_id: string;
   id: string;
   kind: string;
+  progress?: number;
+  stage?: string;
   status: string;
   storage_key?: string | unknown | null | null;
   title: string;
+  url?: string;
 }
 
 export interface SourceResponse {
   chunk_count: number;
+  connector_kind?: string;
   created_at: string;
+  external_id?: string;
   file_asset_id?: string | unknown | null | null;
   granted_by: string;
   granted_scope: string;
   group_id: string;
   id: string;
   kind: string;
+  progress?: number;
+  stage?: string;
   status: string;
   storage_key?: string | unknown | null | null;
   title: string;
+  url?: string;
 }
 
 export interface TokenConsumeRequest {
@@ -247,4 +300,27 @@ export interface ValidationError {
   loc: string | number[];
   msg: string;
   type: string;
+}
+
+export interface VoiceIngestResponse {
+  chunk_count: number;
+  chunks?: ChunkResponse[];
+  connector_kind?: string;
+  created_at: string;
+  external_id?: string;
+  file_asset_id?: string | unknown | null | null;
+  flyer?: FlyerResponse | unknown | null | null;
+  granted_by: string;
+  granted_scope: string;
+  group_id: string;
+  id: string;
+  kind: string;
+  progress?: number;
+  stage?: string;
+  status: string;
+  storage_key?: string | unknown | null | null;
+  title: string;
+  transcription_job_id: string;
+  transcription_status: string;
+  url?: string;
 }

@@ -23,7 +23,8 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **115 tests, all passing**.
+Alembic up/down/up clean; **150 tests, all passing** (34/340 slices:
+Phases 0, 1, and 2 complete).
 
 ## Slice status
 
@@ -66,7 +67,7 @@ Alembic up/down/up clean; **115 tests, all passing**.
   routes, 429 + Retry-After · B-022 role-matrix suite green
   (tests/test_permissions.py: 5 roles × 8 actions, parametrized).
 
-### Phase 2 — Sources and ingest (B-023 → B-034): IN PROGRESS
+### Phase 2 — Sources and ingest (B-023 → B-034): ✅ COMPLETE (2026-10-24)
 - B-023 sources core: `Source`/`SourceChunk`/`Provenance` models
   (models/sources.py), services/sources.py, routers/sources.py —
   create/list/get/delete under `/groups/{id}/sources`, permission
@@ -94,11 +95,75 @@ Alembic up/down/up clean; **115 tests, all passing**.
   skipped, PDF text layer via FlateDecode + Tj/TJ strings, ICS one
   chunk per VEVENT, text by paragraphs). Bytes go to B-007 storage,
   a `FileAsset` row and the source land in one transaction.
+- B-026 newsletter ingest: services/newsletter.py — HTML email →
+  one chunk per section (h1/h2/h3/hr), links inline as
+  `anchor text (URL)`, images → alt text or the marked placeholder
+  `[image: no description]`, script/style/head never chunked.
+  `POST /groups/{id}/sources/newsletter` (raw body, like upload).
+  Golden fixture tests/golden/newsletter.html: twelve events stay
+  twelve ordered sections behind the greeting preamble chunk.
+- B-027 images: services/images.py — magic-byte sniff (PNG/JPEG/
+  GIF/WebP), Pillow EXIF transpose, ≤2400px normalise, 320px JPEG
+  thumbnail, `Flyer` row (models/sources.py) whose `alt_text` starts
+  as the literal "awaiting description" with `alt_text_status`
+  exposed — an undescribed image is a visible defect. Source gained
+  `stage`/`progress` (B-033's read model). Migration 0002.
+- B-028 board photos: same route with `board=true` — ONE source,
+  kind `board_photo`, status/stage `awaiting_segmentation`, exactly
+  one placeholder chunk (`region_json {"placeholder": true}`); the
+  `Flyer.parent_flyer_id`/`region_json` columns await Phase 5.
+- B-029 link ingest: services/linkfetch.py is the ONE guarded fetch
+  road — http/https only, every resolved IP must be `is_global`
+  (metadata IPs + metadata hostnames blocked), redirects followed
+  manually (≤5) with each hop re-validated, 2 MiB cap. Transport +
+  resolver are injectable seams; tests use a fake internet and
+  never touch the real one. services/links.py archives the page
+  (bytes + FileAsset + chunks, final URL on `Source.url`,
+  migration 0003). Refusals: 422 `fetch_blocked`, 502
+  `fetch_failed`; a failed fetch archives nothing.
+- B-030 email-in: services/emailin.py — per-group `InboundAddress`
+  (token hashed via `hash_secret`, shown once, prefix kept);
+  admin+ `POST /groups/{id}/inbound-address`; webhook-shaped
+  receiver `POST /api/v1/email-in/{token}` making `email` sources
+  with `granted_by = "system:email-in"` and the sender on every
+  chunk. Forged token → 401 `token_invalid` + `email_in.rejected`
+  audit row (group NULL) + log line. Provider wiring is Phase 12.
+- B-031 voice: services/voice.py — audio magic-sniff (WAV/MP3/
+  Ogg/FLAC/M4A), stored asset, `voice` source in stage
+  `awaiting_transcription` with one plain-words note chunk, and a
+  `transcribe` job enqueued via B-008 (id in the response; status
+  via `GET /api/v1/jobs/{id}`). The handler (services/transcribe.py)
+  is an honest stub — verifies the note exists, completes, and
+  leaves the status awaiting; the real driver is Phase 5.
+- B-032 live-chat registration: services/live.py guards the only
+  door — granting principal must be a PERSON (seats refused 403),
+  scope non-empty (else 422), connector kind + external id
+  required. `chat_live` source, status `registered`, binding on
+  `Source.connector_kind`/`external_id` (migration 0004). The
+  receiver that fills it is Phase 12.
+- B-033 status + stream: sources report `stage` + `progress`
+  (since B-027); `Job.progress` added (migration 0005 — the
+  chassis sets 100 on completion; exposed in JobResponse);
+  `GET /groups/{id}/stream` (member+) serves SSE from
+  services/stream.py — one `snapshot` frame, then `job.progress`
+  frames — POLLED FROM THE JOB TABLE, the durable record, never
+  an in-memory bus. Honest boundary: synchronous ingests
+  (paste/file/newsletter/image/link) land final stage/progress in
+  the create response and never pass through a job; the stream
+  carries job-driven work (transcription today).
+- B-034 phase gate: tests/test_ingest_corpus.py runs the whole
+  corpus (chat paste + golden newsletter + 3 flyers incl. a
+  sideways EXIF photo + board photo + voice note) through the API
+  in one group — 7 sources, kinds/counts/states/permissions
+  asserted. OPENAPI.json + frontend_types.ts regenerated
+  (42 paths, 40 schemas); FRONTEND_HANDOFF.md carries the
+  upload-screen notes. Phase 2 folds into ZIP-Alpha (Wed Oct 28)
+  per the roadmap train — no ZIP cut at this gate.
 
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 2 continues at B-026 (newsletter ingest). The `Candidate`
-model's Phase 3 growth (draft JSON, confidence, provenance API)
-is still ahead; B-023 gave it only the tombstone columns.
+Phase 3 begins at B-035 (extraction). The `Candidate` model's
+Phase 3 growth (draft JSON, confidence, provenance API) is still
+ahead; B-023 gave it only the tombstone columns.
 
 ## Decisions & deviations (from the roadmap defaults)
 
@@ -121,6 +186,25 @@ is still ahead; B-023 gave it only the tombstone columns.
   everyone else gets the 404. Implemented in deps.get_group_context.
 - Test suite takes ~1 minute, almost all of it Argon2 hashing in
   registrations — acceptable; revisit only if it slows the train.
+- **No new dependencies in Phase 2** — the roadmap's B-025 escape
+  hatch (add pypdf) was NOT needed: B-025's stdlib PDF text-layer
+  reader (FlateDecode + Tj/TJ) covers text-layer PDFs, and
+  scanned-image PDFs are refused in plain words until Phase 5
+  OCR. Pillow (already locked for B-027) is the only imaging lib.
+- **Uploads are raw request bodies** (+ `filename` query param),
+  uniformly — file, newsletter, image, voice. No multipart
+  anywhere; the frontend handoff says so in bold.
+- **Migrations 0002–0005 are inspector-guarded** add/drop: 0001
+  builds from live model metadata, so a fresh database already
+  has every column when the later revisions run; the guards keep
+  up/down/up clean on both fresh and pre-Phase-2 databases
+  (tests/test_migrations_phase2.py).
+- **Concurrency note (2026-10-24)**: B-023→B-025 were built by
+  the 10-minute forge cron and B-026→B-034 by a subagent in one
+  sitting; one overlapping edit (candidate tombstone columns) was
+  absorbed cleanly by the cron's slice. The `.forge-lock` file
+  was accidentally committed once — it is removed again; treat a
+  lock in the tree as stale if its timestamp is old.
 
 ## Standing laws in force here
 

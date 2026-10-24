@@ -245,6 +245,17 @@
             "title": "Position",
             "type": "integer"
           },
+          "region_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Json"
+          },
           "sender": {
             "anyOf": [
               {
@@ -305,6 +316,88 @@
           "new_email"
         ],
         "title": "EmailChangeRequest",
+        "type": "object"
+      },
+      "EmailInRequest": {
+        "description": "One delivered email, in the webhook shape providers share\n(B-030). The real provider adapter lands in Phase 12.",
+        "properties": {
+          "from": {
+            "maxLength": 320,
+            "title": "From",
+            "type": "string"
+          },
+          "html": {
+            "default": "",
+            "maxLength": 4000000,
+            "title": "Html",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Subject",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 2000000,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from"
+        ],
+        "title": "EmailInRequest",
+        "type": "object"
+      },
+      "FlyerResponse": {
+        "description": "An image source's picture record (B-027/B-028).\n\n``alt_text_status`` is the visible-defect flag: it reads\n``awaiting_description`` \u2014 and ``alt_text`` is the literal\nplaceholder \u2014 until a real description of the image exists.",
+        "properties": {
+          "alt_text": {
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "alt_text_status": {
+            "title": "Alt Text Status",
+            "type": "string"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "thumbnail_key": {
+            "default": "",
+            "title": "Thumbnail Key",
+            "type": "string"
+          },
+          "transcript": {
+            "default": "",
+            "title": "Transcript",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "source_id",
+          "width",
+          "height",
+          "alt_text",
+          "alt_text_status"
+        ],
+        "title": "FlyerResponse",
         "type": "object"
       },
       "GroupCreateRequest": {
@@ -505,6 +598,57 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "InboundAddressResponse": {
+        "description": "A group's email-in channel (B-030).\n\n``token`` and ``address`` appear ONLY in the creation\nresponse \u2014 the one time the secret exists outside the hash.",
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "token_prefix": {
+            "title": "Token Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "token_prefix",
+          "created_at"
+        ],
+        "title": "InboundAddressResponse",
+        "type": "object"
+      },
       "InviteRequest": {
         "description": "Invite a person by email with a starting role (B-016).",
         "properties": {
@@ -549,6 +693,11 @@
             "title": "Max Attempts",
             "type": "integer"
           },
+          "progress": {
+            "default": 0,
+            "title": "Progress",
+            "type": "integer"
+          },
           "run_at": {
             "title": "Run At",
             "type": "string"
@@ -568,6 +717,69 @@
           "run_at"
         ],
         "title": "JobResponse",
+        "type": "object"
+      },
+      "LinkIngestRequest": {
+        "description": "Paste a link to be fetched and archived (B-029).",
+        "properties": {
+          "granted_scope": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "LinkIngestRequest",
+        "type": "object"
+      },
+      "LiveSourceRequest": {
+        "description": "Register a live-chat source (B-032): connector, the\nconversation's id there, and \u2014 never optional \u2014 the scope\nthe granting member gave.",
+        "properties": {
+          "connector_kind": {
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Connector Kind",
+            "type": "string"
+          },
+          "external_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "External Id",
+            "type": "string"
+          },
+          "granted_scope": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connector_kind",
+          "external_id"
+        ],
+        "title": "LiveSourceRequest",
         "type": "object"
       },
       "LoginRequest": {
@@ -988,8 +1200,18 @@
             "title": "Chunks",
             "type": "array"
           },
+          "connector_kind": {
+            "default": "",
+            "title": "Connector Kind",
+            "type": "string"
+          },
           "created_at": {
             "title": "Created At",
+            "type": "string"
+          },
+          "external_id": {
+            "default": "",
+            "title": "External Id",
             "type": "string"
           },
           "file_asset_id": {
@@ -1002,6 +1224,16 @@
               }
             ],
             "title": "File Asset Id"
+          },
+          "flyer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlyerResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "granted_by": {
             "title": "Granted By",
@@ -1023,6 +1255,16 @@
             "title": "Kind",
             "type": "string"
           },
+          "progress": {
+            "default": 100,
+            "title": "Progress",
+            "type": "integer"
+          },
+          "stage": {
+            "default": "done",
+            "title": "Stage",
+            "type": "string"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -1040,6 +1282,11 @@
           },
           "title": {
             "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
             "type": "string"
           }
         },
@@ -1064,8 +1311,18 @@
             "title": "Chunk Count",
             "type": "integer"
           },
+          "connector_kind": {
+            "default": "",
+            "title": "Connector Kind",
+            "type": "string"
+          },
           "created_at": {
             "title": "Created At",
+            "type": "string"
+          },
+          "external_id": {
+            "default": "",
+            "title": "External Id",
             "type": "string"
           },
           "file_asset_id": {
@@ -1099,6 +1356,16 @@
             "title": "Kind",
             "type": "string"
           },
+          "progress": {
+            "default": 100,
+            "title": "Progress",
+            "type": "integer"
+          },
+          "stage": {
+            "default": "done",
+            "title": "Stage",
+            "type": "string"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -1116,6 +1383,11 @@
           },
           "title": {
             "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
             "type": "string"
           }
         },
@@ -1232,6 +1504,134 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VoiceIngestResponse": {
+        "description": "A voice source plus its transcription job (B-031): the\njob id is how the note's pending words stay visible.",
+        "properties": {
+          "chunk_count": {
+            "title": "Chunk Count",
+            "type": "integer"
+          },
+          "chunks": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkResponse"
+            },
+            "title": "Chunks",
+            "type": "array"
+          },
+          "connector_kind": {
+            "default": "",
+            "title": "Connector Kind",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "external_id": {
+            "default": "",
+            "title": "External Id",
+            "type": "string"
+          },
+          "file_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Asset Id"
+          },
+          "flyer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlyerResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "granted_by": {
+            "title": "Granted By",
+            "type": "string"
+          },
+          "granted_scope": {
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "progress": {
+            "default": 100,
+            "title": "Progress",
+            "type": "integer"
+          },
+          "stage": {
+            "default": "done",
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "storage_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Key"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "transcription_job_id": {
+            "title": "Transcription Job Id",
+            "type": "string"
+          },
+          "transcription_status": {
+            "title": "Transcription Status",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "title",
+          "granted_by",
+          "granted_scope",
+          "status",
+          "chunk_count",
+          "created_at",
+          "transcription_job_id",
+          "transcription_status"
+        ],
+        "title": "VoiceIngestResponse",
         "type": "object"
       }
     }
@@ -1561,6 +1961,59 @@
         ]
       }
     },
+    "/api/v1/email-in/{token}": {
+      "post": {
+        "description": "The webhook-shaped receiver: one delivered email \u2192 a source.\n\nThe token in the path is the whole credential. A forged\ntoken is refused (401) and logged \u2014 see services/emailin.py.\n(Provider signature verification joins in Phase 12, where the\nprovider itself is chosen.)",
+        "operationId": "receive_email_api_v1_email_in__token__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Receive Email",
+        "tags": [
+          "email-in"
+        ]
+      }
+    },
     "/api/v1/groups": {
       "post": {
         "description": "Create a group; the creator becomes its owner.",
@@ -1846,6 +2299,49 @@
         "summary": "Approve Candidate",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/inbound-address": {
+      "post": {
+        "description": "Open this group's email-in channel (admin+).\n\nThe response carries the full token and the address ONCE;\nonly a hash is kept. Mail to the address becomes a source.",
+        "operationId": "create_inbound_address_api_v1_groups__group_id__inbound_address_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundAddressResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Inbound Address",
+        "tags": [
+          "sources"
         ]
       }
     },
@@ -2367,6 +2863,268 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/sources/image": {
+      "post": {
+        "description": "Upload one photo as a flyer (or board) source (member+).\n\nThe response's ``flyer`` carries the picture's true upright\ndimensions and its alt-text state \u2014 which starts, honestly,\nas ``awaiting_description``.",
+        "operationId": "upload_image_api_v1_groups__group_id__sources_image_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Title",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granted_scope",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Granted Scope",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "board",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Board",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Image",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/link": {
+      "post": {
+        "description": "Fetch a pasted link and archive its text as a source.\n\nPrivate, local, and metadata addresses are refused by the\nfetch guard (422 ``fetch_blocked``) before a single byte is\nrequested; a page that cannot be read archives nothing.",
+        "operationId": "ingest_link_api_v1_groups__group_id__sources_link_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Link",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/live": {
+      "post": {
+        "description": "Register a live-chat source under a person's grant (B-032).\n\nThe registration is the permission record \u2014 connector,\nconversation, scope, and the granting member \u2014 created\nbefore any receiver exists. A seat cannot grant it, and a\nscope cannot be empty: services/live.py holds both rules.",
+        "operationId": "register_live_source_api_v1_groups__group_id__sources_live_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Live Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/newsletter": {
+      "post": {
+        "description": "Upload one HTML newsletter as a source (member+).\n\nChunks come back as the newsletter's sections, in order \u2014\ntwelve events in the email are twelve chunks here.",
+        "operationId": "upload_newsletter_api_v1_groups__group_id__sources_newsletter_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Title",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granted_scope",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Granted Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Newsletter",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/sources/paste": {
       "post": {
         "description": "Paste a chat export or plain text; it is parsed into chunks\nby the speaker-line parser (B-024) and stored as one source.",
@@ -2493,6 +3251,79 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/sources/voice": {
+      "post": {
+        "description": "Upload one voice note (raw body; see the file route's note).\n\nThe audio is stored, a ``voice`` source opens in\nawaiting-transcription, and a transcription job is enqueued;\nthe response names the job so its status stays visible.",
+        "operationId": "ingest_voice_api_v1_groups__group_id__sources_voice_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Title",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granted_scope",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Granted Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingest Voice",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/sources/{source_id}": {
       "delete": {
         "description": "Delete a source (organiser+). Its chunks and provenance go\nwith it; anything drafted from it stays, as a tombstone.",
@@ -2583,6 +3414,47 @@
           }
         },
         "summary": "Read Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/stream": {
+      "get": {
+        "description": "Server-sent events for the group's job-driven work.\n\nBacked by the Job table (services/stream.py) \u2014 what a client\nsees here is the durable record, never an in-memory rumour.",
+        "operationId": "group_stream_api_v1_groups__group_id__stream_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Group Stream",
         "tags": [
           "sources"
         ]
