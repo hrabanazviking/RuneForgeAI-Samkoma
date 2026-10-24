@@ -197,6 +197,100 @@
         "title": "CandidateResponse",
         "type": "object"
       },
+      "ChunkIn": {
+        "description": "One chunk of content handed to the sources core.",
+        "properties": {
+          "sender": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 100000,
+            "title": "Text",
+            "type": "string"
+          },
+          "timestamp_text": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp Text"
+          }
+        },
+        "title": "ChunkIn",
+        "type": "object"
+      },
+      "ChunkResponse": {
+        "description": "One chunk as read back, in source order.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "timestamp_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp Text"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "text"
+        ],
+        "title": "ChunkResponse",
+        "type": "object"
+      },
       "EmailChangeRequest": {
         "description": "Ask to move the account to a new email (B-020). The change\ncompletes only when the token sent to the NEW address is used.",
         "properties": {
@@ -598,6 +692,34 @@
         "title": "PasswordChangeRequest",
         "type": "object"
       },
+      "PasteIngestRequest": {
+        "description": "Paste a chat export or plain text as a source (B-024).",
+        "properties": {
+          "granted_scope": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 2000000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "PasteIngestRequest",
+        "type": "object"
+      },
       "ProfileUpdateRequest": {
         "description": "Change the editable profile fields (B-011).",
         "properties": {
@@ -816,6 +938,199 @@
           "user_id"
         ],
         "title": "SessionResponse",
+        "type": "object"
+      },
+      "SourceCreateRequest": {
+        "description": "Create a text-native source with its chunks (B-023).",
+        "properties": {
+          "chunks": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkIn"
+            },
+            "title": "Chunks",
+            "type": "array"
+          },
+          "granted_scope": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "kind": {
+            "maxLength": 24,
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "SourceCreateRequest",
+        "type": "object"
+      },
+      "SourceDetailResponse": {
+        "description": "A source with its chunks, in order (B-023).",
+        "properties": {
+          "chunk_count": {
+            "title": "Chunk Count",
+            "type": "integer"
+          },
+          "chunks": {
+            "items": {
+              "$ref": "#/components/schemas/ChunkResponse"
+            },
+            "title": "Chunks",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Asset Id"
+          },
+          "granted_by": {
+            "title": "Granted By",
+            "type": "string"
+          },
+          "granted_scope": {
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "storage_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Key"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "title",
+          "granted_by",
+          "granted_scope",
+          "status",
+          "chunk_count",
+          "created_at"
+        ],
+        "title": "SourceDetailResponse",
+        "type": "object"
+      },
+      "SourceResponse": {
+        "description": "A source as lists show it: the container + permission record.",
+        "properties": {
+          "chunk_count": {
+            "title": "Chunk Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "file_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Asset Id"
+          },
+          "granted_by": {
+            "title": "Granted By",
+            "type": "string"
+          },
+          "granted_scope": {
+            "title": "Granted Scope",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "storage_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Key"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "title",
+          "granted_by",
+          "granted_scope",
+          "status",
+          "chunk_count",
+          "created_at"
+        ],
+        "title": "SourceResponse",
         "type": "object"
       },
       "TokenConsumeRequest": {
@@ -1951,6 +2266,325 @@
         "summary": "Create Seat",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources": {
+      "get": {
+        "description": "Every source in the group, oldest first (member+).",
+        "operationId": "list_sources_api_v1_groups__group_id__sources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceResponse"
+                  },
+                  "title": "Response List Sources Api V1 Groups  Group Id  Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sources",
+        "tags": [
+          "sources"
+        ]
+      },
+      "post": {
+        "description": "Create a text-native source with its chunks (member+).\n\nThe permission record's ``granted_by`` is the caller \u2014 filled\nhere from the principal, never trusted from the request body.",
+        "operationId": "create_source_api_v1_groups__group_id__sources_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/paste": {
+      "post": {
+        "description": "Paste a chat export or plain text; it is parsed into chunks\nby the speaker-line parser (B-024) and stored as one source.",
+        "operationId": "paste_source_api_v1_groups__group_id__sources_paste_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasteIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Paste Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/upload": {
+      "post": {
+        "description": "Upload one file as a source (member+).\n\nThe file's BYTES are the request body (no multipart form): the\nfrontend sends the file with ``filename`` as a query parameter.\nContent is sniffed, never trusted by extension (B-025).",
+        "operationId": "upload_source_api_v1_groups__group_id__sources_upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Filename",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Title",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "granted_scope",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Granted Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}": {
+      "delete": {
+        "description": "Delete a source (organiser+). Its chunks and provenance go\nwith it; anything drafted from it stays, as a tombstone.",
+        "operationId": "delete_source_api_v1_groups__group_id__sources__source_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Source",
+        "tags": [
+          "sources"
+        ]
+      },
+      "get": {
+        "description": "One source with its chunks, in order (member+).",
+        "operationId": "read_source_api_v1_groups__group_id__sources__source_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Source",
+        "tags": [
+          "sources"
         ]
       }
     },

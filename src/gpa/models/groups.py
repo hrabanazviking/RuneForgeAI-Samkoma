@@ -99,4 +99,12 @@ class Candidate(Base):
     # pending -> approved | rejected (later phases add edited/merged).
     status: Mapped[str] = mapped_column(String(16), default="pending")
     approved_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    # The source this draft was drawn from (Phase 2, B-023). A
+    # PLAIN STRING, not a foreign key, on purpose: deleting a
+    # source must never cascade-delete an approved candidate — the
+    # id stays as a tombstone and ``source_deleted_at`` says when
+    # the material behind it went away. The candidate keeps its
+    # text; it loses its quotes (see models/sources.py Provenance).
+    source_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)

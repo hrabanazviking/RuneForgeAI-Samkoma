@@ -41,6 +41,21 @@ export interface CandidateResponse {
   title: string;
 }
 
+export interface ChunkIn {
+  sender?: string | unknown | null | null;
+  text?: string;
+  timestamp_text?: string | unknown | null | null;
+}
+
+export interface ChunkResponse {
+  id: string;
+  position: number;
+  sender?: string | unknown | null | null;
+  sent_at?: string | unknown | null | null;
+  text: string;
+  timestamp_text?: string | unknown | null | null;
+}
+
 export interface EmailChangeRequest {
   new_email: string;
 }
@@ -127,6 +142,12 @@ export interface PasswordChangeRequest {
   new_password: string;
 }
 
+export interface PasteIngestRequest {
+  granted_scope?: string;
+  text: string;
+  title?: string;
+}
+
 export interface ProfileUpdateRequest {
   locale?: string | unknown | null | null;
   name?: string | unknown | null | null;
@@ -169,6 +190,42 @@ export interface SessionResponse {
   refresh_token: string;
   token_type?: string;
   user_id: string;
+}
+
+export interface SourceCreateRequest {
+  chunks?: ChunkIn[];
+  granted_scope?: string;
+  kind: string;
+  title?: string;
+}
+
+export interface SourceDetailResponse {
+  chunk_count: number;
+  chunks?: ChunkResponse[];
+  created_at: string;
+  file_asset_id?: string | unknown | null | null;
+  granted_by: string;
+  granted_scope: string;
+  group_id: string;
+  id: string;
+  kind: string;
+  status: string;
+  storage_key?: string | unknown | null | null;
+  title: string;
+}
+
+export interface SourceResponse {
+  chunk_count: number;
+  created_at: string;
+  file_asset_id?: string | unknown | null | null;
+  granted_by: string;
+  granted_scope: string;
+  group_id: string;
+  id: string;
+  kind: string;
+  status: string;
+  storage_key?: string | unknown | null | null;
+  title: string;
 }
 
 export interface TokenConsumeRequest {
