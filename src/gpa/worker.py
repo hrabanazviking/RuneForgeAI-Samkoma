@@ -1,0 +1,34 @@
+"""Background worker entry point (roadmap B-008).
+
+Run standalone as ``gpa-worker`` (or ``python -m gpa.worker``) when
+an operator wants the job loop in its own process — the "service in
+the background" posture of Phase 20/26. The API process can also
+drain the same queue; claim-by-update (services/jobs.py) makes the
+two safe to run side by side.
+"""
+
+import time
+import uuid
+
+from gpa.config import get_settings
+from gpa.db import Database
+from gpa.services import jobs as job_service
+
+
+def main() -> None:
+    """Poll the queue forever, processing jobs as they come due."""
+    settings = get_settings()
+    db = Database(settings.database_url)
+    db.create_all()
+    worker_id = f"worker-{uuid.uuid4().hex[:8]}"
+    session = db.session()
+    try:
+        while True:
+            if not job_service.process_one(session, settings, worker_id):
+                time.sleep(1.0)  # Nothing due — idle, don't spin.
+    finally:
+        session.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,101 @@
+"""Application factory (roadmap B-002, B-010).
+
+``create_app()`` assembles one whole backend: configuration,
+structured logging, request ids, the database, storage, the auth
+rate limiter, the error chassis, and every router. Tests build
+isolated apps by passing their own ``Settings``; production uses
+``uvicorn gpa.main:create_app --factory``.
+
+Structured logging: JSON lines when GPA_ENV=prod, plain readable
+lines in dev — same fields either way (time, level, logger, message,
+request id when inside a request).
+"""
+
+import logging
+import uuid
+
+from fastapi import FastAPI, Request
+
+from gpa import __version__
+from gpa.config import Settings, get_settings
+from gpa.db import Database
+from gpa.errors import install_error_handlers
+from gpa.ratelimit import TokenBucketLimiter
+from gpa.routers import auth, groups, jobs, meta, users
+from gpa.storage.local import LocalStorage
+
+
+def _configure_logging(settings: Settings) -> None:
+    """One logging setup for the whole process (idempotent)."""
+    if settings.env == "prod":
+        fmt = (
+            '{"time": "%(asctime)s", "level": "%(levelname)s", '
+            '"logger": "%(name)s", "request_id": "%(request_id)s", '
+            '"message": "%(message)s"}'
+        )
+    else:
+        fmt = "%(asctime)s %(levelname)-7s %(name)s [%(request_id)s] %(message)s"
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(fmt))
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(logging.INFO)
+
+
+class _RequestIdFilter(logging.Filter):
+    """Give every log record a request_id attribute (the current
+    request's, or "-" outside one) so the format never fails."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.request_id = getattr(record, "request_id", "-")
+        return True
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    """Build the application. Fails fast on bad configuration —
+    a missing secret in prod stops startup with plain words (B-002)."""
+    settings = settings or get_settings()
+    _configure_logging(settings)
+    logging.getLogger().addFilter(_RequestIdFilter())
+
+    app = FastAPI(
+        title="Group Planning Assistant",
+        version=__version__,
+        description=(
+            "Planning from conversation, flyers, and newsletters — "
+            "always drafted, always reviewed by a person."
+        ),
+    )
+
+    # Everything a handler might need, owned by this app instance.
+    app.state.settings = settings
+    app.state.db = Database(settings.database_url)
+    app.state.storage = LocalStorage(settings.storage_dir)
+    app.state.auth_limiter = TokenBucketLimiter(settings.auth_rate_per_minute)
+    if settings.auto_create_tables:
+        app.state.db.create_all()
+
+    install_error_handlers(app)
+
+    @app.middleware("http")
+    async def request_id_middleware(request: Request, call_next):
+        """One request id per request: header in, header out, and in
+        the access log — the thread that ties a failure report to
+        the exact request that produced it."""
+        request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers["X-Request-Id"] = request_id
+        logging.getLogger("gpa.access").info(
+            "%s %s -> %s", request.method, request.url.path, response.status_code,
+            extra={"request_id": request_id},
+        )
+        return response
+
+    # Routers: meta (health), then the /api/v1 domains.
+    app.include_router(meta.router)
+    app.include_router(auth.router)
+    app.include_router(users.router)
+    app.include_router(groups.router)
+    app.include_router(jobs.router)
+    return app
