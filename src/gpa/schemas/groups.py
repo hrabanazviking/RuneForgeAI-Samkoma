@@ -21,6 +21,12 @@ class GroupUpdateRequest(BaseModel):
     visibility: str | None = None
     home_timezone: str | None = Field(default=None, max_length=64)
     default_place: str | None = Field(default=None, max_length=240)
+    # The group's daily AI budget in cost micros (B-047). The
+    # update route drops nulls (its standing convention), so the
+    # cap can be set or changed here but not cleared back to
+    # "no cap" — a very large number is the practical equivalent,
+    # stated plainly rather than hidden.
+    ai_daily_budget_micros: int | None = Field(default=None, ge=0)
 
 
 class GroupResponse(BaseModel):
@@ -88,7 +94,14 @@ class CandidateCreateRequest(BaseModel):
 
 
 class CandidateResponse(BaseModel):
-    """A candidate as the queue shows it."""
+    """A candidate as the queue shows it.
+
+    Grown in Phase 3 (B-043) with the review queue's triage data —
+    draft, confidence, server-computed flags (B-044), prompt
+    provenance (B-038) — all additive: the B-018 stub fields are
+    unchanged. ``resulting_entity_*`` stay null until Phase 4
+    mints published entities; approval records the decision.
+    """
 
     id: str
     group_id: str
@@ -97,3 +110,13 @@ class CandidateResponse(BaseModel):
     status: str
     created_by: str
     approved_by: str | None = None
+    draft: dict = Field(default_factory=dict)
+    confidence: float | None = None
+    flags: list[str] = Field(default_factory=list)
+    source_id: str | None = None
+    prompt_name: str = ""
+    prompt_version: int | None = None
+    job_id: str | None = None
+    merged_into_id: str | None = None
+    resulting_entity_type: str | None = None
+    resulting_entity_id: str | None = None

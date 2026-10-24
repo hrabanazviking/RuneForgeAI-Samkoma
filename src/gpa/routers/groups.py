@@ -236,10 +236,28 @@ def list_seats(
 
 
 def _candidate_response(candidate) -> CandidateResponse:
+    try:
+        draft = json.loads(candidate.draft_json or "{}")
+    except json.JSONDecodeError:
+        draft = {}
+    try:
+        flags = json.loads(candidate.flags_json or "[]")
+    except json.JSONDecodeError:
+        flags = []
     return CandidateResponse(
         id=candidate.id, group_id=candidate.group_id, kind=candidate.kind,
         title=candidate.title, status=candidate.status,
         created_by=candidate.created_by, approved_by=candidate.approved_by,
+        draft=draft if isinstance(draft, dict) else {},
+        confidence=candidate.confidence,
+        flags=flags if isinstance(flags, list) else [],
+        source_id=candidate.source_id,
+        prompt_name=candidate.prompt_name,
+        prompt_version=candidate.prompt_version,
+        job_id=candidate.job_id,
+        merged_into_id=candidate.merged_into_id,
+        resulting_entity_type=candidate.resulting_entity_type,
+        resulting_entity_id=candidate.resulting_entity_id,
     )
 
 

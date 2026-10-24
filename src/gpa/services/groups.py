@@ -349,7 +349,10 @@ def approve_candidate(
     candidate = db.get(Candidate, candidate_id)
     if candidate is None or candidate.group_id != group.id:
         raise AppError("not_found", detail="That candidate could not be found.")
-    if candidate.status != "pending":
+    # "edited" joins "pending" in Phase 3 (B-043): a draft a
+    # reviewer has corrected is still an undecided draft, and
+    # approving it is the normal happy path, not an exception.
+    if candidate.status not in ("pending", "edited"):
         raise AppError("conflict", detail="That candidate has already been decided.")
     candidate.status = "approved"
     candidate.approved_by = actor_label
