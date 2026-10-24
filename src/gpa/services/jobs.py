@@ -93,6 +93,7 @@ def _finish(db: Session, job: Job, settings: Settings, error: Exception | None) 
     """Record a job's outcome: done, retry-with-backoff, or dead."""
     if error is None:
         job.status = "done"
+        job.progress = 100
         job.last_error = ""
     else:
         job.attempts += 1

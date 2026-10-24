@@ -29,6 +29,10 @@ class Job(Base):
     kind: Mapped[str] = mapped_column(String(64), index=True)
     payload_json: Mapped[str] = mapped_column(Text, default="{}")
     status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
+    # Work-reported progress, 0–100 (B-033): handlers may advance
+    # it while they run; the chassis sets 100 when a job completes.
+    # The stream speaks changes to this number as job.progress.
+    progress: Mapped[int] = mapped_column(Integer, default=0)
     run_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     max_attempts: Mapped[int] = mapped_column(Integer, default=5)

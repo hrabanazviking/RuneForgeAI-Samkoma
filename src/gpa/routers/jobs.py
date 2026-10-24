@@ -24,7 +24,7 @@ def read_job(
     """One job's state: queued, running, done, or dead-lettered."""
     job = job_service.get_job(db, job_id)
     return JobResponse(
-        id=job.id, kind=job.kind, status=job.status,
+        id=job.id, kind=job.kind, status=job.status, progress=job.progress,
         attempts=job.attempts, max_attempts=job.max_attempts,
         last_error=job.last_error, run_at=job.run_at.isoformat(),
     )

@@ -26,6 +26,9 @@ class JobResponse(BaseModel):
     id: str
     kind: str
     status: str
+    # 0–100, advanced by the handler and set to 100 on completion
+    # (B-033); the group stream speaks changes to it.
+    progress: int = 0
     attempts: int
     max_attempts: int
     last_error: str

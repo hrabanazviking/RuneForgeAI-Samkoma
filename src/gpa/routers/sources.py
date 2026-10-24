@@ -327,6 +327,31 @@ def create_inbound_address(
     )
 
 
+# --- Ingest status stream (B-033) ---------------------------------------------
+# GET a source already reports stage + progress (the detail
+# response above). This stream is the live companion: a snapshot
+# on connect, then job.progress frames as the group's jobs move.
+
+
+@router.get("/{group_id}/stream")
+def group_stream(
+    request: Request,
+    context: GroupContext = Depends(require_group_role("member")),
+):
+    """Server-sent events for the group's job-driven work.
+
+    Backed by the Job table (services/stream.py) — what a client
+    sees here is the durable record, never an in-memory rumour.
+    """
+    from fastapi.responses import StreamingResponse
+
+    from gpa.services import stream as stream_service
+
+    database = request.app.state.db
+    events = stream_service.group_events(database.session, context.group.id)
+    return StreamingResponse(events, media_type="text/event-stream")
+
+
 # --- Voice notes (B-031) + live-chat registration (B-032) ---------------------
 
 
