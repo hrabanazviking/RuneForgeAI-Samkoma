@@ -161,3 +161,39 @@ async def upload_source(
         title=title, granted_scope=granted_scope,
     )
     return _detail_response(db, source)
+
+
+# --- Newsletter upload (B-026) ----------------------------------------------
+# Same raw-body shape as the file upload; the newsletter service
+# chunks by section instead of by block, and keeps links whole.
+
+
+@router.post(
+    "/{group_id}/sources/newsletter", response_model=SourceDetailResponse, status_code=201
+)
+async def upload_newsletter(
+    request: Request,
+    filename: str = "",
+    title: str = "",
+    granted_scope: str = "",
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Upload one HTML newsletter as a source (member+).
+
+    Chunks come back as the newsletter's sections, in order —
+    twelve events in the email are twelve chunks here.
+    """
+    from gpa.services import newsletter as newsletter_service
+
+    data = await request.body()
+    settings = request.app.state.settings
+    storage = request.app.state.storage
+    source = newsletter_service.ingest_newsletter(
+        db, settings=settings, storage=storage,
+        actor_label=principal.label, group=context.group,
+        filename=filename, data=data,
+        title=title, granted_scope=granted_scope,
+    )
+    return _detail_response(db, source)
