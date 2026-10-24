@@ -13,8 +13,21 @@ layer working and tested (92 tests green). You can now build:
 - **Member management** — invites (accept/decline), roles, removal,
   the agent-seat list, and the group audit view (admin+).
 
-Not yet built (later phases): sources/ingest, the full review
-queue, events/calendar, notifications. The `candidates` endpoints
+**New in Phase 2 (so far): sources.** `POST/GET /groups/{id}/sources`,
+`GET/DELETE /groups/{id}/sources/{source_id}` (delete is organiser+),
+`POST /groups/{id}/sources/paste` (chat exports — WhatsApp, Discord,
+Slack, Messenger, `Name:` lines — parsed into speaker chunks), and
+`POST /groups/{id}/sources/upload?filename=<name>` (raw file bytes as
+the request body; text/HTML/PDF-text-layer/Markdown/.ics; 10 MiB cap;
+executables refused by content sniffing). Every source carries its
+permission record (`granted_by`, `granted_scope`) and ordered chunks
+with `sender`, `sent_at` (only when unambiguous), and the raw
+`timestamp_text`. You can now build the upload + paste screens and a
+source list. Still ahead in Phase 2: newsletter/image/board/link/
+email-in/voice kinds and ingest progress (B-026 → B-034).
+
+Not yet built (later phases): the full review queue,
+events/calendar, notifications. The `candidates` endpoints
 are a Phase 1 stub that exists to prove the seat permission rule.
 
 ## The contract

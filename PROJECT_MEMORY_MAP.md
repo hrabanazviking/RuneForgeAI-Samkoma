@@ -23,7 +23,7 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **92 tests, all passing**.
+Alembic up/down/up clean; **115 tests, all passing**.
 
 ## Slice status
 
@@ -66,9 +66,39 @@ Alembic up/down/up clean; **92 tests, all passing**.
   routes, 429 + Retry-After · B-022 role-matrix suite green
   (tests/test_permissions.py: 5 roles × 8 actions, parametrized).
 
+### Phase 2 — Sources and ingest (B-023 → B-034): IN PROGRESS
+- B-023 sources core: `Source`/`SourceChunk`/`Provenance` models
+  (models/sources.py), services/sources.py, routers/sources.py —
+  create/list/get/delete under `/groups/{id}/sources`, permission
+  record (granted_by = caller label, granted_scope verbatim) on
+  every source, chunks ordered by position, source ids never leak
+  across groups. Deletion law: chunks + their provenance are
+  removed; candidates are NEVER deleted — a candidate naming the
+  source keeps its `source_id` and gains `source_deleted_at`
+  (tombstone columns on Candidate, plain values, no cascade FK).
+- B-024 paste ingest: services/paste.py — speaker-line parsers for
+  WhatsApp (bracket + dash), Discord headers, Slack headers,
+  Messenger blocks (bare name + trailing timestamp line), generic
+  `Name:` lines; unparsed/wrapped lines join the previous message
+  and leading text becomes a senderless chunk — nothing is dropped.
+  Timestamps are kept raw (`timestamp_text`) and parsed to
+  `sent_at` only for unambiguous numeric formats; relative words
+  are Phase 3's date resolver's job. `POST /groups/{id}/sources/paste`.
+- B-025 file ingest: services/files.py — raw-body upload at
+  `POST /groups/{id}/sources/upload?filename=` (no multipart
+  dependency); size limit `GPA_MAX_UPLOAD_BYTES` (default 10 MiB);
+  virus hook (`virus_scan`: EICAR signature + executable magics);
+  content sniffing decides the kind (PDF/HTML/ICS/text) — a
+  disguised executable is refused whatever its extension says;
+  stdlib extraction (HTML via html.parser with script/style
+  skipped, PDF text layer via FlateDecode + Tj/TJ strings, ICS one
+  chunk per VEVENT, text by paragraphs). Bytes go to B-007 storage,
+  a `FileAsset` row and the source land in one transaction.
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 2 sources/ingest is next. The `Candidate` model and
-`FileAsset` table are Phase 1 stubs sized for Phase 2/3 growth.
+Phase 2 continues at B-026 (newsletter ingest). The `Candidate`
+model's Phase 3 growth (draft JSON, confidence, provenance API)
+is still ahead; B-023 gave it only the tombstone columns.
 
 ## Decisions & deviations (from the roadmap defaults)
 
