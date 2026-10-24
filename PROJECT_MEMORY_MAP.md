@@ -23,8 +23,9 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **150 tests, all passing** (34/340 slices:
-Phases 0, 1, and 2 complete).
+Alembic up/down/up clean; **472 tests, all passing** (48/340 slices:
+Phases 0, 1, 2, and 3 complete). Demo verified offline on the mock
+driver (seed + health + demo login, no API key, no network).
 
 ## Slice status
 
