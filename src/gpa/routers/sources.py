@@ -14,6 +14,8 @@ from gpa.db import get_db
 from gpa.deps import GroupContext, Principal, require_group_role, require_scope
 from gpa.schemas.sources import (
     ChunkResponse,
+    EmailInRequest,
+    InboundAddressResponse,
     LinkIngestRequest,
     PasteIngestRequest,
     SourceCreateRequest,
@@ -286,5 +288,61 @@ def ingest_link(
         db, settings=settings, storage=storage,
         actor_label=principal.label, group=context.group,
         url=body.url, title=body.title, granted_scope=body.granted_scope,
+    )
+    return _detail_response(db, source)
+
+
+# --- Email-in (B-030) ---------------------------------------------------------
+# Opening the channel is an admin act; receiving is the token's
+# own authority — no user session rides on a delivered email.
+
+
+@router.post(
+    "/{group_id}/inbound-address",
+    response_model=InboundAddressResponse,
+    status_code=201,
+)
+def create_inbound_address(
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Open this group's email-in channel (admin+).
+
+    The response carries the full token and the address ONCE;
+    only a hash is kept. Mail to the address becomes a source.
+    """
+    from gpa.services import emailin as emailin_service
+
+    row, token, address = emailin_service.create_inbound_address(
+        db, actor_label=principal.label, group=context.group
+    )
+    return InboundAddressResponse(
+        id=row.id, group_id=row.group_id, token_prefix=row.token_prefix,
+        created_at=row.created_at.isoformat(), token=token, address=address,
+    )
+
+
+email_router = APIRouter(prefix="/api/v1/email-in", tags=["email-in"])
+
+
+@email_router.post("/{token}", response_model=SourceDetailResponse, status_code=201)
+def receive_email(
+    token: str,
+    body: EmailInRequest,
+    db: Session = Depends(get_db),
+):
+    """The webhook-shaped receiver: one delivered email → a source.
+
+    The token in the path is the whole credential. A forged
+    token is refused (401) and logged — see services/emailin.py.
+    (Provider signature verification joins in Phase 12, where the
+    provider itself is chosen.)
+    """
+    from gpa.services import emailin as emailin_service
+
+    source = emailin_service.receive_email(
+        db, token=token, sender=body.sender, subject=body.subject,
+        text=body.text, html=body.html,
     )
     return _detail_response(db, source)

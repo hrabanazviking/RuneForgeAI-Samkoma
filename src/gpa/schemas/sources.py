@@ -107,3 +107,30 @@ class LinkIngestRequest(BaseModel):
     url: str = Field(min_length=1, max_length=2000)
     title: str = Field(default="", max_length=240)
     granted_scope: str = Field(default="", max_length=240)
+
+
+class InboundAddressResponse(BaseModel):
+    """A group's email-in channel (B-030).
+
+    ``token`` and ``address`` appear ONLY in the creation
+    response — the one time the secret exists outside the hash.
+    """
+
+    id: str
+    group_id: str
+    token_prefix: str
+    created_at: str
+    token: str | None = None
+    address: str | None = None
+
+
+class EmailInRequest(BaseModel):
+    """One delivered email, in the webhook shape providers share
+    (B-030). The real provider adapter lands in Phase 12."""
+
+    model_config = {"populate_by_name": True}
+
+    sender: str = Field(alias="from", max_length=320)
+    subject: str = Field(default="", max_length=500)
+    text: str = Field(default="", max_length=2_000_000)
+    html: str = Field(default="", max_length=4_000_000)
