@@ -90,6 +90,10 @@ class Source(Base):
     file_asset_id: Mapped[str | None] = mapped_column(
         ForeignKey("file_assets.id"), nullable=True
     )
+    # For link sources (B-029): the URL the content was fetched
+    # from (after redirects). The archived chunks are the history;
+    # this is only the label that says where they came from.
+    url: Mapped[str] = mapped_column(String(2000), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

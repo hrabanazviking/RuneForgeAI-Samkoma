@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     job_max_attempts: int = 5
     job_backoff_base_seconds: int = 5
 
+    # Link ingest (B-029): how long a page fetch may take, and the
+    # largest page body the archive will keep. The SSRF guards
+    # themselves live in services/linkfetch.py and are not knobs —
+    # safety limits are not settings a deployment can loosen.
+    link_fetch_timeout_seconds: int = 10
+    link_fetch_max_bytes: int = 2_097_152
+
     # Dev/demo convenience: create tables at startup. Production
     # runs Alembic migrations and sets this to false.
     auto_create_tables: bool = True

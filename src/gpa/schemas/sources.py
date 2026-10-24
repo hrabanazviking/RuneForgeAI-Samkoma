@@ -79,6 +79,9 @@ class SourceResponse(BaseModel):
     chunk_count: int
     storage_key: str | None = None
     file_asset_id: str | None = None
+    # Where a link source's content was fetched from (B-029);
+    # empty for every other kind.
+    url: str = ""
     created_at: str
 
 
@@ -95,4 +98,12 @@ class PasteIngestRequest(BaseModel):
 
     title: str = Field(default="", max_length=240)
     text: str = Field(min_length=1, max_length=2_000_000)
+    granted_scope: str = Field(default="", max_length=240)
+
+
+class LinkIngestRequest(BaseModel):
+    """Paste a link to be fetched and archived (B-029)."""
+
+    url: str = Field(min_length=1, max_length=2000)
+    title: str = Field(default="", max_length=240)
     granted_scope: str = Field(default="", max_length=240)

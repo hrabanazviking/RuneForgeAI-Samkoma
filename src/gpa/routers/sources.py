@@ -14,6 +14,7 @@ from gpa.db import get_db
 from gpa.deps import GroupContext, Principal, require_group_role, require_scope
 from gpa.schemas.sources import (
     ChunkResponse,
+    LinkIngestRequest,
     PasteIngestRequest,
     SourceCreateRequest,
     SourceDetailResponse,
@@ -34,7 +35,7 @@ def _source_response(db: Session, source) -> SourceResponse:
         stage=source.stage, progress=source.progress,
         chunk_count=source_service.chunk_count(db, source),
         storage_key=source.storage_key, file_asset_id=source.file_asset_id,
-        created_at=source.created_at.isoformat(),
+        url=source.url, created_at=source.created_at.isoformat(),
     )
 
 
@@ -252,5 +253,38 @@ async def upload_image(
         actor_label=principal.label, group=context.group,
         filename=filename, data=data,
         title=title, granted_scope=granted_scope, board_photo=board,
+    )
+    return _detail_response(db, source)
+
+
+# --- Link ingest (B-029) ------------------------------------------------------
+# The fetch itself lives behind services/linkfetch.py's guards;
+# this handler only hands the URL over and shapes the archive.
+
+
+@router.post(
+    "/{group_id}/sources/link", response_model=SourceDetailResponse, status_code=201
+)
+def ingest_link(
+    body: LinkIngestRequest,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Fetch a pasted link and archive its text as a source.
+
+    Private, local, and metadata addresses are refused by the
+    fetch guard (422 ``fetch_blocked``) before a single byte is
+    requested; a page that cannot be read archives nothing.
+    """
+    from gpa.services import links as link_service
+
+    settings = request.app.state.settings
+    storage = request.app.state.storage
+    source = link_service.ingest_link(
+        db, settings=settings, storage=storage,
+        actor_label=principal.label, group=context.group,
+        url=body.url, title=body.title, granted_scope=body.granted_scope,
     )
     return _detail_response(db, source)
