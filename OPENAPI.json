@@ -147,8 +147,8 @@
         "title": "CandidateCreateRequest",
         "type": "object"
       },
-      "CandidateResponse": {
-        "description": "A candidate as the queue shows it.",
+      "CandidateDetailResponse": {
+        "description": "The full candidate: the list row plus provenance rows.",
         "properties": {
           "approved_by": {
             "anyOf": [
@@ -161,9 +161,32 @@
             ],
             "title": "Approved By"
           },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
           "created_by": {
             "title": "Created By",
             "type": "string"
+          },
+          "draft": {
+            "additionalProperties": true,
+            "title": "Draft",
+            "type": "object"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
           },
           "group_id": {
             "title": "Group Id",
@@ -173,9 +196,260 @@
             "title": "Id",
             "type": "string"
           },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
           "kind": {
             "title": "Kind",
             "type": "string"
+          },
+          "merged_into_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merged Into Id"
+          },
+          "prompt_name": {
+            "default": "",
+            "title": "Prompt Name",
+            "type": "string"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/components/schemas/ProvenanceEntry"
+            },
+            "title": "Provenance",
+            "type": "array"
+          },
+          "resulting_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Entity Id"
+          },
+          "resulting_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Entity Type"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "title",
+          "status",
+          "created_by"
+        ],
+        "title": "CandidateDetailResponse",
+        "type": "object"
+      },
+      "CandidateEditRequest": {
+        "description": "A reviewer's edit of the draft (organiser+). The draft is\nthe same JSON shape the pipeline wrote; the reviewer replaces\nfield values, and the API recomputes flags afterwards (B-044\n\u2014 flags are the API's to decide, never the client's).",
+        "properties": {
+          "draft": {
+            "additionalProperties": true,
+            "title": "Draft",
+            "type": "object"
+          }
+        },
+        "required": [
+          "draft"
+        ],
+        "title": "CandidateEditRequest",
+        "type": "object"
+      },
+      "CandidateMergeRequest": {
+        "description": "Merge this candidate INTO the named survivor.",
+        "properties": {
+          "into_candidate_id": {
+            "title": "Into Candidate Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "into_candidate_id"
+        ],
+        "title": "CandidateMergeRequest",
+        "type": "object"
+      },
+      "CandidateResponse": {
+        "description": "A candidate as the queue shows it.\n\nGrown in Phase 3 (B-043) with the review queue's triage data \u2014\ndraft, confidence, server-computed flags (B-044), prompt\nprovenance (B-038) \u2014 all additive: the B-018 stub fields are\nunchanged. ``resulting_entity_*`` stay null until Phase 4\nmints published entities; approval records the decision.",
+        "properties": {
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "draft": {
+            "additionalProperties": true,
+            "title": "Draft",
+            "type": "object"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "merged_into_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merged Into Id"
+          },
+          "prompt_name": {
+            "default": "",
+            "title": "Prompt Name",
+            "type": "string"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "resulting_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Entity Id"
+          },
+          "resulting_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Entity Type"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
           },
           "status": {
             "title": "Status",
@@ -351,6 +625,54 @@
         "title": "EmailInRequest",
         "type": "object"
       },
+      "ExtractAcceptedResponse": {
+        "description": "202: the run is a job; poll the job or watch the stream.",
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kinds",
+            "type": "array"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "source_id",
+          "kinds"
+        ],
+        "title": "ExtractAcceptedResponse",
+        "type": "object"
+      },
+      "ExtractRequest": {
+        "description": "Ask for an extraction run over one source (B-045). Kinds\ndefault to all four; a subset re-runs just those kinds.",
+        "properties": {
+          "kinds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kinds"
+          }
+        },
+        "title": "ExtractRequest",
+        "type": "object"
+      },
       "FlyerResponse": {
         "description": "An image source's picture record (B-027/B-028).\n\n``alt_text_status`` is the visible-defect flag: it reads\n``awaiting_description`` \u2014 and ``alt_text`` is the literal\nplaceholder \u2014 until a real description of the image exists.",
         "properties": {
@@ -497,6 +819,18 @@
       "GroupUpdateRequest": {
         "description": "Edit a group's settings (admin+; B-015).",
         "properties": {
+          "ai_daily_budget_micros": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Daily Budget Micros"
+          },
           "default_place": {
             "anyOf": [
               {
@@ -973,6 +1307,109 @@
           }
         },
         "title": "ProfileUpdateRequest",
+        "type": "object"
+      },
+      "ProvenanceEntry": {
+        "description": "One field's evidence: the quote, its chunk, and whether the\npipeline verified it (an unsupported field is shown, never\nhidden \u2014 that is the queue's whole point).",
+        "properties": {
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id"
+          },
+          "chunk_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Position"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "quote": {
+            "default": "",
+            "title": "Quote",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "supported": {
+            "default": false,
+            "title": "Supported",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "ProvenanceEntry",
+        "type": "object"
+      },
+      "QueueStatusResponse": {
+        "description": "The queue's plain-words state (B-047): how much waits, and\n\u2014 when the group's daily AI budget is spent \u2014 that extraction\nis \"paused \u2014 budget\", said exactly that plainly.",
+        "properties": {
+          "budget_micros": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Micros"
+          },
+          "pause_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pause Reason"
+          },
+          "paused": {
+            "title": "Paused",
+            "type": "boolean"
+          },
+          "pending_count": {
+            "title": "Pending Count",
+            "type": "integer"
+          },
+          "spent_today_micros": {
+            "title": "Spent Today Micros",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending_count",
+          "paused",
+          "spent_today_micros"
+        ],
+        "title": "QueueStatusResponse",
         "type": "object"
       },
       "RefreshRequest": {
@@ -2198,6 +2635,101 @@
       }
     },
     "/api/v1/groups/{group_id}/candidates": {
+      "get": {
+        "description": "The queue: newest first, filterable by kind, status, and\nminimum candidate confidence (B-043).",
+        "operationId": "list_candidates_api_v1_groups__group_id__candidates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Confidence"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CandidateResponse"
+                  },
+                  "title": "Response List Candidates Api V1 Groups  Group Id  Candidates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Candidates",
+        "tags": [
+          "candidates"
+        ]
+      },
       "post": {
         "description": "Draft a candidate. Needs membership (member+) AND, for key\ncallers, the draft scope \u2014 a read key stops here (B-014).",
         "operationId": "create_candidate_api_v1_groups__group_id__candidates_post",
@@ -2250,6 +2782,161 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/candidates/status": {
+      "get": {
+        "description": "How much waits + the budget truth, in plain words (B-047):\nwhen the group's daily AI budget is spent, ``paused`` is true\nand ``pause_reason`` is \"budget\" \u2014 the queue says\n\"paused \u2014 budget\", it does not dress it up.",
+        "operationId": "queue_status_api_v1_groups__group_id__candidates_status_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Queue Status",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/candidates/{candidate_id}": {
+      "get": {
+        "description": "One candidate with its full provenance (B-043): every\nfield's quote, chunk, and support verdict.",
+        "operationId": "get_candidate_api_v1_groups__group_id__candidates__candidate_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Candidate",
+        "tags": [
+          "candidates"
+        ]
+      },
+      "patch": {
+        "description": "Edit a draft (organiser+). Status becomes \"edited\"; flags\nare recomputed by the API, never taken from the client.",
+        "operationId": "edit_candidate_api_v1_groups__group_id__candidates__candidate_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateEditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Candidate",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/candidates/{candidate_id}/approve": {
       "post": {
         "description": "Approve a candidate (organiser+ person with publish rights).\nSeats are refused inside the service itself (B-018's rule).",
@@ -2299,6 +2986,120 @@
         "summary": "Approve Candidate",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/candidates/{candidate_id}/merge": {
+      "post": {
+        "description": "Merge this candidate into the named survivor (organiser+).\nReturns the survivor; the merged row keeps its draft and\nprovenance under its new status.",
+        "operationId": "merge_candidate_api_v1_groups__group_id__candidates__candidate_id__merge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateMergeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge Candidate",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/candidates/{candidate_id}/reject": {
+      "post": {
+        "description": "Reject a draft (organiser+). The draft and its provenance\nstay \u2014 rejection is a decision, not an erasure.",
+        "operationId": "reject_candidate_api_v1_groups__group_id__candidates__candidate_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Candidate",
+        "tags": [
+          "candidates"
         ]
       }
     },
@@ -3416,6 +4217,68 @@
         "summary": "Read Source",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}/extract": {
+      "post": {
+        "description": "Ask for an extraction run over one source (B-045): a\ndurable job is queued (202 + its id); the candidates land in\nthis queue when the worker runs it.",
+        "operationId": "request_extraction_api_v1_groups__group_id__sources__source_id__extract_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractAcceptedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Extraction",
+        "tags": [
+          "candidates"
         ]
       }
     },

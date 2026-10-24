@@ -31,12 +31,51 @@ export interface CandidateCreateRequest {
   title: string;
 }
 
-export interface CandidateResponse {
+export interface CandidateDetailResponse {
   approved_by?: string | unknown | null | null;
+  confidence?: number | unknown | null | null;
   created_by: string;
+  draft?: Record<string, unknown>;
+  flags?: string[];
   group_id: string;
   id: string;
+  job_id?: string | unknown | null | null;
   kind: string;
+  merged_into_id?: string | unknown | null | null;
+  prompt_name?: string;
+  prompt_version?: number | unknown | null | null;
+  provenance?: ProvenanceEntry[];
+  resulting_entity_id?: string | unknown | null | null;
+  resulting_entity_type?: string | unknown | null | null;
+  source_id?: string | unknown | null | null;
+  status: string;
+  title: string;
+}
+
+export interface CandidateEditRequest {
+  draft: Record<string, unknown>;
+}
+
+export interface CandidateMergeRequest {
+  into_candidate_id: string;
+}
+
+export interface CandidateResponse {
+  approved_by?: string | unknown | null | null;
+  confidence?: number | unknown | null | null;
+  created_by: string;
+  draft?: Record<string, unknown>;
+  flags?: string[];
+  group_id: string;
+  id: string;
+  job_id?: string | unknown | null | null;
+  kind: string;
+  merged_into_id?: string | unknown | null | null;
+  prompt_name?: string;
+  prompt_version?: number | unknown | null | null;
+  resulting_entity_id?: string | unknown | null | null;
+  resulting_entity_type?: string | unknown | null | null;
+  source_id?: string | unknown | null | null;
   status: string;
   title: string;
 }
@@ -66,6 +105,16 @@ export interface EmailInRequest {
   html?: string;
   subject?: string;
   text?: string;
+}
+
+export interface ExtractAcceptedResponse {
+  job_id: string;
+  kinds: string[];
+  source_id: string;
+}
+
+export interface ExtractRequest {
+  kinds?: string[] | unknown | null | null;
 }
 
 export interface FlyerResponse {
@@ -99,6 +148,7 @@ export interface GroupResponse {
 }
 
 export interface GroupUpdateRequest {
+  ai_daily_budget_micros?: number | unknown | null | null;
   default_place?: string | unknown | null | null;
   description?: string | unknown | null | null;
   home_timezone?: string | unknown | null | null;
@@ -194,6 +244,23 @@ export interface ProfileUpdateRequest {
   locale?: string | unknown | null | null;
   name?: string | unknown | null | null;
   timezone?: string | unknown | null | null;
+}
+
+export interface ProvenanceEntry {
+  chunk_id?: string | unknown | null | null;
+  chunk_position?: number | unknown | null | null;
+  field: string;
+  quote?: string;
+  sent_at?: string | unknown | null | null;
+  supported?: boolean;
+}
+
+export interface QueueStatusResponse {
+  budget_micros?: number | unknown | null | null;
+  pause_reason?: string | unknown | null | null;
+  paused: boolean;
+  pending_count: number;
+  spent_today_micros: number;
 }
 
 export interface RefreshRequest {

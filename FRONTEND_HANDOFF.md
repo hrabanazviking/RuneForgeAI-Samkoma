@@ -1,4 +1,4 @@
-# Frontend Handoff — ZIP-0 (Foundation) + Phase 1
+# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–3
 
 *Regenerated at each release. Read this first.*
 
@@ -77,9 +77,78 @@ response. Job-driven work streams: `GET /groups/{id}/stream`
 `source_id`) as the group's jobs move. Jobs also carry `progress`
 in `GET /api/v1/jobs/{id}` (100 when done).
 
-Not yet built (later phases): the full review queue,
-events/calendar, notifications. The `candidates` endpoints
-are a Phase 1 stub that exists to prove the seat permission rule.
+**New in Phase 3: the review queue — the most important screen
+in the product.** Everything the AI drafts lands here as
+*candidates*; nothing reaches a calendar until a person approves
+it here. Build this screen first and build it well.
+
+- **Ask for a run:** `POST /groups/{id}/sources/{source_id}/extract`
+  (organiser+, JSON `{kinds?}` — default all four: event, task,
+  decision, question) → **202 + `job_id`**. Extraction is a job:
+  poll `GET /api/v1/jobs/{id}` or watch the SSE stream; candidates
+  appear in the queue when it lands. A source still in stage
+  `awaiting_transcription` / `awaiting_segmentation` is skipped
+  (the audit says so) — drafting from un-transcribed audio never
+  happens, so don't offer the button for those stages.
+- **The queue:** `GET /groups/{id}/candidates` with `kind`,
+  `status`, `min_confidence` filters, newest first. Each row
+  carries the whole triage story: `draft` (see below),
+  `confidence` (0–1, the mean of the field confidences the source
+  actually backs — sort and threshold on it), `flags` (see
+  below), `prompt_name` + `prompt_version` (which instructions
+  made this draft), `source_id`, `job_id`, `created_by`
+  (`"system:extraction"` for machine drafts — never dress a
+  machine draft as a person's words).
+- **Statuses:** `pending` → (`edited`) → `approved` / `rejected` /
+  `merged`; `superseded` when a newer extraction run replaced an
+  undecided draft. Decided rows are history: show them read-only.
+  A re-run never edits or deletes them.
+- **The draft shape:** `draft.fields` is the evidence map — per
+  field: `value`, `confidence`, `quote` (the exact words from
+  the source), `supported` (did the quote verify?). Date fields
+  add `date_phrase` / `time_phrase` (the source's own words) and
+  the resolver's answer: `date_readings` (ALL readings when
+  ambiguous), `date_ambiguous`, `resolved_date`. Top-level
+  mirrors (`draft.title`, `draft.place`, `draft.starts_date`,
+  `draft.starts_at`) are conveniences for list rendering; the
+  fields map is the truth. **When `date_ambiguous` is true, show
+  every reading and let the reviewer pick — the backend never
+  guesses, and neither should the UI.**
+- **Detail:** `GET /groups/{id}/candidates/{candidate_id}` adds
+  `provenance`: one row per field with its quote, `chunk_id`,
+  `chunk_position`, and support verdict. An **unsupported field
+  is shown, struck through or badged — never hidden**: a field
+  whose quote could not be found in the source is exactly what
+  the reviewer is there to catch.
+- **Flags are the API's words — render them verbatim, never
+  invent your own:** `low_confidence:<field>`,
+  `missing_required:<field>`, `unsupported:<field>`,
+  `ambiguous_date:<field>`, `unresolved_date:<field>`,
+  `conflicting:<field>` (another source's candidate disagrees),
+  `shared_chunk_unflagged`. They arrive pre-computed on every
+  row; after any edit the API recomputes them.
+- **Decisions (organiser+):** `PATCH …/candidates/{id}` with
+  `{draft}` edits (status becomes `edited`, flags recomputed,
+  title re-derived); `POST …/candidates/{id}/reject`;
+  `POST …/candidates/{id}/merge` with `{into_candidate_id}`
+  (the loser stays whole under status `merged` — show the link);
+  `POST …/candidates/{id}/approve` (the Phase 1 route). Approval
+  records the decision: **`resulting_entity_id` stays null until
+  Phase 4 mints published events** — do not render an event link
+  yet, render the approval itself.
+- **Queue status + the budget:** `GET /groups/{id}/candidates/status`
+  → `{pending_count, paused, pause_reason, spent_today_micros,
+  budget_micros}`. When a group's daily AI budget is spent,
+  `paused` is true and `pause_reason` is `"budget"`: show the
+  queue as **"paused — budget"** in those plain words, with the
+  spend and cap. Extraction defers itself to the next UTC day —
+  nothing is lost, and the UI should say waiting, not broken.
+  The cap is set via `PATCH /groups/{id}` `ai_daily_budget_micros`
+  (admin+; it can be set or changed, not cleared back to null).
+
+Not yet built (later phases): published events/calendar
+(Phase 4 mints them from approvals), reminders, digests,
+notifications.
 
 ## The contract
 

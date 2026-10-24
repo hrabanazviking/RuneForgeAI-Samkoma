@@ -160,10 +160,92 @@ Phases 0, 1, and 2 complete).
   upload-screen notes. Phase 2 folds into ZIP-Alpha (Wed Oct 28)
   per the roadmap train — no ZIP cut at this gate.
 
+### Phase 3 — The AI adapter and the extraction engine (B-035 → B-048): ✅ COMPLETE (2026-10-24)
+
+- **B-035 adapter protocol** (`ai/client.py`): `MetaModelClient`
+  (complete_text / complete_json / read_image / transcribe,
+  keyword-only args), tiers spark/wonder, `ModelResult` (text,
+  data, model_id, tokens, integer `cost_micros`). Process-wide
+  registry; `build_client(settings)` factory — driver swap is
+  config only. No vendor SDK imports anywhere in domain code
+  (the live driver speaks httpx directly).
+- **B-036 mock + fixture drivers**: mock synthesises the smallest
+  schema-valid instance; fixture replays recordings keyed by
+  sha256(prompt + canonical schema + media hash), missing =
+  loud `FixtureMissError`, never an invented answer.
+- **B-037 live driver**: POST `{GPA_AI_API_BASE}/chat/completions`,
+  env-only secrets, retries with jitter on 429/5xx + transport
+  errors only, a succeeded call never duplicated (parse happens
+  outside the retry loop), per-call usage/cost into `ai_usage`
+  (migration `0006_phase3_ai` also grew `Candidate`
+  (draft_json/confidence/flags/prompt/job/merge/resulting-entity)
+  and `groups.ai_daily_budget_micros`). **Stubbed-transport tests
+  only — never run against a real endpoint.**
+- **B-038 prompt library** (`ai/prompts/`): 9 templates + output
+  JSON Schema beside each; `manifest.json` pins version + SHA-256
+  per template — editing a prompt without a version bump fails
+  load + tests; every candidate records its prompt name/version.
+- **B-039 date resolver** (`ai/dates.py`, D-22): deterministic;
+  "this weekday" passed → BOTH readings flagged; slash dates
+  both readings; ordinals skip short months; unknown = matched
+  False, never a guess. 268-case golden suite incl. the two
+  demo lines (Wed 2026-10-21 → Sat 10-24; 2026-10-28 → Sat 10-31).
+- **B-040/B-041/B-042 extraction pipeline** (`ai/extraction.py`):
+  one pipeline, four kinds; chunk windows (≤40 chunks, ≤12k
+  chars); per-field quote verification (unmatched quote →
+  `supported: false`, no provenance, confidence excluded); dates
+  resolved from the provenance chunk's sent-at in the group tz;
+  one repair retry on malformed output, then ModelError; the
+  12-section newsletter yields 12 candidates; coverage check
+  flags unflagged shared chunks on all claimants.
+- **B-043 review queue API** (`routers/candidates.py`,
+  `services/candidates.py`): list (kind/status/min_confidence),
+  detail with full provenance, PATCH edit (status `edited`,
+  flags recomputed by the API), reject, merge (loser kept whole,
+  `merged_into_id` set). Approve extended to `edited` drafts in
+  services/groups.py. Security suite: no direct event-create
+  route exists (404/405), member approve 403, draft-scoped key
+  approve 403 insufficient_scope, seat approval still refused
+  in-service (B-018). **Boundary: approval records the decision;
+  `resulting_entity_*` stays NULL — Phase 4 (B-049) mints.**
+- **B-044 quality flags** (`services/quality.py`): closed
+  vocabulary computed server-side — low_confidence /
+  missing_required / unsupported / ambiguous_date /
+  unresolved_date / conflicting (cross-source, flagged on BOTH
+  sides) / shared_chunk_unflagged. Clients never send flags.
+- **B-045 extraction jobs** (`services/extraction.py`): `extract`
+  job per source (202 + job id, organiser+); machine author
+  `system:extraction`, requester on job/audit; re-runs supersede
+  the same source+kind's undecided drafts only — decided rows
+  are never touched; sources awaiting transcription/segmentation
+  are skipped with an audit row, not failed.
+- **B-046 evaluation harness** (`ai/evaluation.py` +
+  `eval_corpus.json` + `eval_baseline.json`): per-field
+  precision/recall over the golden corpus (dates scored on the
+  RESOLVED date); corpus deliberately imperfect (place 0.50,
+  cost recall 0.00) so the gate can see red; >2-point drop vs
+  baseline fails the gate test; `python -m gpa.ai.evaluation`
+  prints the table.
+- **B-047 budget** (`services/usage.py`): per-group daily cap
+  (`ai_daily_budget_micros`, set via group PATCH — settable and
+  changeable, not clearable to null under the route's
+  exclude_none convention), usage ledger, gate checked before
+  each kind's step (per model call for single-window sources);
+  at cap the run defers to next UTC midnight as a new job and
+  `GET /candidates/status` reports `paused` / `"budget"` /
+  spend / cap in plain words. The gate re-reads the cap fresh
+  (session-expire) — a long-lived worker never paces by stale
+  settings.
+- **B-048 gate**: `tests/test_phase3_gate.py` — golden chat →
+  candidates (quotes/confidences/flags) → approval; golden
+  newsletter → exactly 12 candidates. OPENAPI.json +
+  frontend_types.ts regenerated (**47 paths, 47 schemas**);
+  FRONTEND_HANDOFF.md carries the review-queue notes. Phase 3
+  folds into ZIP-Alpha (Wed Oct 28) — no ZIP cut at this gate.
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 3 begins at B-035 (extraction). The `Candidate` model's
-Phase 3 growth (draft JSON, confidence, provenance API) is still
-ahead; B-023 gave it only the tombstone columns.
+Phase 4 begins at B-049 (events minted from approvals — it fills
+the `resulting_entity_*` link Phase 3 deliberately left NULL).
 
 ## Decisions & deviations (from the roadmap defaults)
 
