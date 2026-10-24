@@ -40,6 +40,8 @@ def create_source(
     granted_scope: str = "",
     chunks: list[dict] | None = None,
     status: str = "ready",
+    stage: str = "done",
+    progress: int = 100,
     storage_key: str | None = None,
     file_asset_id: str | None = None,
 ) -> Source:
@@ -60,6 +62,8 @@ def create_source(
         granted_by=actor_label,
         granted_scope=granted_scope,
         status=status,
+        stage=stage,
+        progress=progress,
         storage_key=storage_key,
         file_asset_id=file_asset_id,
     )

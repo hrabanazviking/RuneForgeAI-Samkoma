@@ -29,6 +29,27 @@ class ChunkResponse(BaseModel):
     sender: str | None = None
     sent_at: str | None = None
     timestamp_text: str | None = None
+    # A board-photo region box / placeholder marker (B-028), JSON
+    # text exactly as stored; null for ordinary text chunks.
+    region_json: str | None = None
+
+
+class FlyerResponse(BaseModel):
+    """An image source's picture record (B-027/B-028).
+
+    ``alt_text_status`` is the visible-defect flag: it reads
+    ``awaiting_description`` — and ``alt_text`` is the literal
+    placeholder — until a real description of the image exists.
+    """
+
+    id: str
+    source_id: str
+    width: int
+    height: int
+    thumbnail_key: str = ""
+    alt_text: str
+    alt_text_status: str
+    transcript: str = ""
 
 
 class SourceCreateRequest(BaseModel):
@@ -51,6 +72,10 @@ class SourceResponse(BaseModel):
     granted_by: str
     granted_scope: str
     status: str
+    # Ingest stage + 0-100 progress (B-033): the frontend renders
+    # an honest progress bar from these two fields alone.
+    stage: str = "done"
+    progress: int = 100
     chunk_count: int
     storage_key: str | None = None
     file_asset_id: str | None = None
@@ -61,6 +86,8 @@ class SourceDetailResponse(SourceResponse):
     """A source with its chunks, in order (B-023)."""
 
     chunks: list[ChunkResponse] = Field(default_factory=list)
+    # The picture record, when this source is an image (B-027).
+    flyer: FlyerResponse | None = None
 
 
 class PasteIngestRequest(BaseModel):

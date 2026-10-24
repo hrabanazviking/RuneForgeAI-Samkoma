@@ -31,6 +31,7 @@ def _source_response(db: Session, source) -> SourceResponse:
         id=source.id, group_id=source.group_id, kind=source.kind,
         title=source.title, granted_by=source.granted_by,
         granted_scope=source.granted_scope, status=source.status,
+        stage=source.stage, progress=source.progress,
         chunk_count=source_service.chunk_count(db, source),
         storage_key=source.storage_key, file_asset_id=source.file_asset_id,
         created_at=source.created_at.isoformat(),
@@ -38,17 +39,34 @@ def _source_response(db: Session, source) -> SourceResponse:
 
 
 def _detail_response(db: Session, source) -> SourceDetailResponse:
-    """Shape a source with all of its chunks, in order."""
+    """Shape a source with all of its chunks, in order — plus its
+    flyer record when the source is an image (B-027)."""
+    from gpa.schemas.sources import FlyerResponse
+    from gpa.services import images as image_service
+
     base = _source_response(db, source)
     chunks = [
         ChunkResponse(
             id=c.id, position=c.position, text=c.text, sender=c.sender,
             sent_at=c.sent_at.isoformat() if c.sent_at else None,
-            timestamp_text=c.timestamp_text,
+            timestamp_text=c.timestamp_text, region_json=c.region_json,
         )
         for c in source_service.list_chunks(db, source)
     ]
-    return SourceDetailResponse(**base.model_dump(), chunks=chunks)
+    flyer_row = image_service.get_flyer_for_source(db, source.id)
+    flyer = (
+        FlyerResponse(
+            id=flyer_row.id, source_id=flyer_row.source_id,
+            width=flyer_row.width, height=flyer_row.height,
+            thumbnail_key=flyer_row.thumbnail_key,
+            alt_text=flyer_row.alt_text,
+            alt_text_status=flyer_row.alt_text_status,
+            transcript=flyer_row.transcript,
+        )
+        if flyer_row is not None
+        else None
+    )
+    return SourceDetailResponse(**base.model_dump(), chunks=chunks, flyer=flyer)
 
 
 @router.post("/{group_id}/sources", response_model=SourceDetailResponse, status_code=201)
@@ -195,5 +213,44 @@ async def upload_newsletter(
         actor_label=principal.label, group=context.group,
         filename=filename, data=data,
         title=title, granted_scope=granted_scope,
+    )
+    return _detail_response(db, source)
+
+
+# --- Image upload: flyers and board photos (B-027, B-028) -------------------
+# Same raw-body shape as the other uploads. ``board=true`` marks
+# the upload as a whole noticeboard: ONE source, status
+# awaiting_segmentation, one placeholder chunk (B-028).
+
+
+@router.post(
+    "/{group_id}/sources/image", response_model=SourceDetailResponse, status_code=201
+)
+async def upload_image(
+    request: Request,
+    filename: str = "",
+    title: str = "",
+    granted_scope: str = "",
+    board: bool = False,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Upload one photo as a flyer (or board) source (member+).
+
+    The response's ``flyer`` carries the picture's true upright
+    dimensions and its alt-text state — which starts, honestly,
+    as ``awaiting_description``.
+    """
+    from gpa.services import images as image_service
+
+    data = await request.body()
+    settings = request.app.state.settings
+    storage = request.app.state.storage
+    source = image_service.ingest_image(
+        db, settings=settings, storage=storage,
+        actor_label=principal.label, group=context.group,
+        filename=filename, data=data,
+        title=title, granted_scope=granted_scope, board_photo=board,
     )
     return _detail_response(db, source)
