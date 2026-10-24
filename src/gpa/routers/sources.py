@@ -17,10 +17,12 @@ from gpa.schemas.sources import (
     EmailInRequest,
     InboundAddressResponse,
     LinkIngestRequest,
+    LiveSourceRequest,
     PasteIngestRequest,
     SourceCreateRequest,
     SourceDetailResponse,
     SourceResponse,
+    VoiceIngestResponse,
 )
 from gpa.services import paste as paste_service
 from gpa.services import sources as source_service
@@ -37,7 +39,9 @@ def _source_response(db: Session, source) -> SourceResponse:
         stage=source.stage, progress=source.progress,
         chunk_count=source_service.chunk_count(db, source),
         storage_key=source.storage_key, file_asset_id=source.file_asset_id,
-        url=source.url, created_at=source.created_at.isoformat(),
+        url=source.url, connector_kind=source.connector_kind,
+        external_id=source.external_id,
+        created_at=source.created_at.isoformat(),
     )
 
 
@@ -321,6 +325,73 @@ def create_inbound_address(
         id=row.id, group_id=row.group_id, token_prefix=row.token_prefix,
         created_at=row.created_at.isoformat(), token=token, address=address,
     )
+
+
+# --- Voice notes (B-031) + live-chat registration (B-032) ---------------------
+
+
+@router.post(
+    "/{group_id}/sources/voice", response_model=VoiceIngestResponse, status_code=201
+)
+async def ingest_voice(
+    request: Request,
+    filename: str = "",
+    title: str = "",
+    granted_scope: str = "",
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Upload one voice note (raw body; see the file route's note).
+
+    The audio is stored, a ``voice`` source opens in
+    awaiting-transcription, and a transcription job is enqueued;
+    the response names the job so its status stays visible.
+    """
+    from gpa.services import transcribe as _transcribe  # noqa: F401 — registers the job handler
+    from gpa.services import voice as voice_service
+
+    settings = request.app.state.settings
+    storage = request.app.state.storage
+    data = await request.body()
+    source, job = voice_service.ingest_voice(
+        db, settings=settings, storage=storage,
+        actor_label=principal.label, group=context.group,
+        filename=filename, data=data,
+        title=title, granted_scope=granted_scope,
+    )
+    detail = _detail_response(db, source)
+    return VoiceIngestResponse(
+        **detail.model_dump(),
+        transcription_job_id=job.id, transcription_status=job.status,
+    )
+
+
+@router.post(
+    "/{group_id}/sources/live", response_model=SourceDetailResponse, status_code=201
+)
+def register_live_source(
+    body: LiveSourceRequest,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Register a live-chat source under a person's grant (B-032).
+
+    The registration is the permission record — connector,
+    conversation, scope, and the granting member — created
+    before any receiver exists. A seat cannot grant it, and a
+    scope cannot be empty: services/live.py holds both rules.
+    """
+    from gpa.services import live as live_service
+
+    source = live_service.register_live_source(
+        db, actor_label=principal.label, actor_is_seat=principal.is_seat,
+        group=context.group, connector_kind=body.connector_kind,
+        external_id=body.external_id, granted_scope=body.granted_scope,
+        title=body.title,
+    )
+    return _detail_response(db, source)
 
 
 email_router = APIRouter(prefix="/api/v1/email-in", tags=["email-in"])

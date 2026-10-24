@@ -82,6 +82,9 @@ class SourceResponse(BaseModel):
     # Where a link source's content was fetched from (B-029);
     # empty for every other kind.
     url: str = ""
+    # The live-chat binding (B-032); empty for every other kind.
+    connector_kind: str = ""
+    external_id: str = ""
     created_at: str
 
 
@@ -134,3 +137,22 @@ class EmailInRequest(BaseModel):
     subject: str = Field(default="", max_length=500)
     text: str = Field(default="", max_length=2_000_000)
     html: str = Field(default="", max_length=4_000_000)
+
+
+class LiveSourceRequest(BaseModel):
+    """Register a live-chat source (B-032): connector, the
+    conversation's id there, and — never optional — the scope
+    the granting member gave."""
+
+    connector_kind: str = Field(min_length=1, max_length=48)
+    external_id: str = Field(min_length=1, max_length=240)
+    granted_scope: str = Field(default="", max_length=240)
+    title: str = Field(default="", max_length=240)
+
+
+class VoiceIngestResponse(SourceDetailResponse):
+    """A voice source plus its transcription job (B-031): the
+    job id is how the note's pending words stay visible."""
+
+    transcription_job_id: str
+    transcription_status: str

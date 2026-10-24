@@ -94,6 +94,12 @@ class Source(Base):
     # from (after redirects). The archived chunks are the history;
     # this is only the label that says where they came from.
     url: Mapped[str] = mapped_column(String(2000), default="")
+    # For live-chat sources (B-032): which connector the source is
+    # bound to, and the conversation's id in that system. The
+    # registration IS the permission record; the receiver that
+    # fills the source with chunks arrives in Phase 12.
+    connector_kind: Mapped[str] = mapped_column(String(48), default="")
+    external_id: Mapped[str] = mapped_column(String(240), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

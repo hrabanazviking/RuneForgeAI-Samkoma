@@ -45,6 +45,8 @@ def create_source(
     storage_key: str | None = None,
     file_asset_id: str | None = None,
     url: str = "",
+    connector_kind: str = "",
+    external_id: str = "",
 ) -> Source:
     """Create a source and its chunks, in order, in one transaction.
 
@@ -68,6 +70,8 @@ def create_source(
         storage_key=storage_key,
         file_asset_id=file_asset_id,
         url=url,
+        connector_kind=connector_kind,
+        external_id=external_id,
     )
     db.add(source)
     db.flush()  # The source id must exist before chunks point at it.
