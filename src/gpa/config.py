@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # Auth rate limiting (B-021): attempts per minute per IP.
     auth_rate_per_minute: int = 30
 
+    # File ingest (B-025): the largest single upload, in bytes.
+    # Refused files are rejected before anything is stored.
+    max_upload_bytes: int = 10_485_760
+
     # Background jobs (B-008): attempts before dead-letter, and the
     # base delay that exponential backoff grows from.
     job_max_attempts: int = 5
