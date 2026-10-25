@@ -21,6 +21,9 @@ Alembic and the test fixtures both rely on that. Domain files:
                  candidate approvals (Phase 9)
     memory.py    summaries + prune runs — the group's past,
                  answerable and accountable (Phase 10)
+    integrations.py  account links, live sync state, the
+                 integration framework, webhook doors, outbound
+                 deliveries, external event links (Phase 11)
 """
 
 from gpa.models.ai import AiUsage
@@ -39,6 +42,16 @@ from gpa.models.events import (
 )
 from gpa.models.groups import AgentSeat, Candidate, Group, Membership
 from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User
+from gpa.models.integrations import (
+    ExternalAccountLink,
+    ExternalEventLink,
+    Integration,
+    LiveSyncState,
+    OutboundDelivery,
+    OutboundWebhook,
+    WebhookEndpoint,
+    WebhookReceipt,
+)
 from gpa.models.notifications import (
     Digest,
     EventInvite,
@@ -93,11 +106,15 @@ __all__ = [
     "EventChange",
     "EventContradiction",
     "EventSourceLink",
+    "ExternalAccountLink",
+    "ExternalEventLink",
     "FileAsset",
     "Flyer",
     "Group",
     "InboundAddress",
+    "Integration",
     "Job",
+    "LiveSyncState",
     "MailEvent",
     "MemberNotificationSettings",
     "Membership",
@@ -105,6 +122,8 @@ __all__ = [
     "NotificationPreference",
     "OneTimeToken",
     "OpenQuestion",
+    "OutboundDelivery",
+    "OutboundWebhook",
     "Poll",
     "PollOption",
     "PollVote",
@@ -120,4 +139,6 @@ __all__ = [
     "Thread",
     "Tombstone",
     "User",
+    "WebhookEndpoint",
+    "WebhookReceipt",
 ]

@@ -27,6 +27,10 @@ class ChunkResponse(BaseModel):
     position: int
     text: str
     sender: str | None = None
+    # The speaker's id in the source system, when the ingest
+    # knows one (Phase 11 live connectors). Account links key
+    # on THIS — never on the display name in ``sender``.
+    sender_ref: str | None = None
     sent_at: str | None = None
     timestamp_text: str | None = None
     # A board-photo region box / placeholder marker (B-028), JSON

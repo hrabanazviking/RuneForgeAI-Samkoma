@@ -55,6 +55,7 @@ def _detail_response(db: Session, source) -> SourceDetailResponse:
     chunks = [
         ChunkResponse(
             id=c.id, position=c.position, text=c.text, sender=c.sender,
+            sender_ref=c.sender_ref,
             sent_at=c.sent_at.isoformat() if c.sent_at else None,
             timestamp_text=c.timestamp_text, region_json=c.region_json,
         )
