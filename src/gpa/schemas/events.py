@@ -16,6 +16,7 @@ disciplines run through the file:
   the frontend does zero date maths (B-055).
 """
 
+import json
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
@@ -113,6 +114,46 @@ class ResolveContradictionRequest(BaseModel):
 
     value: str = Field(min_length=1)
     note: str = ""
+
+
+class AnnouncementChangeView(BaseModel):
+    """One line of a re-announce draft (B-078), in the humanised
+    words the draft itself carries."""
+
+    field: str
+    old: str
+    new: str
+    change_id: str
+
+
+class AnnouncementDraftResponse(BaseModel):
+    """A drafted re-announcement (B-078): the body names old →
+    new for every material change it covers. Drafting only —
+    sending is Phase 10."""
+
+    id: str
+    event_id: str
+    group_id: str
+    body: str
+    changes: list[AnnouncementChangeView]
+    created_by: str
+    created_at: datetime
+
+
+def announcement_draft_view(draft) -> AnnouncementDraftResponse:
+    try:
+        changes = json.loads(draft.changes_json or "[]")
+    except json.JSONDecodeError:
+        changes = []
+    return AnnouncementDraftResponse(
+        id=draft.id,
+        event_id=draft.event_id,
+        group_id=draft.group_id,
+        body=draft.body,
+        changes=[AnnouncementChangeView(**row) for row in changes],
+        created_by=draft.created_by,
+        created_at=draft.created_at,
+    )
 
 
 class RecurrenceRequest(BaseModel):

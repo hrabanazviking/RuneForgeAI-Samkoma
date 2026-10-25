@@ -17,6 +17,7 @@ from gpa.db import get_db
 from gpa.deps import GroupContext, Principal, require_group_role, require_scope
 from gpa.models.groups import role_at_least
 from gpa.schemas.events import (
+    AnnouncementDraftResponse,
     CancelRequest,
     ContradictionResponse,
     EventChangeResponse,
@@ -29,6 +30,7 @@ from gpa.schemas.events import (
     RecurrenceRequest,
     RecurrenceResponse,
     ResolveContradictionRequest,
+    announcement_draft_view,
     change_row,
     contradiction_view,
     project_event,
@@ -514,3 +516,83 @@ def delete_recurrence(
         db, actor_label=principal.label, group=context.group, event=event
     )
     return Response(status_code=204)
+
+
+# --- Deletion + restore (B-080) -----------------------------------------
+
+
+@router.delete("/{group_id}/events/{event_id}", status_code=204)
+def delete_event(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Delete an event (organiser+): it vanishes from every
+    read at once and leaves a 30-day tombstone (B-080)."""
+    from gpa.services import tombstones as tombstone_service
+
+    tombstone_service.delete_event(
+        db, actor_label=principal.label, group=context.group, event_id=event_id
+    )
+    return Response(status_code=204)
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/restore", response_model=EventResponse
+)
+def restore_event(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Undelete an event inside its 30-day window (B-080): it
+    comes back whole — history, links, RSVPs and all."""
+    from gpa.services import tombstones as tombstone_service
+
+    event = tombstone_service.restore_event(
+        db, actor_label=principal.label, group=context.group, event_id=event_id
+    )
+    return project_event(event, "organiser")
+
+
+# --- Re-announce drafts (B-078) ------------------------------------------
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/reannounce-drafts",
+    response_model=AnnouncementDraftResponse,
+    status_code=201,
+)
+def draft_reannouncement(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Draft the announcement of an event's material changes
+    (B-078): the body names old → new for each one. Drafting
+    only — sending belongs to Phase 10."""
+    from gpa.services import announce as announce_service
+
+    draft = announce_service.draft_reannouncement(
+        db, actor_label=principal.label, group=context.group, event_id=event_id
+    )
+    return announcement_draft_view(draft)
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/reannounce-drafts",
+    response_model=list[AnnouncementDraftResponse],
+)
+def list_reannouncement_drafts(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """An event's announcement drafts, oldest first (member+)."""
+    from gpa.services import announce as announce_service
+
+    drafts = announce_service.list_drafts(db, context.group, event_id)
+    return [announcement_draft_view(draft) for draft in drafts]

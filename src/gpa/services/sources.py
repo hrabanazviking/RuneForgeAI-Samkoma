@@ -164,6 +164,16 @@ def delete_source(db: Session, *, actor_label: str, group: Group, source_id: str
     their own link rows.
     """
     source = get_source(db, group, source_id)
+    # Phase 6 (B-080): snapshot the source into a Tombstone
+    # BEFORE anything is removed, so an organiser can restore
+    # it inside 30 days. The removal below is unchanged — the
+    # B-023 law stands at full strength; the snapshot only
+    # makes the accident recoverable.
+    from gpa.services import tombstones as tombstone_service
+
+    tombstone_service.tombstone_source(
+        db, actor_label=actor_label, group=group, source=source
+    )
     # Tombstone stamp: candidates that name this source keep their
     # source_id and gain the moment the material went away (the
     # Candidate columns are plain strings/dates, never a cascade —

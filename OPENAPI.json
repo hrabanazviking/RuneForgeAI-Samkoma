@@ -45,6 +45,83 @@
         "title": "AltTextUpdateRequest",
         "type": "object"
       },
+      "AnnouncementChangeView": {
+        "description": "One line of a re-announce draft (B-078), in the humanised\nwords the draft itself carries.",
+        "properties": {
+          "change_id": {
+            "title": "Change Id",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "new": {
+            "title": "New",
+            "type": "string"
+          },
+          "old": {
+            "title": "Old",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "old",
+          "new",
+          "change_id"
+        ],
+        "title": "AnnouncementChangeView",
+        "type": "object"
+      },
+      "AnnouncementDraftResponse": {
+        "description": "A drafted re-announcement (B-078): the body names old \u2192\nnew for every material change it covers. Drafting only \u2014\nsending is Phase 10.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/AnnouncementChangeView"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "group_id",
+          "body",
+          "changes",
+          "created_by",
+          "created_at"
+        ],
+        "title": "AnnouncementDraftResponse",
+        "type": "object"
+      },
       "ApiKeyCreateRequest": {
         "description": "Mint an API key with chosen scopes (B-014).",
         "properties": {
@@ -3135,6 +3212,125 @@
         "title": "ProvenanceEntry",
         "type": "object"
       },
+      "QualityContradictionRef": {
+        "properties": {
+          "contradiction_id": {
+            "title": "Contradiction Id",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_title": {
+            "title": "Event Title",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_title",
+          "contradiction_id",
+          "field"
+        ],
+        "title": "QualityContradictionRef",
+        "type": "object"
+      },
+      "QualityEventRef": {
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "title"
+        ],
+        "title": "QualityEventRef",
+        "type": "object"
+      },
+      "QualityFieldRef": {
+        "properties": {
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "title",
+          "field"
+        ],
+        "title": "QualityFieldRef",
+        "type": "object"
+      },
+      "QualityReportResponse": {
+        "properties": {
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "low_confidence_fields": {
+            "items": {
+              "$ref": "#/components/schemas/QualityFieldRef"
+            },
+            "title": "Low Confidence Fields",
+            "type": "array"
+          },
+          "missing_host": {
+            "items": {
+              "$ref": "#/components/schemas/QualityEventRef"
+            },
+            "title": "Missing Host",
+            "type": "array"
+          },
+          "missing_place": {
+            "items": {
+              "$ref": "#/components/schemas/QualityEventRef"
+            },
+            "title": "Missing Place",
+            "type": "array"
+          },
+          "needs_attention": {
+            "title": "Needs Attention",
+            "type": "integer"
+          },
+          "unresolved_contradictions": {
+            "items": {
+              "$ref": "#/components/schemas/QualityContradictionRef"
+            },
+            "title": "Unresolved Contradictions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "group_id",
+          "missing_place",
+          "missing_host",
+          "low_confidence_fields",
+          "unresolved_contradictions",
+          "needs_attention"
+        ],
+        "title": "QualityReportResponse",
+        "type": "object"
+      },
       "QueueStatusResponse": {
         "description": "The queue's plain-words state (B-047): how much waits, and\n\u2014 when the group's daily AI budget is spent \u2014 that extraction\nis \"paused \u2014 budget\", said exactly that plainly.",
         "properties": {
@@ -3820,6 +4016,56 @@
           "token"
         ],
         "title": "TokenConsumeRequest",
+        "type": "object"
+      },
+      "TombstoneResponse": {
+        "properties": {
+          "deleted_at": {
+            "format": "date-time",
+            "title": "Deleted At",
+            "type": "string"
+          },
+          "deleted_by": {
+            "title": "Deleted By",
+            "type": "string"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "purge_after": {
+            "format": "date-time",
+            "title": "Purge After",
+            "type": "string"
+          },
+          "restorable": {
+            "title": "Restorable",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entity_type",
+          "entity_id",
+          "title",
+          "deleted_by",
+          "deleted_at",
+          "purge_after",
+          "restorable"
+        ],
+        "title": "TombstoneResponse",
         "type": "object"
       },
       "UserResponse": {
@@ -5930,6 +6176,49 @@
       }
     },
     "/api/v1/groups/{group_id}/events/{event_id}": {
+      "delete": {
+        "description": "Delete an event (organiser+): it vanishes from every\nread at once and leaves a 30-day tombstone (B-080).",
+        "operationId": "delete_event_api_v1_groups__group_id__events__event_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Event",
+        "tags": [
+          "events"
+        ]
+      },
       "get": {
         "description": "One event. A draft asked for by a non-organiser is a 404 \u2014\nthe bright line (B-049) is existence-level, not field-level.",
         "operationId": "get_event_api_v1_groups__group_id__events__event_id__get",
@@ -6784,6 +7073,112 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/reannounce-drafts": {
+      "get": {
+        "description": "An event's announcement drafts, oldest first (member+).",
+        "operationId": "list_reannouncement_drafts_api_v1_groups__group_id__events__event_id__reannounce_drafts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementDraftResponse"
+                  },
+                  "title": "Response List Reannouncement Drafts Api V1 Groups  Group Id  Events  Event Id  Reannounce Drafts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Reannouncement Drafts",
+        "tags": [
+          "events"
+        ]
+      },
+      "post": {
+        "description": "Draft the announcement of an event's material changes\n(B-078): the body names old \u2192 new for each one. Drafting\nonly \u2014 sending belongs to Phase 10.",
+        "operationId": "draft_reannouncement_api_v1_groups__group_id__events__event_id__reannounce_drafts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementDraftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft Reannouncement",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/recurrence": {
       "delete": {
         "description": "Remove the rule: the event becomes a one-off (B-052).",
@@ -6996,6 +7391,58 @@
           }
         },
         "summary": "Add Exception",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/restore": {
+      "post": {
+        "description": "Undelete an event inside its 30-day window (B-080): it\ncomes back whole \u2014 history, links, RSVPs and all.",
+        "operationId": "restore_event_api_v1_groups__group_id__events__event_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Event",
         "tags": [
           "events"
         ]
@@ -7821,6 +8268,49 @@
         "summary": "Print Month",
         "tags": [
           "flyers"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/quality-report": {
+      "get": {
+        "description": "The group's data-quality report (B-081): four lists and\nthe needs_attention count the frontend badge renders.",
+        "operationId": "quality_report_api_v1_groups__group_id__quality_report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualityReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Quality Report",
+        "tags": [
+          "truth"
         ]
       }
     },
@@ -8690,6 +9180,56 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/sources/{source_id}/restore": {
+      "post": {
+        "description": "Undelete a source inside its 30-day window (B-080): the\ntombstone snapshot rebuilds it with its original ids \u2014\nchunks, provenance and flyers \u2014 and its candidates lose\ntheir source-deleted stamps.",
+        "operationId": "restore_source_api_v1_groups__group_id__sources__source_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/stream": {
       "get": {
         "description": "Server-sent events for the group's job-driven work.\n\nBacked by the Job table (services/stream.py) \u2014 what a client\nsees here is the durable record, never an in-memory rumour.",
@@ -8728,6 +9268,53 @@
         "summary": "Group Stream",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/tombstones": {
+      "get": {
+        "description": "What's deleted-but-restorable in this group (B-080):\neach row names its window's closing day.",
+        "operationId": "list_tombstones_api_v1_groups__group_id__tombstones_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TombstoneResponse"
+                  },
+                  "title": "Response List Tombstones Api V1 Groups  Group Id  Tombstones Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tombstones",
+        "tags": [
+          "truth"
         ]
       }
     },

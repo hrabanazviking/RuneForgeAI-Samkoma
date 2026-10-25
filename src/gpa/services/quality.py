@@ -141,3 +141,104 @@ def compute_flags(
                     if flag not in flags:
                         flags.append(flag)
     return flags
+
+
+# ------------------------------------------------------------------
+# The group data-quality report (B-081)
+# ------------------------------------------------------------------
+# One read over the group's truth-keeping state, in four lists:
+# published events missing a place, published events missing a
+# host, low-confidence fields still sitting in the open queue,
+# and contradictions nobody has resolved. ``needs_attention``
+# is the total — the frontend's badge is that number and
+# nothing else. Drafts are excluded from the missing-* lists on
+# purpose: a draft is allowed to be unfinished; a published
+# event is a promise the group has already made.
+
+
+def group_quality_report(db, group) -> dict:
+    """The B-081 report as plain dicts (the schema shapes it)."""
+    import json as _json
+
+    from gpa.models.events import Event, EventContradiction
+    from gpa.models.groups import Candidate
+
+    events = (
+        db.query(Event)
+        .filter(
+            Event.group_id == group.id,
+            Event.status == "published",
+            Event.deleted_at.is_(None),
+        )
+        .order_by(Event.starts_at, Event.id)
+        .all()
+    )
+    missing_place = [
+        {"event_id": event.id, "title": event.title}
+        for event in events
+        if not (event.place_name or "").strip()
+    ]
+    missing_host = [
+        {"event_id": event.id, "title": event.title}
+        for event in events
+        if not (event.host_label or "").strip()
+    ]
+
+    low_confidence: list[dict] = []
+    open_candidates = (
+        db.query(Candidate)
+        .filter(
+            Candidate.group_id == group.id,
+            Candidate.status.in_(("pending", "edited")),
+        )
+        .order_by(Candidate.created_at, Candidate.id)
+        .all()
+    )
+    for candidate in open_candidates:
+        for flag in _json.loads(candidate.flags_json or "[]"):
+            if flag.startswith("low_confidence:"):
+                low_confidence.append(
+                    {
+                        "candidate_id": candidate.id,
+                        "title": candidate.title,
+                        "field": flag.split(":", 1)[1],
+                    }
+                )
+
+    titles = {event.id: event.title for event in events}
+    contradictions = (
+        db.query(EventContradiction)
+        .filter(
+            EventContradiction.group_id == group.id,
+            EventContradiction.status == "open",
+        )
+        .order_by(EventContradiction.created_at, EventContradiction.id)
+        .all()
+    )
+    unresolved = []
+    for row in contradictions:
+        event = db.get(Event, row.event_id)
+        if event is None or event.deleted_at is not None:
+            continue
+        unresolved.append(
+            {
+                "event_id": row.event_id,
+                "event_title": titles.get(row.event_id, event.title),
+                "contradiction_id": row.id,
+                "field": row.field,
+            }
+        )
+
+    return {
+        "group_id": group.id,
+        "missing_place": missing_place,
+        "missing_host": missing_host,
+        "low_confidence_fields": low_confidence,
+        "unresolved_contradictions": unresolved,
+        "needs_attention": (
+            len(missing_place)
+            + len(missing_host)
+            + len(low_confidence)
+            + len(unresolved)
+        ),
+    }

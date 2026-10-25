@@ -154,6 +154,25 @@ def delete_source(
     return None
 
 
+@router.post("/{group_id}/sources/{source_id}/restore")
+def restore_source(
+    source_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Undelete a source inside its 30-day window (B-080): the
+    tombstone snapshot rebuilds it with its original ids —
+    chunks, provenance and flyers — and its candidates lose
+    their source-deleted stamps."""
+    from gpa.services import tombstones as tombstone_service
+
+    source = tombstone_service.restore_source(
+        db, actor_label=principal.label, group=context.group, source_id=source_id
+    )
+    return _detail_response(db, source)
+
+
 # --- File upload (B-025) ---------------------------------------------------
 # Imported here so the upload route mounts with the sources router;
 # the handler itself stays thin and defers to services/files.py.

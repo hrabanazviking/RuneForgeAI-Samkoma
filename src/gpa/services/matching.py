@@ -233,13 +233,16 @@ def _matchable_events(db: Session, group: Group) -> list[Event]:
     matching against it would only resurrect it by accident.
     Deleted events are excluded by the tombstone filter
     (B-080, added with the deleted_at column)."""
-    query = db.query(Event).filter(
-        Event.group_id == group.id,
-        Event.status.in_(("draft", "published")),
+    return (
+        db.query(Event)
+        .filter(
+            Event.group_id == group.id,
+            Event.status.in_(("draft", "published")),
+            Event.deleted_at.is_(None),
+        )
+        .order_by(Event.starts_at, Event.id)
+        .all()
     )
-    if hasattr(Event, "deleted_at"):
-        query = query.filter(Event.deleted_at.is_(None))
-    return query.order_by(Event.starts_at, Event.id).all()
 
 
 def match_candidate(db: Session, group: Group, candidate: Candidate) -> list[dict]:

@@ -10,6 +10,23 @@ export interface AltTextUpdateRequest {
   alt_text: string;
 }
 
+export interface AnnouncementChangeView {
+  change_id: string;
+  field: string;
+  new: string;
+  old: string;
+}
+
+export interface AnnouncementDraftResponse {
+  body: string;
+  changes: AnnouncementChangeView[];
+  created_at: string;
+  created_by: string;
+  event_id: string;
+  group_id: string;
+  id: string;
+}
+
 export interface ApiKeyCreateRequest {
   label?: string;
   scopes?: string[];
@@ -566,6 +583,33 @@ export interface ProvenanceEntry {
   supported?: boolean;
 }
 
+export interface QualityContradictionRef {
+  contradiction_id: string;
+  event_id: string;
+  event_title: string;
+  field: string;
+}
+
+export interface QualityEventRef {
+  event_id: string;
+  title: string;
+}
+
+export interface QualityFieldRef {
+  candidate_id: string;
+  field: string;
+  title: string;
+}
+
+export interface QualityReportResponse {
+  group_id: string;
+  low_confidence_fields: QualityFieldRef[];
+  missing_host: QualityEventRef[];
+  missing_place: QualityEventRef[];
+  needs_attention: number;
+  unresolved_contradictions: QualityContradictionRef[];
+}
+
 export interface QueueStatusResponse {
   budget_micros?: number | unknown | null | null;
   pause_reason?: string | unknown | null | null;
@@ -701,6 +745,17 @@ export interface SourceResponse {
 export interface TokenConsumeRequest {
   new_password?: string | unknown | null | null;
   token: string;
+}
+
+export interface TombstoneResponse {
+  deleted_at: string;
+  deleted_by: string;
+  entity_id: string;
+  entity_type: string;
+  id: string;
+  purge_after: string;
+  restorable: boolean;
+  title: string;
 }
 
 export interface UserResponse {

@@ -127,7 +127,8 @@ def flyer_wall(
     )
     events_by_flyer: dict[str, Event] = {}
     for event in db.query(Event).filter(Event.group_id == group.id).all():
-        if event.flyer_id:
+        # B-080: a deleted event's poster leaves the wall with it.
+        if event.flyer_id and event.deleted_at is None:
             events_by_flyer[event.flyer_id] = event
     sources = {
         source.id: source

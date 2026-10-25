@@ -75,6 +75,10 @@ def _live_events(db: Session, group: Group) -> list[Event]:
         .filter(
             Event.group_id == group.id,
             Event.status.in_(("published", "cancelled")),
+            # B-080: a deleted event is gone from every surface
+            # until restored — cancelled shows AS cancelled, but
+            # deleted does not show at all.
+            Event.deleted_at.is_(None),
         )
         .order_by(Event.starts_at, Event.id)
         .all()

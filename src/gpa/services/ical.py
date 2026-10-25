@@ -517,6 +517,8 @@ def feed_events(db: Session, feed: CalendarFeed) -> list[tuple[Event, Recurrence
         .filter(
             Event.group_id == feed.group_id,
             Event.status.in_(("published", "cancelled")),
+            # B-080: deleted events leave every feed until restored.
+            Event.deleted_at.is_(None),
         )
         .order_by(Event.starts_at, Event.id)
         .all()

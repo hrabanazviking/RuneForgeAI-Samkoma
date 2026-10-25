@@ -34,6 +34,7 @@ from gpa.routers import (
     meta,
     rsvps,
     sources,
+    truth,
     users,
 )
 from gpa.storage.local import LocalStorage
@@ -129,5 +130,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(flyers.router)
     app.include_router(sources.router)
     app.include_router(sources.email_router)
+    app.include_router(truth.router)
     app.include_router(jobs.router)
     return app

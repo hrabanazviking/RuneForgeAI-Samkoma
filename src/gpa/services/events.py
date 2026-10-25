@@ -32,7 +32,17 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from gpa.errors import AppError
-from gpa.models.events import Event, EventChange, EventSourceLink, Recurrence
+from gpa.models.events import (
+    AnnouncementDraft,
+    Comment,
+    Event,
+    EventChange,
+    EventContradiction,
+    EventSourceLink,
+    Recurrence,
+    Rsvp,
+    Thread,
+)
 from gpa.models.groups import Candidate, Group, role_at_least
 from gpa.models.sources import Provenance, SourceChunk
 from gpa.services import audit
@@ -94,6 +104,39 @@ def record_change(
     )
     db.add(row)
     return row
+
+
+def hard_delete_event(db: Session, event: Event) -> None:
+    """Remove an event and everything it carries, for good.
+
+    Only the tombstone purge calls this (B-080), after the
+    30-day restore window has closed: children first (comments
+    through their threads, then the event's own rows), the
+    event last. Does not commit — the purge's commit carries
+    the whole sweep.
+    """
+    thread_ids = [
+        row.id
+        for row in db.query(Thread)
+        .filter(Thread.parent_type == "event", Thread.parent_id == event.id)
+        .all()
+    ]
+    if thread_ids:
+        db.query(Comment).filter(Comment.thread_id.in_(thread_ids)).delete(
+            synchronize_session=False
+        )
+        db.query(Thread).filter(Thread.id.in_(thread_ids)).delete(
+            synchronize_session=False
+        )
+    for model in (
+        Rsvp, Recurrence, EventChange, EventSourceLink,
+        EventContradiction, AnnouncementDraft,
+    ):
+        db.query(model).filter(model.event_id == event.id).delete(
+            synchronize_session=False
+        )
+    db.delete(event)
+    db.flush()
 
 
 def get_event(
