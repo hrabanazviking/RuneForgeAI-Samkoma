@@ -123,6 +123,21 @@ class IntegrationResponse(BaseModel):
     created_at: str
 
 
+# --- Google Calendar sync (B-132) -------------------------------------
+
+
+class GoogleSyncResponse(BaseModel):
+    """One Google sync run's counts: copies created, copies
+    brought back into agreement, cancellations propagated,
+    and copies already current (left alone)."""
+
+    integration_id: str
+    pushed: int
+    updated: int
+    cancelled: int
+    unchanged: int
+
+
 # --- Inbound webhook endpoints (B-126) -------------------------------
 
 

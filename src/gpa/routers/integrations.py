@@ -24,6 +24,7 @@ from gpa.models.identity import User
 from gpa.schemas.integrations import (
     AccountLinkCreateRequest,
     AccountLinkResponse,
+    GoogleSyncResponse,
     IntegrationCreateRequest,
     IntegrationResponse,
     IntegrationUpdateRequest,
@@ -434,6 +435,63 @@ def check_integration_health(
         integration_id=integration_id,
     )
     return _integration_response(request, db, row)
+
+
+# --- Google Calendar: connect + sync (B-132) ---------------------------
+# Connect is the credential act (admin); sync is the outward
+# press (organiser + publish scope), like every human-
+# triggered outward run in this phase.
+
+
+@router.post(
+    "/{group_id}/integrations/{integration_id}/google-connect",
+    response_model=IntegrationResponse,
+)
+def connect_google(
+    integration_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Verify a Google Calendar connection's credentials
+    against the client boundary and record the verdict on
+    the row (admin+). The sealed token is what a deployment's
+    OAuth consent flow issued; this door proves it answers
+    before any sync trusts it."""
+    from gpa.services import google_calendar as google_service
+
+    row = google_service.connect(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        integration_id=integration_id,
+    )
+    return _integration_response(request, db, row)
+
+
+@router.post(
+    "/{group_id}/integrations/{integration_id}/google-sync",
+    response_model=GoogleSyncResponse,
+)
+def sync_google(
+    integration_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Run one Google Calendar sync (organiser+): published
+    events upsert into the chosen calendar, cancellations
+    propagate as cancellations. ONE-WAY OUT — edits made on
+    Google are never read back into events here."""
+    from gpa.services import google_calendar as google_service
+
+    counts = google_service.sync_group(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        integration_id=integration_id,
+    )
+    return GoogleSyncResponse(integration_id=integration_id, **counts)
 
 
 # --- Outbound webhooks + deliveries (B-128) ------------------------------

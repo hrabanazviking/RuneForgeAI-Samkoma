@@ -233,12 +233,27 @@ def _run_check(db: Session, settings: Settings, row: Integration) -> tuple[str, 
         except Exception as err:  # A broken client is a health fact too.
             return "error", f"The Facebook connection failed its check: {err}"
     if row.kind == "google_calendar":
-        return (
-            "unconfigured",
-            "Not connected yet — this integration's live check "
-            "arrives with its Phase 12 slice; until then there "
-            "is no connection to check.",
-        )
+        # B-132: same shape as the Facebook check — config
+        # gate first, then the boundary's ping, whose refusal
+        # in this environment IS the honest verdict.
+        from gpa.services import google_calendar as google_service
+
+        config = read_config(settings, row)
+        missing = [k for k in ("calendar_id", "access_token") if not config.get(k)]
+        if missing:
+            return (
+                "unconfigured",
+                "Not connected yet — add "
+                f"{' and '.join(missing)} to this integration's "
+                "config, then check again.",
+            )
+        try:
+            google_service.get_client().ping()
+            return "ok", ""
+        except google_service.GoogleUnavailable as err:
+            return "error", str(err)
+        except Exception as err:  # A broken client is a health fact too.
+            return "error", f"The Google connection failed its check: {err}"
     # custom
     try:
         sealing.open_sealed(settings, row.config_sealed) if row.config_sealed else ""
