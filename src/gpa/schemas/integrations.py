@@ -140,6 +140,26 @@ class GoogleSyncResponse(BaseModel):
     unchanged: int
 
 
+# --- Reconciliation (B-137) --------------------------------------------
+
+
+class DriftEntryResponse(BaseModel):
+    """One drifted outside copy: which event, which door, and
+    how it drifted — "differs" (edited outside) or "missing"
+    (deleted outside). Reconciliation reports; it never
+    repairs."""
+
+    event_id: str
+    title: str
+    connector: str
+    kind: str
+    external_id: str
+
+
+class ReconcileResponse(BaseModel):
+    drift: list[DriftEntryResponse] = Field(default_factory=list)
+
+
 # --- Integration health board (B-136) ---------------------------------
 
 

@@ -242,6 +242,15 @@ def payload_hash(payload: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def projected(outside: dict, payload: dict) -> dict:
+    """An outside copy projected onto the payload's keys —
+    the comparison B-137's reconciliation and the press's
+    repair both use: the outside system's envelope fields
+    (its own id, its URL) ride along in its records and are
+    not part of the event's facts."""
+    return {key: outside.get(key) for key in payload}
+
+
 def _integration(db: Session, group: Group) -> Integration:
     """The group's Facebook connection, or a plain refusal.
 
@@ -385,7 +394,29 @@ def publish_event(
     payload = payload_for(db, event)  # Draft events 404 inside.
     digest = payload_hash(payload)
     if link is not None and link.payload_hash == digest:
-        return {**facebook_state(db, group=group, event=event), "action": "unchanged"}
+        # Our side has not moved since the last press. One
+        # Page-side case still acts: a copy that was DELETED
+        # over there is recreated by this press (the link
+        # follows it to its new id) — restoring a deletion is
+        # the press's own business. A copy that was EDITED
+        # over there is NOT overwritten: it stands for a
+        # person to settle (B-132's one-way law, B-137's
+        # report) — the press returns "unchanged" and the
+        # organiser's road is unpublish + publish, deliberate.
+        outside = client.get_event(page_id, link.external_id)
+        if outside is not None:
+            return {**facebook_state(db, group=group, event=event), "action": "unchanged"}
+        if outside is None:
+            stored = client.create_event(page_id, payload)
+            link.external_id = stored["id"]
+            link.external_url = stored.get("url", link.external_url)
+            audit.record(
+                db, actor=actor_label, action="facebook.created",
+                group_id=group.id, entity_type="event", entity_id=event.id,
+                detail={"external_id": link.external_id, "url": link.external_url},
+            )
+            db.commit()
+            return {**facebook_state(db, group=group, event=event), "action": "created"}
     if link is None:
         stored = client.create_event(page_id, payload)
         link = ExternalEventLink(

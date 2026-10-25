@@ -22,6 +22,7 @@ from gpa.services import notifications as _notifications  # noqa: F401 — regis
 from gpa.services import digests as _digests  # noqa: F401 — registers the digest_run handler on import
 from gpa.services import vision as _vision  # noqa: F401 — registers the vision handler on import
 from gpa.services import outbound as _outbound  # noqa: F401 — registers the webhook_deliver handler on import (Phase 11)
+from gpa.services import reconcile as _reconcile  # noqa: F401 — registers the reconcile handler on import (Phase 12)
 from gpa.storage import LocalStorage, set_storage
 
 

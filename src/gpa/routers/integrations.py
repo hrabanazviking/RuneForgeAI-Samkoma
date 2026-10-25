@@ -28,6 +28,7 @@ from gpa.schemas.integrations import (
     EmbedOriginsResponse,
     GoogleSyncResponse,
     HealthBoardEntryResponse,
+    ReconcileResponse,
     IntegrationCreateRequest,
     IntegrationResponse,
     IntegrationUpdateRequest,
@@ -337,6 +338,13 @@ def create_integration(
         actor_label=principal.label, group=context.group,
         kind=body.kind, name=body.name, config=body.config,
     )
+    if body.kind in ("facebook_events", "google_calendar"):
+        # B-137: connecting an outside calendar anchors the
+        # group's nightly reconciliation chain.
+        from gpa.services import reconcile as reconcile_service
+
+        reconcile_service.ensure_scheduled(db, group=context.group)
+        db.commit()
     return _integration_response(request, db, row)
 
 
@@ -375,6 +383,33 @@ def integration_health_board(
         HealthBoardEntryResponse(**entry)
         for entry in health_board.board(db, group=context.group)
     ]
+
+
+@router.post(
+    "/{group_id}/integrations/reconcile",
+    response_model=ReconcileResponse,
+)
+def reconcile_now(
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Run reconciliation NOW (admin+, B-137): compare the
+    group's outside copies, notify the organisers of any
+    drift, return the drift list. Registered before
+    /{integration_id} routes for the same reason as the
+    health board. Running it also anchors the nightly chain
+    if it is not anchored yet."""
+    from gpa.services import reconcile as reconcile_service
+
+    drift = reconcile_service.reconcile_group(
+        db, request.app.state.settings,
+        group=context.group, actor=principal.label,
+    )
+    reconcile_service.ensure_scheduled(db, group=context.group)
+    db.commit()
+    return ReconcileResponse(drift=drift)
 
 
 @router.get(

@@ -217,6 +217,15 @@ def payload_hash(payload: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def projected(outside: dict, payload: dict) -> dict:
+    """An outside copy projected onto the payload's keys —
+    the comparison B-137's reconciliation and the sync's
+    repair both use: the outside system's envelope fields
+    ride along in its records and are not part of the
+    event's facts."""
+    return {key: outside.get(key) for key in payload}
+
+
 # ---------------------------------------------------------------------
 # Connect + sync
 # ---------------------------------------------------------------------
@@ -349,8 +358,18 @@ def sync_group(
             .one_or_none()
         )
         if link is not None and link.payload_hash == digest:
-            counts["unchanged"] += 1
-            continue
+            # Our side has not moved. One calendar-side case
+            # still acts: a copy that was DELETED over there
+            # is restored by falling through to the upsert
+            # below — a sync that finds its copy gone puts it
+            # back. A copy that was EDITED over there STANDS:
+            # never silently overwritten (this slice's one-way
+            # law, pinned by test); B-137's reconciliation
+            # reports it for a person to settle.
+            outside = client.get_event(calendar_id, link.external_id)
+            if outside is not None:
+                counts["unchanged"] += 1
+                continue
         if event.status == "cancelled":
             if link is None:
                 counts["unchanged"] += 1  # Never pushed; nothing to cancel.

@@ -118,6 +118,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from gpa.services import messenger_transport
 
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
+    # The reconciliation job handler (Phase 12, B-137)
+    # registers on import, like the other job services.
+    from gpa.services import reconcile as _reconcile  # noqa: F401
     # The outbound webhook deliverer (Phase 11, B-128): its
     # job handler receives only db + payload, so the process
     # settings it unseals with are wired in here.
