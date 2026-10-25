@@ -370,6 +370,10 @@ class RoleSlotResponse(BaseModel):
     group_id: str
     event_id: str
     role_name: str
+    # The shift window (B-107): set on a shift's slots, null on
+    # a plain timeless B-088 slot.
+    starts_at: str | None = None
+    ends_at: str | None = None
     claimed_by_id: str | None = None
     claimed_by_label: str = ""
     claimed: bool = False
@@ -382,6 +386,8 @@ def role_slot_view(slot) -> RoleSlotResponse:
         group_id=slot.group_id,
         event_id=slot.event_id,
         role_name=slot.role_name,
+        starts_at=iso_utc(slot.starts_at),
+        ends_at=iso_utc(slot.ends_at),
         claimed_by_id=slot.claimed_by_id,
         claimed_by_label=slot.claimed_by_label,
         claimed=slot.claimed_by_id is not None or bool(slot.claimed_by_label),

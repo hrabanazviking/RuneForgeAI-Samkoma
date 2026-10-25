@@ -11,20 +11,32 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
-from gpa.deps import GroupContext, Principal, require_group_role, require_scope
+from gpa.deps import (
+    GroupContext,
+    Principal,
+    get_principal,
+    require_group_role,
+    require_scope,
+)
 from gpa.schemas.nonprofit import (
     AnnouncementCreateRequest,
     AnnouncementPatchRequest,
     AnnouncementResponse,
+    ShiftCreateRequest,
+    ShiftGapReportResponse,
+    ShiftResponse,
     SubGroupCreateRequest,
     SubGroupEnrollRequest,
     SubGroupMemberResponse,
     SubGroupPatchRequest,
     SubGroupResponse,
     announcement_view,
+    shift_gap_view,
+    shift_view,
     subgroup_view,
 )
 from gpa.services import announcements as announcement_service
+from gpa.services import shifts as shift_service
 from gpa.services import subgroups as subgroup_service
 
 subgroups_router = APIRouter(prefix="/api/v1/groups", tags=["subgroups"])
@@ -271,6 +283,89 @@ def delete_announcement(
         db, actor_label=principal.label, actor_is_seat=principal.is_seat,
         group=context.group, announcement_id=announcement_id,
     )
+
+
+# ------------------------------------------------------------------
+# Volunteer shifts (B-107)
+# ------------------------------------------------------------------
+
+shifts_router = APIRouter(prefix="/api/v1/groups", tags=["shifts"])
+
+
+@shifts_router.post(
+    "/{group_id}/events/{event_id}/shifts",
+    response_model=ShiftResponse,
+    status_code=201,
+)
+def open_shift(
+    event_id: str,
+    body: ShiftCreateRequest,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Open a shift on an event (member+): headcount slots of
+    one role over one window. Claims ride the B-088 endpoints."""
+    from gpa.schemas.events import to_utc_naive
+
+    group = shift_service.open_shift(
+        db, actor_label=principal.label, group=context.group,
+        viewer_role=context.role, viewer_user_id=principal.user_id,
+        event_id=event_id, role_name=body.role_name,
+        headcount=body.headcount,
+        starts_at=to_utc_naive(body.starts_at),
+        ends_at=to_utc_naive(body.ends_at),
+    )
+    return shift_view(group)
+
+
+@shifts_router.get(
+    "/{group_id}/events/{event_id}/shifts", response_model=list[ShiftResponse]
+)
+def list_shifts(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+):
+    """An event's shifts, grouped by role + window."""
+    from gpa.services import events as event_service
+
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role,
+        viewer_user_id=principal.user_id,
+    )
+    return [shift_view(group) for group in shift_service.shift_groups(db, event)]
+
+
+@shifts_router.get("/{group_id}/shift-gaps", response_model=ShiftGapReportResponse)
+def shift_gaps(
+    from_: str | None = Query(default=None, alias="from"),
+    to: str | None = Query(default=None),
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """The gap report: which events in the window still need
+    which roles — "Saturday still needs a driver and a door
+    person." Without a window, the group's coming week."""
+    from datetime import datetime, timedelta, timezone
+
+    def parse(value: str | None):
+        if not value:
+            return None
+        try:
+            from gpa.schemas.events import to_utc_naive
+
+            return to_utc_naive(datetime.fromisoformat(value.replace("Z", "+00:00")))
+        except ValueError:
+            from gpa.errors import AppError
+
+            raise AppError("validation_error", detail="from/to must be ISO datetimes.")
+
+    start = parse(from_) or datetime.now(timezone.utc).replace(tzinfo=None)
+    end = parse(to) or start + timedelta(days=7)
+    rows = shift_service.gap_report(db, context.group, start=start, end=end)
+    return ShiftGapReportResponse(events=[shift_gap_view(row) for row in rows])
 
 
 @subgroups_router.delete(
