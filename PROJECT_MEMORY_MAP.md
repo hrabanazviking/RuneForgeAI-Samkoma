@@ -963,10 +963,11 @@ Phase 10 begins at B-113.
 - No Docker, anywhere, ever (native installs + uv only).
 - All code is the team's own original work (D-46); third-party
   software enters only as installed, locked dependencies.
-- Licence: **undecided** — "Licence: to be decided by the team — all
-  rights reserved." No file may presume one (no licence field in
-  pyproject, no classifiers). Business/licence decisions rest with
-  Geoffrey & Henry.
+- Licence: **GPLv2** — "Licence: GNU General Public License
+  version 2 (GPLv2)." Ruled by Volmarr on 2026-10-24 ("GPLv2 is
+  the project liscense"), superseding the earlier undecided
+  posture; local statements aligned by Yrsa at the Phase 9
+  checkpoint (README line, pyproject licence field).
 - Commit-before-answer (services commit, then routers respond);
   entered data is sacred (WAL + FULL).
 - Heavy plain-words comments (D-26): header on every file,
