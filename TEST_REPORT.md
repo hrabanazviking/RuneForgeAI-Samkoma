@@ -74,3 +74,42 @@ rotated            1      0.75      0.75
   another person's inbox item is a 404.
 - Migrations 0001–0011 each up/down/up clean; the suite's
   Alembic tests cover 0011 explicitly.
+
+---
+
+# Addendum — Phase 9 (B-112 gate, 2026-10-24; no ZIP)
+
+Phase 9 cut no ZIP (it folds into ZIP-RC at B-138, per the
+roadmap's train), so this addendum carries its numbers until
+the RC report supersedes it.
+
+## Suite
+
+- **704 passed, 0 failed, 0 errors** (489s, pytest, one
+  warning: a Starlette TestClient deprecation notice) — one
+  clean run against the final Phase 9 tree.
+- Collected = passed = 704. Reconciliation: 673 at ZIP-Beta's
+  gate (Phase 8) + 31 new Phase 9 tests = 704.
+- Contract: 151 OpenAPI paths, 179 schemas (was 133 / 150) —
+  `OPENAPI.json` regenerated at this gate is the exact schema
+  the snapshot test passed against; `frontend_types.ts`
+  generated from it.
+
+## Phase 9's new tests (31)
+
+| File | Tests | Covers |
+|---|---|---|
+| test_subgroups.py | 5 | B-105 create/enrol/roles, scoping leak tests (list, detail 404, tasks, calendar), delete-refused-while-scoped 409 |
+| test_announcements.py | 4 | B-106 organiser-only posting (member 403), seat refused in the service, pinned-first order, expiry + organiser include_expired |
+| test_shifts.py | 4 | B-107 headcount slots with windows, claim/release via B-088, gap report golden ("Saturday still needs a driver and a door person.") |
+| test_resources.py | 3 | B-108 keeper items, booking rules (cancelled 422, duplicate 409), golden double-booking → resource_overlap flag |
+| test_attendance.py | 3 | B-109 marking + idempotence, counts-only reads, the refusal itself (per-person routes 404/405, no identity in aggregates) |
+| test_member_io.py | 5 | B-110 messy-CSV golden (dupes, blanks, stray commas) report, dry-run changes nothing, re-import counts, CSV round-trip of a comma name, admin doors |
+| test_settings_pack.py | 5 | B-111 defaults, settings change → audit row → two-approver behaviour in one test, review floor opens/closes, validation + doors, budget set/clear |
+| test_migrations_phase9.py | 1 | Migration 0012 up/down/up on a Phase 8-era database |
+| test_phase9_gate.py | 1 | B-112: import → flyer in → event out → scoped → shifts claimed → attendance → digest sent |
+
+One Phase 4 assertion was updated as superseded (the Phase 8
+pattern): tests/test_calendar_views.py's conflict note now
+asserts "resource_overlap" — B-108 made Phase 4's deferred
+resource-conflict flag real; intent unchanged.

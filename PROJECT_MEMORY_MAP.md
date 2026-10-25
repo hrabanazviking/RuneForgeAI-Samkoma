@@ -23,11 +23,12 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **673 tests, all passing** (104/340 slices:
-Phases 0–8 complete) — the count taken from one clean run against
-the final Phase 8 tree (642 before Phase 8 + 31 new = 673,
+Alembic up/down/up clean; **704 tests, all passing** (112/340 slices:
+Phases 0–9 complete) — the count taken from one clean run against
+the final Phase 9 tree (673 at the Phase 8 gate + 31 new = 704,
 collected count reconciled). ZIP-Beta cut at the Phase 8 gate
-(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy).
+(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phase 9
+cut no ZIP — it folds into ZIP-RC at B-138.
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
