@@ -199,3 +199,68 @@ exercised against a stub transport whose answers are
 content-aware (it reads the prompt it was sent and judges
 the chunks in it). Fixture and mock remain the demo drivers;
 nothing in this phase pretends a real model judged anything.
+
+---
+
+# Addendum — Phase 11 (B-130 gate, 2026-10-25; no ZIP)
+
+Phase 11 cut no ZIP (it folds into ZIP-RC at B-138, per the
+roadmap's train), so this addendum carries its numbers until
+the RC report supersedes it.
+
+## Suite
+
+- **768 passed, 0 failed, 0 errors** — one clean run against
+  the final Phase 11 tree (pytest, one warning: a Starlette
+  TestClient deprecation notice), temp base on the workspace
+  overlay per the standing /tmp practice, totals read from
+  the run's own report file.
+- Collected = passed = 768. Reconciliation: 735 at the
+  Phase 10 gate + 33 new Phase 11 tests = 768.
+- Contract: 174 OpenAPI paths, 204 schemas (was 160 / 189) —
+  `OPENAPI.json` regenerated at this gate is the exact schema
+  the snapshot test passed against in the same run;
+  `frontend_types.ts` generated from it. The Bruno
+  collections remain the B-010 skeleton, unchanged.
+- No defect was found in earlier phases' code. Two finds
+  inside the phase's own new work, both fixed and covered:
+  the outbound service's first registration imported the
+  jobs module before this app's handler registry existed
+  (registration moved to package import, the pattern the
+  other job services use), and a B-124 test-data slip (a
+  Samtal-side edit that moved only an event's start; the
+  B-077 move rule correctly carried the end — the test now
+  moves both, as a real edit would).
+
+## Phase 11's new tests (33)
+
+| File | Tests | Covers |
+|---|---|---|
+| test_samtal_connector.py | 6 | B-123 hall sync chunk-for-chunk vs paste; identity by link only (name-collision trap); link rules (active members, duplicate 409); cursor re-sync; unknown connector plain-words refusal; unavailable Samtal records its refusal |
+| test_samtal_calendar.py | 4 | B-124 round trip (out → Samtal edit → candidate → approve → push-back); rejection leaves the event standing; Samtal-side cancellation is a candidate; drafts and foreign hall events never travel |
+| test_messenger_fallback.py | 3 | B-125 access state honest; sync refuses in plain words naming paste, refusal recorded; a Messenger export through paste ingest lands identically |
+| test_webhooks_in.py | 6 | B-126 signed delivery archives chunks; bad signature / stale stamp / unknown token refuse and archive nothing; replay accepted exactly once (409); revoke closes the door; neither token nor secret exists in the DB file |
+| test_integrations_framework.py | 5 | B-127 config sealed at rest (marker secret absent from the DB file; internal read-back round-trips); health verdicts recorded incl. the Samtal ping refusal; tampered envelope raises; admin gates and cross-group 404 |
+| test_outbound_webhooks.py | 4 | B-128 signed delivery, verified with the shown secret; retry after a 500 then success (attempts recorded); dead at the attempt cap with the reason kept; subscription filtering hears only its kinds |
+| test_agent_pack.py | 3 | B-129 the `agent` tag covers the pack and nothing outside it; the scope guide names every scope and never blurs approval; the secretary-seat example runs in mock mode (hall → draft → 403 seat_cannot_approve) |
+| test_migrations_phase11.py | 1 | Migration 0014 up/down/up on a Phase 10-era database |
+| test_phase11_gate.py | 1 | B-130: hall → sync → extraction → approval → event → back onto the hall's calendar, the whole bridge in one story |
+
+## The honest boundaries
+
+- **Samtal is the author's real, live system, and this
+  suite never touches it.** The connector is built and
+  tested against recorded fixtures and the
+  `FixtureSamtalClient` test double only. No real Samtal
+  address, token, or key exists anywhere in this
+  repository; a deployment points the connector at the
+  group's own Samtal under its own consent record.
+- **Messenger access has not been granted.** B-125 ships
+  the documented fallback — the paste/export ingest path —
+  and the connector refuses sync in plain words naming that
+  road. No live Messenger integration is simulated,
+  stubbed, or implied anywhere.
+- The Facebook Events and Google Calendar integration kinds
+  exist in the framework with health checks that honestly
+  report "not connected yet"; their live slices are
+  Phase 12's, exactly as the roadmap orders.

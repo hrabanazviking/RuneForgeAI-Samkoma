@@ -23,9 +23,9 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **735 tests, all passing** (122/350 slices:
-Phases 0–10 complete) — the count taken from one clean run against
-the final Phase 10 tree (704 at the Phase 9 gate + 31 new = 735,
+Alembic up/down/up clean; **768 tests, all passing** (130/350 slices:
+Phases 0–11 complete) — the count taken from one clean run against
+the final Phase 11 tree (735 at the Phase 10 gate + 33 new = 768,
 collected count reconciled). ZIP-Beta cut at the Phase 8 gate
 (releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phases 9
 and 10 cut no ZIP — they fold into ZIP-RC at B-138.
@@ -995,6 +995,84 @@ login, no API key, no network).
   EVERY event from a viewer-less read — the recap now reads
   at the organiser role its door guarantees, then filters
   hidden/deleted regardless.
+
+### Phase 11 — Samtal bridge and live sources (B-123 → B-130) ✅
+
+- **B-123** Samtal source connector (`services/samtal.py`,
+  `services/livechat.py`, migration 0014): a live source
+  (B-032 permission record) syncs a hall's new messages as
+  chunks through a cursor, byte-identical to the same words
+  pasted. Speakers key on their outside id (`sender_ref`);
+  `ExternalAccountLink` resolves a speaker to a member ONLY
+  when a person made the link (active members only) —
+  unlinked speakers stay named guests (name-collision trap
+  test). Sync refusals are recorded on the source's sync
+  state in plain words. **The connector is built and tested
+  against recorded fixtures and the `FixtureSamtalClient`
+  test double only — the live Samtal is never contacted by
+  this codebase; no real address, token, or key exists
+  anywhere in the repo.**
+- **B-124** Calendar return path (`services/samtal_calendar.py`):
+  published events stand on the hall's calendar (the hall
+  source's id IS its calendar id); a content hash keeps a
+  second sync quiet; Samtal-side edits/cancellations return
+  as B-077 change candidates (`created_by=
+  system:samtal-calendar`, words in a backing source) —
+  Samtal never writes events directly. Foreign hall events
+  (no `ref`) never import.
+- **B-125** Messenger: **access not granted** — the slice is
+  its documented fallback: `services/messenger.py` refuses
+  sync in plain words naming the paste/export road
+  (B-024's mechanics, proven identical), and the refusal is
+  recorded on the sync state. Nothing fakes a live
+  integration.
+- **B-126** Inbound webhooks (`services/webhooks_in.py`):
+  endpoint per source; URL token shown once, kept SHA-256
+  hashed; signing secret DERIVED by HMAC from the server
+  secret (stored nowhere); signature over
+  `"<timestamp>.<body>"`, 300 s window; `WebhookReceipt`
+  gives exactly-once (replay = 409 webhook_replay);
+  refusals audit-logged (group NULL for unknown tokens);
+  the DB-file grep finds neither token nor secret.
+- **B-127** Integration framework (`services/integrations.py`,
+  `services/sealing.py`): kinds samtal / facebook_events /
+  google_calendar / custom; config sealed whole at rest
+  with a stdlib HMAC envelope (encrypt-then-MAC, fresh
+  nonce, constant-time verify; key from
+  `GPA_INTEGRATION_KEY` or the app secret); API reads show
+  config key NAMES only; health checks record verdicts in
+  plain words — Samtal checks ping the connector (the
+  unavailable refusal IS the verdict), the Phase 12 kinds
+  report `unconfigured` and say their live check arrives
+  with their slice. Acceptance grep: a marker secret appears
+  nowhere in the database file.
+- **B-128** Outbound webhooks (`services/outbound.py`):
+  subscriptions to event.published / event.changed /
+  event.cancelled / candidate.pending; secret shown once,
+  kept sealed; emission is transactional inside the doors
+  where the acts happen (events service, approval mint,
+  candidate doors, extraction); the `webhook_deliver` job
+  signs with the inbound scheme and, on failure, COMMITS
+  the attempt record before raising (the B-102 lesson);
+  deliveries inspectable, `dead` at the job's attempt cap.
+- **B-129** Agent pack (`services/agent_pack.py`,
+  `examples/secretary_seat.py`): the seat's working surface
+  is tagged `agent` in the contract — the tagger walks this
+  FastAPI version's lazy `_IncludedRouter` entries to the
+  route objects the schema builder reads; `SCOPE_GUIDE`
+  documents the ladder once (publish never approves — a
+  person's act). The example runs in mock mode in the
+  suite: reads a hall, drafts its plan line, meets 403
+  `seat_cannot_approve` even holding publish.
+- **B-130** Gate: `tests/test_phase11_gate.py` — hall →
+  sync → extraction → approval → event → back onto the
+  hall's calendar (Club night, Sat 24 Oct 2026 19:00 New
+  York = 23:00 UTC on the double). Contract regenerated:
+  174 paths / 204 schemas (was 160 / 189). No ZIP — folds
+  into ZIP-RC at B-138. No defect was found in earlier
+  phases' code this phase; the two in-phase finds were in
+  the phase's own new code (registration import order for
+  the outbound service; a test-data slip in B-124's test).
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 11 begins at B-123.

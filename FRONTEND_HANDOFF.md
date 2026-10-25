@@ -707,6 +707,79 @@ settings pack. All live and tested; contract is now
   the API returns 403 `seat_cannot_approve`. Approval UI is for
   people (organiser+) only.
 
+## Live sources and the bridge (Phase 11) — NEW, folds into ZIP-RC
+
+Phase 11 connects the village to its neighbours — carefully,
+and honestly about what is and is not live.
+
+- **Live sources (Samtal, Messenger).** Register a live
+  source with `POST /sources/live` (the B-032 permission
+  record), then `POST /sources/{id}/sync` pulls new messages
+  as transcript chunks. Each source has a sync-state record:
+  cursor, last success, last attempt, and the last refusal
+  **in plain words** — show it verbatim when a sync fails;
+  that text is written for the user, not for a log.
+  **Samtal is exercised against recorded fixtures and a test
+  double in this backend's suite**; real deployment points
+  the connector at the group's own Samtal with its own
+  consent record. **Messenger access has not been granted**:
+  a Messenger source registers like any other, but sync
+  refuses with a message naming the paste/export road — the
+  UI should present paste/export as *the* Messenger path,
+  not as a degraded one.
+- **Speakers and identity.** `GET /sources/{id}/speakers`
+  lists who spoke, linked or guest (`guest: true`,
+  `person_id` null). Nothing merges a speaker into a member
+  except an explicit link — `POST/GET/DELETE
+  /account-links` (admin-gated; link by the speaker's
+  Samtal person id, `external_ref`). Render unlinked
+  speakers as named guests; that is their standing, not an
+  error.
+- **The calendar return path.** `POST
+  /sources/{id}/calendar-sync` (organiser) pushes the
+  group's published events onto the hall's calendar and
+  brings Samtal-side edits back as **change candidates** in
+  the ordinary queue (provenance `system:samtal-calendar`) —
+  nothing Samtal-side ever writes the group's events
+  directly. The response counts `pushed`, `candidates`, and
+  `unchanged`.
+- **Inbound webhooks.** `POST /groups/{id}/webhook-endpoints`
+  returns the URL token **once** — capture it in the same
+  screen that created it; it is never shown again (only its
+  hash is kept). Senders sign with the endpoint's derived
+  secret: header `X-Gpa-Signature: t=<unix>,v1=<hmac-sha256
+  hex of "<t>.<raw body>">`. A signed payload is accepted
+  exactly once; replays get `409 webhook_replay`. Payload
+  shapes: `{"messages": [{sender, text, sent_at?,
+  sender_ref?}]}` or `{"text": …}`.
+- **Integrations.** `POST/GET/PATCH/DELETE /integrations`
+  stores a kind (`samtal`, `facebook_events`,
+  `google_calendar`, `custom`) plus a config object that is
+  **sealed at rest** — reads return only `config_keys` (the
+  names), never values. `POST /integrations/{id}/health`
+  records a health verdict with a plain-words `last_error`;
+  kinds whose live slice lands later say so in that text.
+- **Outbound webhooks.** `POST /outbound-webhooks`
+  subscribes an HTTPS endpoint to `event.published`,
+  `event.changed`, `event.cancelled`, `candidate.pending`;
+  the signing secret is shown **once**. Deliveries arrive
+  signed the inbound way (`X-Gpa-Signature` over
+  `"<timestamp>.<body>"`, plus `X-Gpa-Event` and
+  `X-Gpa-Delivery` headers) and are inspectable at
+  `GET /outbound-webhooks/{id}/deliveries` (status,
+  attempts, last error, response status) — a delivery that
+  exhausts retries ends `dead` with its reason kept.
+- **The agent pack.** Operations tagged **`agent`** in
+  `OPENAPI.json` are the seat's working surface (sources
+  read, queue read/draft, events read, ask, summaries).
+  Scopes, once: `read` sees, `draft` creates, `publish`
+  requests extractions/syncs, `admin` administers — and no
+  scope lets a seat approve; approval is a person's act, and
+  the API refuses a seat's approval with `403
+  seat_cannot_approve`. `examples/secretary_seat.py` is a
+  complete worked seat to build against.
+- **Contract:** 174 paths / 204 schemas (was 160 / 189).
+
 ## Context pruning and group memory (Phase 10) — NEW, folds into ZIP-RC
 
 The group's memory engine: the approved history (sources,

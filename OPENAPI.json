@@ -1,6 +1,90 @@
 {
   "components": {
     "schemas": {
+      "AccountLinkCreateRequest": {
+        "description": "Link one outside identity to one member (organiser act).\n\n``external_user_id`` is the speaker's id in the outside\nsystem \u2014 the key. ``external_name`` is the name that\nsystem showed for them: evidence for the human making\nthe link, never a matching key.",
+        "properties": {
+          "connector_kind": {
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Connector Kind",
+            "type": "string"
+          },
+          "external_name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "External Name",
+            "type": "string"
+          },
+          "external_user_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "External User Id",
+            "type": "string"
+          },
+          "user_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connector_kind",
+          "external_user_id",
+          "user_id"
+        ],
+        "title": "AccountLinkCreateRequest",
+        "type": "object"
+      },
+      "AccountLinkResponse": {
+        "properties": {
+          "connector_kind": {
+            "title": "Connector Kind",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "external_name": {
+            "title": "External Name",
+            "type": "string"
+          },
+          "external_user_id": {
+            "title": "External User Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "member_name": {
+            "default": "",
+            "title": "Member Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "connector_kind",
+          "external_user_id",
+          "external_name",
+          "user_id",
+          "created_at"
+        ],
+        "title": "AccountLinkResponse",
+        "type": "object"
+      },
       "AgendaResponse": {
         "description": "One agenda page: occurrences + the next page's cursor.",
         "properties": {
@@ -1455,6 +1539,17 @@
               }
             ],
             "title": "Sender"
+          },
+          "sender_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender Ref"
           },
           "sent_at": {
             "anyOf": [
@@ -4178,6 +4273,136 @@
         "title": "InstantiationResponse",
         "type": "object"
       },
+      "IntegrationCreateRequest": {
+        "description": "Register one integration (admin act).\n\n``config`` is the connector's settings as a JSON object \u2014\ntokens and keys inside it are sealed before they touch\nthe database and are never read back out through the API\n(responses carry only the NAMES of the config keys).",
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "kind": {
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "IntegrationCreateRequest",
+        "type": "object"
+      },
+      "IntegrationResponse": {
+        "properties": {
+          "config_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Config Keys",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "default": "",
+            "title": "Last Error",
+            "type": "string"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "name",
+          "status",
+          "created_at"
+        ],
+        "title": "IntegrationResponse",
+        "type": "object"
+      },
+      "IntegrationUpdateRequest": {
+        "description": "Replace an integration's name and/or config (admin act).\n\nA present ``config`` replaces the sealed config whole \u2014\npartial secret updates are how stale half-rotated keys\nhappen, so the framework does not offer them.",
+        "properties": {
+          "config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "IntegrationUpdateRequest",
+        "type": "object"
+      },
       "InviteCreateRequest": {
         "description": "Invite one address to one event (B-098).",
         "properties": {
@@ -4462,6 +4687,40 @@
           "external_id"
         ],
         "title": "LiveSourceRequest",
+        "type": "object"
+      },
+      "LiveSyncResponse": {
+        "description": "The result of one poll of a live source (B-123).",
+        "properties": {
+          "added": {
+            "title": "Added",
+            "type": "integer"
+          },
+          "cursor": {
+            "title": "Cursor",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "added",
+          "cursor",
+          "status",
+          "stage"
+        ],
+        "title": "LiveSyncResponse",
         "type": "object"
       },
       "LoginRequest": {
@@ -5212,6 +5471,150 @@
           "timezone"
         ],
         "title": "OccurrenceResponse",
+        "type": "object"
+      },
+      "OutboundDeliveryResponse": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "event_kind": {
+            "title": "Event Kind",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_error": {
+            "default": "",
+            "title": "Last Error",
+            "type": "string"
+          },
+          "response_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Status"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "webhook_id": {
+            "title": "Webhook Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "webhook_id",
+          "group_id",
+          "event_kind",
+          "status",
+          "attempts",
+          "created_at"
+        ],
+        "title": "OutboundDeliveryResponse",
+        "type": "object"
+      },
+      "OutboundWebhookCreateRequest": {
+        "description": "Register one outbound endpoint (admin act).",
+        "properties": {
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "OutboundWebhookCreateRequest",
+        "type": "object"
+      },
+      "OutboundWebhookResponse": {
+        "properties": {
+          "active": {
+            "default": true,
+            "title": "Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "signing_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Secret"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "url",
+          "created_at"
+        ],
+        "title": "OutboundWebhookResponse",
         "type": "object"
       },
       "PasswordChangeRequest": {
@@ -7082,6 +7485,30 @@
         "title": "RsvpResponse",
         "type": "object"
       },
+      "SamtalCalendarSyncResponse": {
+        "description": "One run of the Samtal calendar return path (B-124):\nhow many events were pushed out, and how many Samtal-side\nedits arrived as change candidates for the queue.",
+        "properties": {
+          "candidates_created": {
+            "title": "Candidates Created",
+            "type": "integer"
+          },
+          "pushed": {
+            "title": "Pushed",
+            "type": "integer"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "pushed",
+          "candidates_created"
+        ],
+        "title": "SamtalCalendarSyncResponse",
+        "type": "object"
+      },
       "SearchHitResponse": {
         "properties": {
           "candidate_id": {
@@ -7671,6 +8098,68 @@
           "created_at"
         ],
         "title": "SourceResponse",
+        "type": "object"
+      },
+      "SpeakerMember": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "name"
+        ],
+        "title": "SpeakerMember",
+        "type": "object"
+      },
+      "SpeakerResponse": {
+        "description": "One speaker in a live source, resolved (B-123).\n\n``guest`` is True exactly when no account link resolves\nthis speaker \u2014 including when their display name matches\na member's name letter for letter. That is the identity\nlaw, rendered.",
+        "properties": {
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "guest": {
+            "default": true,
+            "title": "Guest",
+            "type": "boolean"
+          },
+          "member": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpeakerMember"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "SpeakerResponse",
         "type": "object"
       },
       "SubGroupCreateRequest": {
@@ -8758,6 +9247,118 @@
         ],
         "title": "WallEventSummary",
         "type": "object"
+      },
+      "WebhookDeliveryResponse": {
+        "description": "One accepted inbound delivery (B-126): the source it\nfed and how many chunks it archived.",
+        "properties": {
+          "chunks_added": {
+            "title": "Chunks Added",
+            "type": "integer"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "chunks_added"
+        ],
+        "title": "WebhookDeliveryResponse",
+        "type": "object"
+      },
+      "WebhookEndpointCreateRequest": {
+        "description": "Open a webhook door onto one source (organiser act).",
+        "properties": {
+          "source_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id"
+        ],
+        "title": "WebhookEndpointCreateRequest",
+        "type": "object"
+      },
+      "WebhookEndpointResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "signing_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signing Secret"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          },
+          "token_prefix": {
+            "title": "Token Prefix",
+            "type": "string"
+          },
+          "url_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url Path"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "source_id",
+          "token_prefix",
+          "created_at"
+        ],
+        "title": "WebhookEndpointResponse",
+        "type": "object"
       }
     }
   },
@@ -9316,6 +9917,149 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/account-links": {
+      "get": {
+        "description": "Every account link in the group (organiser+).",
+        "operationId": "list_account_links_api_v1_groups__group_id__account_links_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountLinkResponse"
+                  },
+                  "title": "Response List Account Links Api V1 Groups  Group Id  Account Links Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Account Links",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "description": "Link one outside identity to one member of this group.\n\nThe link keys on the outside id \u2014 the response shows the\nmember it now resolves to. A name is never a key: nothing\nin this API can link by name.",
+        "operationId": "create_account_link_api_v1_groups__group_id__account_links_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLinkCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLinkResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Account Link",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/account-links/{link_id}": {
+      "delete": {
+        "description": "Remove one link (organiser+). The speaker's chunks\nstay; they simply stop resolving to the member.",
+        "operationId": "delete_account_link_api_v1_groups__group_id__account_links__link_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "link_id",
+            "required": true,
+            "schema": {
+              "title": "Link Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Account Link",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/agenda": {
       "get": {
         "description": "The agenda (B-055): occurrence-expanded, searchable,\nfilterable, cursor-paginated \u2014 the frontend does zero date\nmaths of its own, here and everywhere in this file.",
@@ -9795,7 +10539,8 @@
         },
         "summary": "Ask",
         "tags": [
-          "memory"
+          "memory",
+          "agent"
         ]
       }
     },
@@ -10306,7 +11051,8 @@
         },
         "summary": "List Candidates",
         "tags": [
-          "candidates"
+          "candidates",
+          "agent"
         ]
       },
       "post": {
@@ -10357,7 +11103,8 @@
         },
         "summary": "Create Candidate",
         "tags": [
-          "groups"
+          "groups",
+          "agent"
         ]
       }
     },
@@ -10452,7 +11199,8 @@
         },
         "summary": "Get Candidate",
         "tags": [
-          "candidates"
+          "candidates",
+          "agent"
         ]
       },
       "patch": {
@@ -11714,7 +12462,8 @@
         },
         "summary": "List Events",
         "tags": [
-          "events"
+          "events",
+          "agent"
         ]
       },
       "post": {
@@ -11860,7 +12609,8 @@
         },
         "summary": "Get Event",
         "tags": [
-          "events"
+          "events",
+          "agent"
         ]
       },
       "patch": {
@@ -14607,6 +15357,311 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/integrations": {
+      "get": {
+        "description": "A group's integrations with their health (organiser+).",
+        "operationId": "list_integrations_api_v1_groups__group_id__integrations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IntegrationResponse"
+                  },
+                  "title": "Response List Integrations Api V1 Groups  Group Id  Integrations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Integrations",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "description": "Register one integration (admin+). Its config is\nsealed before it is stored; the response names the\nconfig keys held and shows no value, ever.",
+        "operationId": "create_integration_api_v1_groups__group_id__integrations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Integration",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/integrations/{integration_id}": {
+      "delete": {
+        "description": "Remove one integration and its sealed config (admin+).",
+        "operationId": "delete_integration_api_v1_groups__group_id__integrations__integration_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Integration",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "get": {
+        "description": "One integration's record (organiser+).",
+        "operationId": "read_integration_api_v1_groups__group_id__integrations__integration_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Integration",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "patch": {
+        "description": "Rename and/or re-configure one integration (admin+).\nA present config replaces the old one whole and resets\nthe health verdict to unconfigured.",
+        "operationId": "update_integration_api_v1_groups__group_id__integrations__integration_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Integration",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/integrations/{integration_id}/health": {
+      "post": {
+        "description": "Run the health check and record its verdict (admin+):\nstatus, last success, and \u2014 when it fails \u2014 the error in\nplain words, on the record where the list shows it.",
+        "operationId": "check_integration_health_api_v1_groups__group_id__integrations__integration_id__health_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check Integration Health",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/invites": {
       "post": {
         "description": "Invite a person by email (organiser+).",
@@ -15386,6 +16441,205 @@
         "summary": "Resend Notification",
         "tags": [
           "notifications"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/outbound-webhooks": {
+      "get": {
+        "description": "A group's outbound endpoints (organiser+).",
+        "operationId": "list_outbound_webhooks_api_v1_groups__group_id__outbound_webhooks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OutboundWebhookResponse"
+                  },
+                  "title": "Response List Outbound Webhooks Api V1 Groups  Group Id  Outbound Webhooks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Outbound Webhooks",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "description": "Register one outbound endpoint (admin+). The response\ncarries the signing secret ONCE; deliveries are signed\nwith it and only its sealed form is kept.",
+        "operationId": "create_outbound_webhook_api_v1_groups__group_id__outbound_webhooks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutboundWebhookCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundWebhookResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Outbound Webhook",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/outbound-webhooks/{webhook_id}": {
+      "delete": {
+        "description": "Remove one endpoint (admin+); its pending deliveries\ngo with it \u2014 a removed door announces nothing more.",
+        "operationId": "delete_outbound_webhook_api_v1_groups__group_id__outbound_webhooks__webhook_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Outbound Webhook",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/outbound-webhooks/{webhook_id}/deliveries": {
+      "get": {
+        "description": "One endpoint's deliveries, newest first (organiser+):\nstatus, attempts, the receiver's HTTP answer, and the\nlast error in plain words.",
+        "operationId": "list_outbound_deliveries_api_v1_groups__group_id__outbound_webhooks__webhook_id__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "webhook_id",
+            "required": true,
+            "schema": {
+              "title": "Webhook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OutboundDeliveryResponse"
+                  },
+                  "title": "Response List Outbound Deliveries Api V1 Groups  Group Id  Outbound Webhooks  Webhook Id  Deliveries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Outbound Deliveries",
+        "tags": [
+          "integrations"
         ]
       }
     },
@@ -16907,7 +18161,8 @@
         },
         "summary": "List Sources",
         "tags": [
-          "sources"
+          "sources",
+          "agent"
         ]
       },
       "post": {
@@ -17514,7 +18769,60 @@
         },
         "summary": "Read Source",
         "tags": [
-          "sources"
+          "sources",
+          "agent"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}/calendar-sync": {
+      "post": {
+        "description": "Run the calendar return path for a Samtal source.\n\nOut: published events appear on the hall's calendar.\nIn: Samtal-side edits arrive as CHANGE CANDIDATES in the\nreview queue \u2014 never as silent writes. The event itself\ndoes not move until a person approves the candidate.",
+        "operationId": "sync_samtal_calendar_api_v1_groups__group_id__sources__source_id__calendar_sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamtalCalendarSyncResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Samtal Calendar",
+        "tags": [
+          "integrations"
         ]
       }
     },
@@ -17679,6 +18987,115 @@
         "summary": "Restore Source",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}/speakers": {
+      "get": {
+        "description": "A live source's speakers, resolved through account\nlinks (member+). Unlinked speakers answer guest=True \u2014\neven when their name is a member's name. That is the\nidentity law, and this response is where it shows.",
+        "operationId": "list_speakers_api_v1_groups__group_id__sources__source_id__speakers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SpeakerResponse"
+                  },
+                  "title": "Response List Speakers Api V1 Groups  Group Id  Sources  Source Id  Speakers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Speakers",
+        "tags": [
+          "integrations",
+          "agent"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}/sync": {
+      "post": {
+        "description": "Poll a live source's connector for new messages.\n\nNew messages land as chunks, in order, under the\npermission record the source was registered with. A\nconnector that cannot answer \u2014 no live Samtal configured,\nMessenger's ungranted access \u2014 refuses in plain words and\nthe refusal is recorded on the source's sync state.",
+        "operationId": "sync_live_source_api_v1_groups__group_id__sources__source_id__sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveSyncResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Live Source",
+        "tags": [
+          "integrations"
         ]
       }
     },
@@ -18205,7 +19622,8 @@
         },
         "summary": "List Summaries",
         "tags": [
-          "memory"
+          "memory",
+          "agent"
         ]
       }
     },
@@ -19061,6 +20479,149 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/webhook-endpoints": {
+      "get": {
+        "description": "A group's webhook endpoints (organiser+) \u2014 prefixes\nonly; the secrets were shown once, at creation.",
+        "operationId": "list_webhook_endpoints_api_v1_groups__group_id__webhook_endpoints_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookEndpointResponse"
+                  },
+                  "title": "Response List Webhook Endpoints Api V1 Groups  Group Id  Webhook Endpoints Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Webhook Endpoints",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "description": "Open a signed webhook door onto one source (organiser+).\n\nThe response carries the full URL token and the signing\nsecret ONCE \u2014 the token is stored hashed and the secret\nis derived, never stored, so neither can be read back.",
+        "operationId": "create_webhook_endpoint_api_v1_groups__group_id__webhook_endpoints_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEndpointCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookEndpointResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Webhook Endpoint",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/webhook-endpoints/{endpoint_id}": {
+      "delete": {
+        "description": "Revoke one endpoint (organiser+): its URL dies at\nonce, and every later delivery is refused and logged.",
+        "operationId": "revoke_webhook_endpoint_api_v1_groups__group_id__webhook_endpoints__endpoint_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Webhook Endpoint",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/invites/{token}": {
       "get": {
         "description": "The invite's public face: enough of the event to answer\nit \u2014 the B-059 PUBLIC projection (no host, no cost, no\naccess notes), never the group's internals.",
@@ -19780,6 +21341,49 @@
         "summary": "Mail Webhook",
         "tags": [
           "notifications"
+        ]
+      }
+    },
+    "/api/v1/webhooks/source/{token}": {
+      "post": {
+        "description": "The receiver: one signed delivery \u2192 chunks on its source.\n\nThe credential is the token in the path plus the\n``x-gpa-signature`` HMAC over ``x-gpa-timestamp`` and the\nraw body. Verification \u2014 token, window, signature,\nreplay receipt \u2014 happens inside services/webhooks_in.py\nbefore a single chunk is written; refusals are logged\nthere too.",
+        "operationId": "receive_webhook_delivery_api_v1_webhooks_source__token__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Receive Webhook Delivery",
+        "tags": [
+          "integrations"
         ]
       }
     },

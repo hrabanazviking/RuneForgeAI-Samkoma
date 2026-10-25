@@ -172,6 +172,54 @@ are the roadmap's own words; phases are grouped in build order.
 - **B-111** — Group settings pack
 - **B-112** — Phase gate (no ZIP — folds into ZIP-RC at B-138)
 
+### Phase 11 — Samtal bridge and live sources — B-123 → B-130
+
+- **B-123** — Samtal source connector: a live source syncs a
+  hall's new messages as transcript chunks, keyed on each
+  speaker's outside id; speakers resolve to members ONLY
+  through explicit account links (active members only,
+  duplicates refused) — unlinked speakers stay named guests,
+  proven against a name-collision trap. Built and tested
+  against recorded fixtures and a test double; the live
+  Samtal is never touched by this codebase's suite
+- **B-124** — Samtal calendar return path: published events
+  stand on the hall's own calendar; Samtal-side edits and
+  cancellations come back as B-077 change candidates in the
+  ordinary queue — the round-trip test walks out, edit,
+  candidate, approval, and back, against the double
+- **B-125** — Messenger source: access has not been granted,
+  so the slice ships as the documented fallback — the
+  paste/export ingest path (B-024), with the connector
+  refusing sync in plain words naming that road. The
+  fallback IS the acceptance test; nothing fakes a live
+  Messenger integration
+- **B-126** — Generic webhook source: per-source endpoint,
+  URL token shown once and kept hashed, signing secret
+  derived (never stored), HMAC over "<timestamp>.<body>",
+  300-second replay window and exactly-once acceptance —
+  a replay is a 409; refusals are audit-logged and archive
+  nothing
+- **B-127** — Integration framework: kinds, sealed-at-rest
+  config (an HMAC-envelope in the house idiom; API reads
+  show key names only), and recorded health checks. The
+  acceptance grep over the raw database file finds no
+  plaintext secret
+- **B-128** — Outbound webhooks: the group's acts (event
+  published/changed/cancelled, candidate pending) are
+  announced to subscribed endpoints, signed with the
+  inbound scheme, delivered by job with the failure record
+  committed before the raise; deliveries inspectable, dead
+  at the retry cap with the reason kept
+- **B-129** — Agent API pack: the seat's working surface is
+  tagged `agent` in the contract; the scope ladder is
+  documented once; `examples/secretary_seat.py` runs in
+  mock mode in the suite — reads a hall, drafts its plan
+  line, and meets the approval refusal that defines a seat
+- **B-130** — Phase gate: hall → sync → extraction →
+  approval → event → back onto the hall's calendar, one
+  scripted test; contract regenerated (174 paths / 204
+  schemas); no ZIP — folds into ZIP-RC at B-138
+
 ### Phase 10 — Context pruning and group memory (Sun Nov 1) — B-113 → B-122
 
 - **B-113** — Pruning core: a full LLM judges chunk relevance
