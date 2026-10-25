@@ -23,7 +23,13 @@ from gpa import models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False is load-bearing: the
+    # default (True) silences every logger the host process
+    # already configured — an application that runs Alembic
+    # in-process (the B-152 mover does) would lose its access
+    # log from that moment on. Alembic's ini configures
+    # Alembic's loggers; it does not own the process's.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 config.set_main_option(
     "sqlalchemy.url",
