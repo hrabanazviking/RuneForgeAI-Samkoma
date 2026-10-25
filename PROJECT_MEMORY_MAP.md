@@ -23,10 +23,10 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **588 tests, all passing** (82/340 slices:
-Phases 0, 1, 2, 3, 4, 5, and 6 complete) — the count taken from one
-clean `./test.sh` run against the final committed Phase 6 tree
-(553 before Phase 6 + 35 new = 588, collected count reconciled).
+Alembic up/down/up clean; **642 tests, all passing** (94/340 slices:
+Phases 0, 1, 2, 3, 4, 5, 6, and 7 complete) — the count taken from
+one clean `./test.sh` run against the final committed Phase 7 tree
+(588 before Phase 7 + 54 new = 642, collected count reconciled).
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
@@ -561,8 +561,139 @@ login, no API key, no network).
 - **35 new tests** (matching 7, merging 7, migration 1, change
   candidates 6, announce 6, tombstones 5, quality 2, gate 1).
 
+### Phase 7 — Planning: tasks, decisions, polls, checklists (B-083 → B-094): ✅ COMPLETE (2026-10-25)
+- **Migration 0010_phase7_planning** (guarded creates in the
+  0009 style; up/down/up tested against 0009): tables `tasks`,
+  `decisions`, `open_questions`, `polls`, `poll_options`,
+  `poll_votes` (unique per poll+voter), `checklist_items`,
+  `role_slots`, `cost_lines`, `availability_slots`,
+  `availability_marks` (unique per slot+voter), `templates`.
+  Domain code follows the house shape: `models/planning.py`,
+  `schemas/planning.py`, services `planning` / `polls` /
+  `checklists` / `budget` / `availability` / `templates`,
+  routers of the same names; contract now **121 paths, 134
+  schemas**.
+- **Approval mints planning (the Phase 4 pattern, extended)**:
+  `groups.approve_candidate` now also calls the planning mints
+  in the approval's own transaction — a task / decision /
+  question candidate approval creates its entity and fills
+  `resulting_entity_*`; a mint that refuses (empty draft, a
+  draft `owner_id` naming a non-member) rolls the whole
+  approval back and the candidate stays pending.
+- **B-083 tasks**: direct create + per-event/per-group lists
+  (filters: status, unclaimed, owner); `unclaimed` and
+  `overdue` are computed server-side on every response, never
+  stored. THE OWNER LAW: the extraction draft's owner WORDS
+  land only in `suggested_owner_label`; `owner_id` is set
+  solely by a person's act — direct create naming a member, a
+  PATCH assigning/unassigning, or a reviewer putting a real
+  member's `owner_id` into the edited draft before approving.
+  The AI never assigns a silent victim (pinned by test). A
+  draft due-date that resolved to a day only is due at END of
+  that local day (recorded decision, in the service). Status
+  flow: forward moves, cancel from open/in_progress, reopen
+  from done; done stamps `completed_at`.
+- **B-084 threads generalised**: `services/discussion.py` is
+  parent-generic (`PARENT_TYPES = event|task|decision|poll`);
+  ONE Thread/Comment system — the B-060 event paths read the
+  same rows as the new `…/comments/{parent_type}/{parent_id}`
+  routes. `CommentResponse` always carries `parent_type` +
+  `parent_id`; `event_id` is populated for event parents, null
+  otherwise (SSE `comment.created` frames likewise). Ordering
+  law in the router: comment-act routes register BEFORE the
+  generic parent routes, or `POST …/comments/{id}/hide` would
+  be read as a post to a parent named "hide".
+- **B-085 decisions**: mint or direct create; supersede chains
+  both ways in one transaction (superseding a non-current
+  decision is a 409); `?current=true` is the settled-truth
+  view; `…/decisions/{id}/chain` walks root → current.
+- **B-086 questions + gaps**: mint (asked of the group —
+  naming who must answer is a person's PATCH) or direct
+  create with `asked_of_id`; drop is a settled state, never a
+  delete; resolve may mint a decision in the SAME call
+  (`resolution_decision_id` links it). `…/events/{eid}/gaps`
+  aggregates missing fields (place, host) + open questions +
+  unclaimed roles + unclaimed tasks into one flat `gaps` list
+  plus sections (golden half-planned event pinned).
+- **B-087 polls**: choice/date kinds (date options REQUIRE an
+  instant; the label defaults to the formatted moment);
+  vote/change-vote with the (poll, voter) unique constraint —
+  `cast_vote` COMMITS inside the service and the router reads
+  the tally only afterwards (commit-before-answer, proven by
+  a separate-session test); concurrent same-member votes hold
+  one current vote via the constraint + bounded retry
+  (transaction test, 8 threads). Close freezes; `closes_at`
+  ends voting by the clock. `apply-winner` (organiser+,
+  publish scope): attached event MOVES through
+  `events.apply_changes` (history + needs_reannounce ride
+  along); no attached event mints one via direct entry; a tie
+  or zero votes refuses in plain words — the backend never
+  picks a winner.
+- **B-088 checklists + roles**: bring/prepare lines with
+  quantities; claims are one-person promises (claiming
+  another's line/slot is a 409; "held" = a member id OR a
+  seat's label claim); role slots are N one-person rows per
+  role name. `GET …/supplies?start=&end=` (default: this week,
+  Monday → Monday group-local) folds lines by
+  case/whitespace-normalised label across non-cancelled,
+  non-tombstoned events — totals + per-event breakdown
+  (merged-supplies golden pinned).
+- **B-089 budget-lite**: cost lines + per-event summary;
+  integer cents END TO END — the request schema takes an int
+  (a float body is a 422 before any service runs), the column
+  is Integer, balances sum in SQL and sort by paid desc.
+  Payer defaults to the caller; a named member is validated;
+  words-only payers (guest cash) keep `member_id: null`.
+  Stops at group truth by design: no ledger, no payments.
+- **B-090 availability**: organiser-proposed slots; members
+  mark can/can't (upsert under the unique constraint);
+  ranking is deterministic (can desc, can't asc, starts asc)
+  — golden group-of-five pinned. Privacy boundary is the
+  shape: only marks against proposed slots exist; no
+  private-calendar data is read, stored, or shown.
+- **B-091 templates**: payload grammar `{event, tasks (due as
+  day-offsets), checklist, roles}`; `template_from_event`
+  snapshots a plan (claims become open slots); instantiate
+  builds through the same doors as direct entry — the event
+  via `events.create_event` (which commits it, as direct
+  entry does), then tasks/checklist/roles in a commit of
+  their own (two commits, documented honestly in the service;
+  instantiated tasks/roles are always unclaimed). The 7
+  global starters (meeting, club night, trip, fundraiser,
+  class, match, celebration) seed idempotently by name via
+  `seed_starter_templates`, called from `load_seed_data`
+  (its return gains a `templates` key; created/already_present
+  shapes unchanged).
+- **B-092 search**: `GET …/search?q=` over events (published/
+  cancelled, tombstones excluded), tasks, decisions,
+  questions — deterministic weighted scoring (primary text 3
+  with startswith bonus, secondary fields less; ties by type,
+  title, id), every hit carrying `candidate_id` / `source_id`
+  / `event_id` links (golden ranking pinned).
+- **B-093 digest data**: `GET …/planning-digest` — this
+  week's published events, unclaimed open tasks, open
+  questions, undecided polls, computed once in
+  `planning.planning_digest` (golden snapshot at a fixed
+  moment pinned; week = Monday 00:00 group-local → next
+  Monday).
+- **B-094 gate**: `tests/test_phase7_gate.py` — Flow B from
+  the proposal: the 40-message trip argument pasted (40
+  chunks = exactly one extraction window), fixture-extracted
+  into 1 event + 3 tasks + 2 decisions + 2 questions, two
+  reviewer edits (place corrected; the kayaks' volunteered
+  owner confirmed by naming the member in the draft), all
+  approved and minted, and the conversation continuing in the
+  minted event's thread. OPENAPI.json + frontend_types.ts
+  regenerated (121 paths, 134 schemas); FRONTEND_HANDOFF.md
+  carries the Phase 7 planning-screens notes. Phase 7 folds
+  into ZIP-Beta (Sat Oct 31 — the ZIP is cut at the Phase 8
+  gate, B-104); no ZIP cut here.
+- **54 new tests** (tasks 9, decisions 4, questions 5, polls
+  11, checklists 3, budget 3, availability 4, threads 5,
+  templates 4, search/digest 4, migration 1, gate 1).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 7 begins at B-083.
+Phase 8 begins at B-095.
 
 ## Decisions & deviations (from the roadmap defaults)
 
