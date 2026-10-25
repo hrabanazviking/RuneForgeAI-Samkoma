@@ -104,6 +104,18 @@ class Settings(BaseSettings):
     ai_price_spark_micros_per_1k: int = 0
     ai_price_wonder_micros_per_1k: int = 0
 
+    # Local driver (Phase 10, B-119): an OpenAI-compatible
+    # endpoint on hardware the operator controls. A group whose
+    # ``prune_driver`` setting says "local" prunes through this
+    # endpoint while extraction stays on the process driver.
+    # The base looks like http://localhost:11434/v1; one model
+    # id serves every tier; the key is optional (many local
+    # servers want none) and environment-only when present.
+    ai_local_base: str = ""
+    ai_local_model: str = ""
+    ai_local_api_key: str = ""
+    ai_local_timeout_seconds: float = 60.0
+
     # Mail transport (Phase 8, B-095). The notification outbox
     # sends through ONE driver boundary (services/mailer.py):
     # "file" is the dev driver — messages land as JSON files in

@@ -144,10 +144,20 @@ def approved_corpus(db: Session, group: Group) -> list[pruning.MemoryChunk]:
 
 
 def resolve_client(settings: Settings | None, group: Group):
-    """The engine's judge for this group (B-119 grows the local
-    road here): by default the process's configured driver —
-    swapping drivers stays a configuration choice, never a code
-    change (B-035)."""
+    """The engine's judge for this group (B-119): the per-group
+    ``prune_driver`` setting is the switch — ``local`` builds
+    the local-inference driver (the group's own hardware,
+    Doc 07 §7.5) for THIS group's memory work, while
+    ``hosted`` — and every other AI caller in the process,
+    extraction included — keeps the process's configured
+    driver. Swapping stays a configuration choice, never a
+    code change (B-035); a group that asks for local without
+    the endpoint configured gets the plain-words refusal the
+    LocalDriver raises, never a silent fallback."""
+    if group is not None and group.prune_driver == "local":
+        from gpa.ai.drivers_local import LocalDriver
+
+        return LocalDriver(settings or get_settings())
     return ai_client.get_client()
 
 
