@@ -45,6 +45,7 @@ from gpa.routers import (
     sources,
     templates,
     truth,
+    uploads,
     users,
 )
 from gpa.storage.local import LocalStorage
@@ -191,6 +192,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     install_error_handlers(app)
 
+    # B-171: the durability guard. A handler that answers
+    # success while its tracked session still holds
+    # uncommitted writes has answered a lie — roll the
+    # writes back and answer the structural error instead.
+    # Error responses pass untouched (their sessions close
+    # and roll back by design).
+    @app.middleware("http")
+    async def _durability_guard(request, call_next):  # noqa: ANN001, ANN202
+        response = await call_next(request)
+        from gpa import durability
+
+        violation = durability.pending_violation(request)
+        if violation is not None and response.status_code < 400:
+            violation.session.rollback()
+            from gpa.errors import AppError, problem_body
+            from starlette.responses import JSONResponse
+
+            err = AppError(
+                "uncommitted_writes",
+                detail=(
+                    "The handler returned success with writes still "
+                    "uncommitted; they were rolled back. Commit before "
+                    "answering."
+                ),
+            )
+            return JSONResponse(problem_body(request, err), status_code=err.status)
+        return response
+
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
         """One request id per request: header in, header out, and in
@@ -267,6 +296,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # (sources/permissions) must not be swallowed by the
     # sources router's {source_id} path (Phase 13).
     app.include_router(privacy.router)
+    app.include_router(uploads.router)
     app.include_router(sources.router)
     app.include_router(sources.email_router)
     app.include_router(truth.router)

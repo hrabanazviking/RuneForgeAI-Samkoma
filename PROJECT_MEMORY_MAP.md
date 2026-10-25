@@ -1860,6 +1860,33 @@ Phase 16 begins at B-157.
   verify; edited row fails naming the row; deleted row
   breaks; forged insert detected; endpoint answers the
   same verdict. Audit-heavy regression batch: 62 passed.
+- **B-171 durability manager** ✅: (a) commit-before-answer
+  made STRUCTURAL — `gpa/durability.py` WriteTracker
+  (flush listeners mark uncommitted writes; commit/rollback
+  clear) rides request.state from get_db; the create_app
+  middleware answers a success response carrying uncommitted
+  writes with 500 `uncommitted_writes` after rolling them
+  back. Error responses pass untouched. (b) Draft autosaves
+  (migration 0020): PUT/GET
+  /groups/{id}/autosaves/{candidate|event}/{id} with
+  base_version optimistic concurrency — a stale save lands
+  as a kept conflict copy, answered 409 draft_conflict with
+  both versions. (c) Resumable chunked uploads:
+  POST/GET/PUT parts/POST complete under
+  /groups/{id}/uploads — parts in any order, each size-
+  verified against its position (offset law), resting as
+  files outside the content store; completion assembles,
+  verifies the whole-file SHA-256 (mismatch → 422, session
+  stays open), and hands the bytes to B-025's ingest_file.
+  Acceptance (tests/test_durability.py, 4 passed): the
+  forgetting-handler probe (500 + writes gone; committed
+  control persists; a refuser's own error stands), the
+  conflict rehearsal, resume-after-kill across two app
+  instances, hash-mismatch refusal. Also in this commit:
+  the modulemap placements B-169/B-170 owed (audit_chain →
+  audit, keymgmt → crypto, uploads → sources, autosaves →
+  platform) + the keymgmt→jobs handler-registration pin —
+  architecture suite green.
 
 ## Standing laws in force here
 

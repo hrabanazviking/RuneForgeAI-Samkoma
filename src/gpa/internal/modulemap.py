@@ -50,6 +50,7 @@ SERVICE_MODULES: dict[str, str] = {
     "agent_pack": "identity",  # agent seats are identity principals
     # audit — the append-only B-019 stream; a named common module.
     "audit": "audit",
+    "audit_chain": "audit",  # the B-170 chain: audit's own half
     # groups — groups, memberships, sub-groups (Phases 1, 9).
     "groups": "groups",
     "subgroups": "groups",
@@ -57,6 +58,7 @@ SERVICE_MODULES: dict[str, str] = {
     "sources": "sources",
     "paste": "sources",
     "files": "sources",
+    "uploads": "sources",  # B-171: the resumable road into files.ingest_file
     "newsletter": "sources",
     "images": "sources",
     "links": "sources",
@@ -134,6 +136,10 @@ SERVICE_MODULES: dict[str, str] = {
     # crypto — sealing for secrets at rest (Phase 11). The field
     # service of B-167 joins this module as gpa.crypto lands.
     "sealing": "crypto",
+    "keymgmt": "crypto",  # B-169: rotation + recovery, the key lifecycle
+    # durability — the B-171 platform services that are not an
+    # ingest road: draft autosaves rest beside the health board.
+    "autosaves": "platform",
     # privacy — export, erasure, retention (Phase 13).
     "erasure": "privacy",
     "retention": "privacy",

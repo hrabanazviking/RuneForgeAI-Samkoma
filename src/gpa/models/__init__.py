@@ -29,6 +29,7 @@ Alembic and the test fixtures both rely on that. Domain files:
 from gpa.models.ai import AiUsage
 from gpa.models.core import AuditChainHead, AuditLog, FileAsset, Job, Tombstone
 from gpa.models.crypto import GroupKey, RecoveryEscrow
+from gpa.models.durability import DraftAutosave, UploadSession
 from gpa.models.events import (
     AnnouncementDraft,
     CalendarFeed,
@@ -93,6 +94,8 @@ __all__ = [
     "ApiKey",
     "AgentSeat",
     "AuditChainHead",
+    "DraftAutosave",
+    "UploadSession",
     "AuditLog",
     "AvailabilityMark",
     "AvailabilitySlot",

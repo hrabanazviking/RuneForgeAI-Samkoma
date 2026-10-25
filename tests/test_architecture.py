@@ -75,6 +75,10 @@ PINNED_SERVICE_EDGES = frozenset(
         ("src/gpa/services/groups.py", "gpa.services.planning"),
         ("src/gpa/services/groups.py", "gpa.services.reminders"),
         ("src/gpa/services/jobqueue.py", "gpa.ai.client"),
+        # B-169: keymgmt registers its rotation handler on the
+        # jobs module's public registry — the same surface
+        # every handler-bearing service uses (digests above).
+        ("src/gpa/services/keymgmt.py", "gpa.services.jobs"),
         ("src/gpa/services/jobqueue.py", "gpa.services.digests"),
         ("src/gpa/services/jobqueue.py", "gpa.services.extraction"),
         ("src/gpa/services/jobqueue.py", "gpa.services.mailer"),
