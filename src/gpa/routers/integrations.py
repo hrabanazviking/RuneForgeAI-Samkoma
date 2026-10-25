@@ -24,6 +24,9 @@ from gpa.models.identity import User
 from gpa.schemas.integrations import (
     AccountLinkCreateRequest,
     AccountLinkResponse,
+    IntegrationCreateRequest,
+    IntegrationResponse,
+    IntegrationUpdateRequest,
     LiveSyncResponse,
     SamtalCalendarSyncResponse,
     SpeakerMember,
@@ -282,6 +285,152 @@ def revoke_webhook_endpoint(
         endpoint_id=endpoint_id,
     )
     return None
+
+
+# --- The integration framework (B-127) -----------------------------------
+# Credentials live here, so the write doors are admin doors;
+# the read doors are organiser doors, and what they read is
+# the record — kind, key NAMES, health — never a secret.
+
+
+def _integration_response(request: Request, db: Session, row) -> IntegrationResponse:
+    from gpa.services import integrations as integration_service
+
+    return IntegrationResponse(
+        id=row.id, group_id=row.group_id, kind=row.kind, name=row.name,
+        config_keys=integration_service.config_keys(
+            request.app.state.settings, row
+        ),
+        status=row.status, last_error=row.last_error,
+        last_checked_at=row.last_checked_at.isoformat() if row.last_checked_at else None,
+        last_success_at=row.last_success_at.isoformat() if row.last_success_at else None,
+        created_at=row.created_at.isoformat(),
+    )
+
+
+@router.post(
+    "/{group_id}/integrations",
+    response_model=IntegrationResponse,
+    status_code=201,
+)
+def create_integration(
+    body: IntegrationCreateRequest,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Register one integration (admin+). Its config is
+    sealed before it is stored; the response names the
+    config keys held and shows no value, ever."""
+    from gpa.services import integrations as integration_service
+
+    row = integration_service.create_integration(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        kind=body.kind, name=body.name, config=body.config,
+    )
+    return _integration_response(request, db, row)
+
+
+@router.get(
+    "/{group_id}/integrations", response_model=list[IntegrationResponse]
+)
+def list_integrations(
+    request: Request,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """A group's integrations with their health (organiser+)."""
+    from gpa.services import integrations as integration_service
+
+    return [
+        _integration_response(request, db, row)
+        for row in integration_service.list_integrations(db, context.group)
+    ]
+
+
+@router.get(
+    "/{group_id}/integrations/{integration_id}",
+    response_model=IntegrationResponse,
+)
+def read_integration(
+    integration_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """One integration's record (organiser+)."""
+    from gpa.services import integrations as integration_service
+
+    row = integration_service.get_integration(db, context.group, integration_id)
+    return _integration_response(request, db, row)
+
+
+@router.patch(
+    "/{group_id}/integrations/{integration_id}",
+    response_model=IntegrationResponse,
+)
+def update_integration(
+    integration_id: str,
+    body: IntegrationUpdateRequest,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Rename and/or re-configure one integration (admin+).
+    A present config replaces the old one whole and resets
+    the health verdict to unconfigured."""
+    from gpa.services import integrations as integration_service
+
+    row = integration_service.update_integration(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        integration_id=integration_id, name=body.name, config=body.config,
+    )
+    return _integration_response(request, db, row)
+
+
+@router.delete("/{group_id}/integrations/{integration_id}", status_code=204)
+def delete_integration(
+    integration_id: str,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Remove one integration and its sealed config (admin+)."""
+    from gpa.services import integrations as integration_service
+
+    integration_service.delete_integration(
+        db, actor_label=principal.label, group=context.group,
+        integration_id=integration_id,
+    )
+    return None
+
+
+@router.post(
+    "/{group_id}/integrations/{integration_id}/health",
+    response_model=IntegrationResponse,
+)
+def check_integration_health(
+    integration_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Run the health check and record its verdict (admin+):
+    status, last success, and — when it fails — the error in
+    plain words, on the record where the list shows it."""
+    from gpa.services import integrations as integration_service
+
+    row = integration_service.check_health(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        integration_id=integration_id,
+    )
+    return _integration_response(request, db, row)
 
 
 @webhook_router.post(

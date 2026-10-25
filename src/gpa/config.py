@@ -131,6 +131,15 @@ class Settings(BaseSettings):
     # the frontend can absolutise them itself.
     public_base_url: str = ""
 
+    # Integration sealing (Phase 11, B-127): the envelope key
+    # for secrets stored in integration configs and outbound
+    # webhook secrets (services/sealing.py). Empty means "use
+    # the app secret" — one secret to run a small deployment,
+    # a separate one when the operator wants the envelope to
+    # survive an app-secret rotation. Environment-only, like
+    # every secret here; it is never stored anywhere.
+    integration_key: str = ""
+
     # Board segmentation (Phase 5, B-064, decision D-19): SAM is
     # used ONLY to cut a board photo into poster regions. Its base
     # URL names a SAM-shaped HTTP endpoint; empty (the default)
