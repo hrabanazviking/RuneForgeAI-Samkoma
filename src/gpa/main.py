@@ -108,10 +108,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ai_client.set_client(ai_client.build_client(settings))
     # The mail transport (Phase 8, B-095): the notification
     # outbox sends through this driver boundary — the file
-    # driver in dev; the provider driver lands in Phase 12.
+    # driver in dev; the SMTP provider driver in production
+    # (Phase 12, B-133).
     from gpa.services import mailer
 
     mailer.set_transport(mailer.build_transport(settings))
+    # The Messenger notification transport (Phase 12, B-134):
+    # the unavailable driver until access is granted (B-125).
+    from gpa.services import messenger_transport
+
+    messenger_transport.set_transport(messenger_transport.build_transport(settings))
     # The outbound webhook deliverer (Phase 11, B-128): its
     # job handler receives only db + payload, so the process
     # settings it unseals with are wired in here.

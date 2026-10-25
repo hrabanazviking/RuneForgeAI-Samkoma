@@ -15,6 +15,7 @@ from gpa.config import get_settings
 from gpa.db import Database
 from gpa.services import jobs as job_service
 from gpa.services import mailer
+from gpa.services import messenger_transport
 from gpa.services import transcribe as _transcribe  # noqa: F401 — registers its handler on import
 from gpa.services import extraction as _extraction  # noqa: F401 — registers its handler on import
 from gpa.services import notifications as _notifications  # noqa: F401 — registers the notify handler on import (Phase 8 outbox; it superseded the rsvps stub)
@@ -29,6 +30,7 @@ def main() -> None:
     settings = get_settings()
     ai_client.set_client(ai_client.build_client(settings))
     mailer.set_transport(mailer.build_transport(settings))
+    messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)
     set_storage(LocalStorage(settings.storage_dir))
     db = Database(settings.database_url)
