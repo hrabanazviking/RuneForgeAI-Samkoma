@@ -24,6 +24,8 @@ from gpa.models.identity import User
 from gpa.schemas.integrations import (
     AccountLinkCreateRequest,
     AccountLinkResponse,
+    EmbedOriginsRequest,
+    EmbedOriginsResponse,
     GoogleSyncResponse,
     IntegrationCreateRequest,
     IntegrationResponse,
@@ -492,6 +494,47 @@ def sync_google(
         integration_id=integration_id,
     )
     return GoogleSyncResponse(integration_id=integration_id, **counts)
+
+
+# --- Embed origins (B-135) ----------------------------------------------
+# The register of origins allowed to embed the group's
+# public page. Reading it is an organiser read; replacing it
+# is an admin act — it decides whose websites may frame the
+# group's face.
+
+
+@router.get(
+    "/{group_id}/embed-origins", response_model=EmbedOriginsResponse
+)
+def list_embed_origins(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """The group's registered embed origins (organiser+)."""
+    from gpa.services import embed as embed_service
+
+    return EmbedOriginsResponse(origins=embed_service.origins_of(context.group))
+
+
+@router.put(
+    "/{group_id}/embed-origins", response_model=EmbedOriginsResponse
+)
+def set_embed_origins(
+    body: EmbedOriginsRequest,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Replace the embed register whole (admin+). An entry
+    that is not an origin (a path, a bare word) is refused in
+    plain words and nothing is stored."""
+    from gpa.services import embed as embed_service
+
+    origins = embed_service.set_origins(
+        db, actor_label=principal.label, group=context.group,
+        origins=body.origins,
+    )
+    return EmbedOriginsResponse(origins=origins)
 
 
 # --- Outbound webhooks + deliveries (B-128) ------------------------------

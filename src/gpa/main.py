@@ -152,6 +152,47 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return response
 
+    @app.middleware("http")
+    async def embed_cors_middleware(request: Request, call_next):
+        """Embed CORS (B-135): the public + embed paths answer a
+        browser's Origin ONLY when some group registered it.
+        An unregistered origin gets NOTHING — no Allow-Origin
+        header, so the browser blocks the read — and a
+        preflight from one is answered empty for the same
+        reason. Every other path is untouched."""
+        from fastapi.responses import Response as _Response
+
+        path = request.url.path
+        origin = request.headers.get("origin")
+        on_embed_paths = path.startswith("/api/v1/public/") or path.startswith(
+            "/api/v1/embed/"
+        )
+        if not (on_embed_paths and origin):
+            return await call_next(request)
+        from gpa.services import embed as embed_service
+
+        session = app.state.db.session()
+        try:
+            registered = embed_service.origin_registered(session, origin)
+        finally:
+            session.close()
+        if request.method == "OPTIONS":
+            response = _Response(status_code=204)
+            if registered:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+                response.headers["Access-Control-Allow-Headers"] = (
+                    request.headers.get("access-control-request-headers", "*")
+                )
+                response.headers["Access-Control-Max-Age"] = "600"
+                response.headers["Vary"] = "Origin"
+            return response
+        response = await call_next(request)
+        if registered:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Vary"] = "Origin"
+        return response
+
     # Routers: meta (health), then the /api/v1 domains.
     app.include_router(meta.router)
     app.include_router(auth.router)
@@ -161,6 +202,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(events.router)
     app.include_router(calendar.router)
     app.include_router(calendar.public_router)
+    app.include_router(calendar.embed_router)
     app.include_router(discussion.router)
     app.include_router(rsvps.router)
     app.include_router(flyers.router)

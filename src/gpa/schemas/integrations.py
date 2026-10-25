@@ -138,6 +138,21 @@ class GoogleSyncResponse(BaseModel):
     unchanged: int
 
 
+# --- Embed origins (B-135) --------------------------------------------
+
+
+class EmbedOriginsRequest(BaseModel):
+    """Replace a group's embed register whole (admin act):
+    the web origins allowed to embed its public page. An
+    origin is a scheme + host — never a path."""
+
+    origins: list[str] = Field(default_factory=list, max_length=50)
+
+
+class EmbedOriginsResponse(BaseModel):
+    origins: list[str] = Field(default_factory=list)
+
+
 # --- Inbound webhook endpoints (B-126) -------------------------------
 
 
