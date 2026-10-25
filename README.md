@@ -6,11 +6,11 @@
 > of the noise, writes it down as a draft *with its receipts*, and then waits
 > for a human being to say yes.
 
-| 📍 Where we are | Phases 0–10 complete · Phase 11 (Samtal bridge and live sources) next |
+| 📍 Where we are | Phases 0–11 complete · Phase 12 (external publishing integrations) next |
 |---|---|
-| 🧩 Roadmap | **122 of 350 slices** built — B-001 → B-122 of a 29-phase roadmap |
-| ✅ Tests | **735 passing**, counted from one clean run against the committed tree |
-| 📜 API contract | **160 paths · 189 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
+| 🧩 Roadmap | **130 of 350 slices** built — B-001 → B-130 of a 29-phase roadmap |
+| ✅ Tests | **769 passing**, counted from one clean run against the committed tree |
+| 📜 API contract | **174 paths · 204 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
 | 🐍 Stack | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · SQLite (WAL) today, PostgreSQL on the roadmap |
 | 🏠 Born for | The Meta Global AI Developer Hackathon — a team entry, built Oct 26 → Nov 4, 2026 |
 
@@ -80,7 +80,7 @@ sentence.
 
 ## ✨ What it can do today
 
-Everything below is built, tested, and committed (Phases 0–10).
+Everything below is built, tested, and committed (Phases 0–11).
 
 ### 📥 Feed it anything
 
@@ -521,7 +521,7 @@ code provably the team's own work).
 | 8 | Reminders, notifications, and digests | B-095 → B-104 | ✅ |
 | 9 | Members, nonprofit pack, and resources | B-105 → B-112 | ✅ |
 | 10 | Context pruning and group memory | B-113 → B-122 | ✅ |
-| 11 | Samtal bridge and live sources | B-123 → B-130 | ⬜ |
+| 11 | Samtal bridge and live sources | B-123 → B-130 | ✅ |
 | 12 | External publishing integrations | B-131 → B-138 | ⬜ |
 | 13 | Security hardening, privacy, and erasure | B-139 → B-146 | ⬜ |
 | 14 | Submission freeze and demo proof | B-147 → B-151 | ⬜ |
@@ -572,8 +572,8 @@ lockfile-recorded packages.
 
 A README that only boasts is marketing. This one keeps the ledger:
 
-- **This README describes the committed tree (Phases 0–10).** Phase 11 is
-  next in the forge; everything past B-122 in the roadmap table above is
+- **This README describes the committed tree (Phases 0–11).** Phase 12 is
+  next in the forge; everything past B-130 in the roadmap table above is
   a plan, not a claim.
 - **No live model endpoint** has been called from this environment (see the
   adapter section). Fixture and mock drivers carry every demo and test.
