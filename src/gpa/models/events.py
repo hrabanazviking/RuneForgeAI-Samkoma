@@ -220,6 +220,12 @@ class AnnouncementDraft(Base):
     body: Mapped[str] = mapped_column(Text, default="")
     changes_json: Mapped[str] = mapped_column(Text, default="[]")
     created_by: Mapped[str] = mapped_column(String(80))  # audit label
+    # The sending record (Phase 8, B-097): an organiser approves
+    # the draft and the change alerts go out; only then are
+    # these set, and the event's needs_reannounce flag clears —
+    # the group HAS been told. Until then a draft is just paper.
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    sent_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

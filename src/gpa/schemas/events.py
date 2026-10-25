@@ -128,8 +128,9 @@ class AnnouncementChangeView(BaseModel):
 
 class AnnouncementDraftResponse(BaseModel):
     """A drafted re-announcement (B-078): the body names old →
-    new for every material change it covers. Drafting only —
-    sending is Phase 10."""
+    new for every material change it covers. ``sent_at`` /
+    ``sent_by`` record the approval that sent it as change
+    alerts (Phase 8, B-097); null until then."""
 
     id: str
     event_id: str
@@ -138,6 +139,8 @@ class AnnouncementDraftResponse(BaseModel):
     changes: list[AnnouncementChangeView]
     created_by: str
     created_at: datetime
+    sent_at: datetime | None = None
+    sent_by: str | None = None
 
 
 def announcement_draft_view(draft) -> AnnouncementDraftResponse:
@@ -153,6 +156,8 @@ def announcement_draft_view(draft) -> AnnouncementDraftResponse:
         changes=[AnnouncementChangeView(**row) for row in changes],
         created_by=draft.created_by,
         created_at=draft.created_at,
+        sent_at=draft.sent_at,
+        sent_by=draft.sent_by,
     )
 
 

@@ -596,3 +596,31 @@ def list_reannouncement_drafts(
 
     drafts = announce_service.list_drafts(db, context.group, event_id)
     return [announcement_draft_view(draft) for draft in drafts]
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/reannounce-drafts/{draft_id}/approve",
+    response_model=AnnouncementDraftResponse,
+)
+def approve_reannouncement(
+    event_id: str,
+    draft_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Approve a draft and SEND the change alerts (B-097):
+    exactly the event's RSVP'd people are told, through the
+    outbox, and the event's needs_reannounce flag clears —
+    the group has been told."""
+    from gpa.services import announce as announce_service
+
+    draft = announce_service.get_draft(db, context.group, draft_id)
+    if draft.event_id != event_id:
+        from gpa.errors import AppError
+
+        raise AppError("not_found", detail="That announcement draft could not be found.")
+    draft = announce_service.approve_announcement(
+        db, actor_label=principal.label, group=context.group, draft=draft
+    )
+    return announcement_draft_view(draft)
