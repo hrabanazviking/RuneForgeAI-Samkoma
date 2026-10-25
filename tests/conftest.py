@@ -124,10 +124,45 @@ def _pg_reset() -> None:
         )
 
 
-@pytest.fixture(autouse=True)
-def _pg_isolation():
-    """Per-test clean slate in PG mode; a no-op on SQLite."""
+# Modules whose world is MODULE-scoped by design (a fixture
+# built once from tmp_path_factory). On SQLite such a module
+# gets one database FILE for the whole module — its tests are
+# written to share that world, and broader-scope fixtures are
+# built BEFORE any function-scoped fixture runs. So no
+# function-scoped reset can ever be early enough for them:
+# the PG gate caught the naive version as 401s throughout
+# test_authz_fuzz.py (the reset wiped the just-built world).
+# The faithful analogue is: the shared DB reaches such a
+# module EMPTY — guaranteed by the per-test resets of every
+# module before it, plus one run-level reset below — and is
+# then left alone for the module's duration.
+_PG_SHARED_WORLD_MODULES = {"test_authz_fuzz.py"}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _pg_run_start():
+    """One reset before anything is built (PG mode only).
+
+    Session scope is the point: it instantiates before every
+    module-scoped world, which a function-scoped reset can
+    never do (broader scopes set up first — the trap the two
+    attempts above fell into)."""
     if PG_URL:
+        _pg_reset()
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _pg_isolation(request):
+    """Per-test clean slate in PG mode; a no-op on SQLite.
+
+    Exception, above: shared-world modules are not reset
+    inside — their world must live for the whole module,
+    exactly as it does on its one SQLite file. They still
+    start empty: this fixture reset the database after every
+    earlier module's tests, and _pg_run_start reset it
+    before the run."""
+    if PG_URL and request.path.name not in _PG_SHARED_WORLD_MODULES:
         _pg_reset()
     yield
 
