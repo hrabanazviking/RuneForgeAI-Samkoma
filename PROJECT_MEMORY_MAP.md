@@ -362,10 +362,124 @@ driver (seed + health + demo login, no API key, no network).
   and the candidate is untouched — where Phase 3 could only
   assert the route's absence (404/405).
 
+### Phase 5 — Flyers, vision, and boards (B-063 → B-074): ✅ COMPLETE (2026-10-24)
+- **B-063 vision reading** (`ai/vision.py` + `services/vision.py`,
+  migration `0008_phase5_vision`): POST
+  `/groups/{id}/sources/{source_id}/read` (organiser+ / publish
+  scope) enqueues a `vision` job → the adapter reads the picture
+  with the versioned `flyer_reading` prompt (v2: transcript, alt
+  text, links) → the SAME event draft shape as text extraction,
+  with **region provenance**: `Provenance.region_json` carries
+  each field's bounding box; a field whose box is invalid is
+  `supported: False`, never hidden — the claimed box rides the
+  draft, labelled by the verdict. Dates resolve through the
+  Phase 3 resolver anchored on the photo's `created_at`.
+  Approval of a flyer-born candidate now sets `Event.flyer_id`
+  in the mint itself — **Phase 4's by-hand stand-in is lifted**.
+  A reading with **no field values at all** mints no candidate:
+  nothing readable is a result, not a draft (the mock driver's
+  schema-shaped shrug lands exactly there).
+- **B-064 board segmentation** (`ai/segmentation.py`): a
+  SAM-shaped wire client (POST `{base}/segment`, stub-transport
+  tested) behind a `BoardSegmenter` protocol; the decided
+  fallback asks the vision driver for poster boxes
+  (`board_segmentation` prompt v1) and the SAME region pipeline
+  runs. Children are cut once with Pillow into child Flyer
+  sources (permission record inherited from the board), then
+  read one by one. If SAM refuses at runtime the run falls back
+  to vision and **the audit names the driver that actually cut**
+  (`vision (fallback: SAM refused)`). Golden board yields its 3
+  posters as separate flyers in both driver modes.
+- **B-065 transcript + alt text**: every read flyer stores its
+  transcript (which becomes its citable chunk) and a drafted
+  description; `alt_text_status` flips to `complete` only for a
+  **genuine** description (≥20 chars, not the placeholder, not
+  the filename) and a human-completed alt is **never**
+  overwritten by a machine draft. `PATCH /groups/{id}/flyers/{id}`
+  lets a member+ write the description (non-descriptions refused
+  422). Standing scan test: no flyer API response ships the
+  placeholder unflagged — the pairing (placeholder ⇔
+  `awaiting_description`) is asserted across every surface.
+- **B-066 links**: candidate `draft["links"]` = the model's
+  decoded codes (QR/printed, with regions) **merged with**
+  printed URLs extracted deterministically from the flyer's own
+  transcript (scheme-ful and `www.` addresses; bare domains are
+  the model's half). **No QR decoder was hand-rolled and none
+  is pretended**: decoding is the vision model's structured
+  output — the boundary is recorded here plainly.
+- **B-067 generated image**: POST
+  `/groups/{id}/events/{id}/generate-image` (organiser+) via the
+  adapter's `generate_image`; stored as a Flyer with
+  `generated=True` — a **column**, carried by `FlyerView` in
+  every projection (detail, list, agenda, tonight, public, wall)
+  forever. The picture's provenance is a manual source naming
+  the requesting organiser; its alt text completes only from the
+  organiser's own genuine description. An event with a picture
+  refuses a second (409). The **live driver raises ModelError
+  in plain words** — no image-generation endpoint is wired;
+  fixture/mock carry the tests.
+- **B-068 transcription**: the B-031 stub handler is real —
+  audio through the adapter's `transcribe`, usage recorded,
+  speaker-labelled chunks by the paste discipline (sender
+  prefix split, continuations joined, nothing dropped), the
+  placeholder chunk replaced, source `ready`/`done`, audit
+  `transcription.completed`. Golden voice note → chunks →
+  downstream extraction with quote verification. A failed
+  transcription leaves the note honestly `awaiting_transcription`.
+- **B-069 job pipeline**: vision work is jobs (B-033 machinery)
+  with real progress; a board's progress is the share of its
+  posters read. **Partial success is a state**: a failed child
+  is `read_failed` on the wall, the board still completes, and
+  `vision.partial {read, failed, total}` is audited; only
+  all-failed fails the job.
+- **B-070 flyer wall**: GET `/groups/{id}/flyers?period=YYYY-MM`
+  — the period's posters (by their event's month, else arrival
+  month), dated first; unapproved flyers show `pending_review`,
+  failed reads show `read_failed`, never invisible.
+- **B-071 duplicates**: hand-rolled **average-hash** perceptual
+  hash (8×8, `services/images.py`, computed at ingest) — same
+  poster twice (≤6 bits apart) + same drafted title or date →
+  `possible_duplicate` flag and a `duplicate_of` pointer on the
+  new draft: a merge SUGGESTION in the queue, never a silent
+  second event, never an automatic merge.
+- **B-072 print month**: GET `/groups/{id}/print/month?month=`
+  — rows carry every event fact (title, group-local date/time,
+  place, address, host, cost, bring, description) and the
+  rendered `text` is asserted fact-by-fact in tests.
+- **B-073 vision evaluation** (`ai/vision_evaluation.py` +
+  corpus/baseline JSON): the golden flyers (clean / handwriting
+  / rotated / glare) scored per type through the real pipeline —
+  clean 1.00, the other three 0.75 each by deliberate corpus
+  imperfection (a missing cost, a missing place, a digit-misread
+  date), overall 0.8125; the 0.02 gate has a degradation test
+  with teeth. `python -m gpa.ai.vision_evaluation` prints the
+  table.
+- **B-074 gate**: `tests/test_phase5_gate.py` — Flow A
+  (photo → read → queue → approve → published event with the
+  flyer attached by the real mint → agenda) on a fresh DB,
+  offline, with the **fixture** driver; and again with the
+  **mock** driver, whose honest end is: job done, no invented
+  candidate, flyer flagged on the wall. OPENAPI.json +
+  frontend_types.ts regenerated (**77 paths, 80 schemas**);
+  FRONTEND_HANDOFF.md carries the flyer notes. Phase 5 folds
+  into ZIP-Beta (Sat Oct 31) — no ZIP cut at this gate.
+- **Superseded assertions, updated with the phase**:
+  `test_voice_live.py`'s stub-era assertion (source still
+  awaiting after the job) now asserts the real handler's words
+  land, with the supersession noted in the test;
+  `test_prompts.py`'s manifest expectations grew
+  (`board_segmentation` v1, `flyer_reading` v2).
+- **Driver reality (the phase's standing boundary)**: no real
+  Muse Image / SAM / transcription endpoint or credential
+  exists in this environment. Everything above runs through the
+  Phase 3 adapter with fixture/mock drivers; the SAM client is
+  stub-transport tested only; the live driver's `generate_image`
+  refuses in plain words. The B-074 live-driver run is recorded
+  as **awaiting a real Meta endpoint** — never faked.
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 5 begins at B-063 (vision reading — it fills Flyer
-transcripts/alt text and sets `Event.flyer_id` on flyer-born
-events, the link B-062's gate sets by hand today).
+Phase 6 begins at B-075 (de-duplication, changes, and
+truth-keeping).
 
 ## Decisions & deviations (from the roadmap defaults)
 

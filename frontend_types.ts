@@ -6,6 +6,10 @@ export interface AgendaResponse {
   next_cursor?: string | unknown | null | null;
 }
 
+export interface AltTextUpdateRequest {
+  alt_text: string;
+}
+
 export interface ApiKeyCreateRequest {
   label?: string;
   scopes?: string[];
@@ -290,8 +294,11 @@ export interface FeedResponse {
 export interface FlyerResponse {
   alt_text: string;
   alt_text_status: string;
+  generated?: boolean;
   height: number;
   id: string;
+  parent_flyer_id?: string | unknown | null | null;
+  region_json?: string | unknown | null | null;
   source_id: string;
   thumbnail_key?: string;
   transcript?: string;
@@ -302,7 +309,33 @@ export interface FlyerView {
   alt_text?: string;
   alt_text_status?: string;
   flyer_id: string;
+  generated?: boolean;
   thumbnail_key?: string;
+}
+
+export interface FlyerWallEntry {
+  alt_text: string;
+  alt_text_status: string;
+  event?: WallEventSummary | unknown | null | null;
+  flyer_id: string;
+  generated?: boolean;
+  height?: number;
+  parent_flyer_id?: string | unknown | null | null;
+  review_status: string;
+  source_id: string;
+  source_kind: string;
+  thumbnail_key?: string;
+  transcript?: string;
+  width?: number;
+}
+
+export interface FlyerWallResponse {
+  entries?: FlyerWallEntry[];
+  period: string;
+}
+
+export interface GenerateImageRequest {
+  description?: string;
 }
 
 export interface GroupCreateRequest {
@@ -447,6 +480,25 @@ export interface PasteIngestRequest {
   title?: string;
 }
 
+export interface PrintEventRow {
+  bring?: string;
+  cost?: string;
+  description?: string;
+  event_id: string;
+  host?: string;
+  place?: string;
+  status: string;
+  title: string;
+  when: string;
+}
+
+export interface PrintMonthResponse {
+  events?: PrintEventRow[];
+  period: string;
+  text?: string;
+  timezone: string;
+}
+
 export interface ProfileUpdateRequest {
   locale?: string | unknown | null | null;
   name?: string | unknown | null | null;
@@ -458,6 +510,7 @@ export interface ProvenanceEntry {
   chunk_position?: number | unknown | null | null;
   field: string;
   quote?: string;
+  region?: number[] | unknown | null | null;
   sent_at?: string | unknown | null | null;
   supported?: boolean;
 }
@@ -610,6 +663,11 @@ export interface ValidationError {
   type: string;
 }
 
+export interface VisionReadAcceptedResponse {
+  job_id: string;
+  source_id: string;
+}
+
 export interface VoiceIngestResponse {
   chunk_count: number;
   chunks?: ChunkResponse[];
@@ -631,4 +689,11 @@ export interface VoiceIngestResponse {
   transcription_job_id: string;
   transcription_status: string;
   url?: string;
+}
+
+export interface WallEventSummary {
+  id: string;
+  starts_at: string;
+  status: string;
+  title: string;
 }

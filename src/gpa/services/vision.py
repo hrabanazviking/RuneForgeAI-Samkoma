@@ -308,6 +308,22 @@ def _read_one_flyer(
         db.add(chunk)
         db.flush()
 
+    # --- Nothing readable is a RESULT, not a draft: a reading
+    # whose fields carry no values at all (the mock driver's
+    # schema-shaped shrug, a genuinely blank photograph) mints
+    # no candidate. The flyer keeps its transcript and its
+    # flagged alt state and stays visible on the wall (B-070);
+    # the queue is for drafts a person can judge. The check runs
+    # before supersession, so a blank re-read never eats an
+    # earlier real draft.
+    fields = reading.draft.get("fields") or {}
+    if not any(
+        entry.get("value") not in (None, "")
+        for entry in fields.values()
+        if isinstance(entry, dict)
+    ):
+        return 0
+
     # --- A re-read supersedes this source's undecided vision
     # drafts (the B-045 rule): decided rows are history and are
     # never touched; drafts are never edited in place.

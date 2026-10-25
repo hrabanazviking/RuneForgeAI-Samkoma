@@ -269,11 +269,72 @@ maths of its own, anywhere.**
   whose notification rides the job queue (delivery is a later
   phase). Answering a cancelled event is a 409.
 
-Not yet built (later phases): flyer/board vision reading
-(Phase 5 — it will set `flyer_id` on events and complete alt
-texts), tasks/decisions/polls as entities (Phase 7), reminders,
-digests, real notification delivery (Phase 11), the Facebook
-posting integration (Phase 12).
+Not yet built (later phases): tasks/decisions/polls as
+entities (Phase 7), reminders, digests, real notification
+delivery (Phase 11), the Facebook posting integration
+(Phase 12).
+
+## Flyers, vision, and boards (Phase 5)
+
+- **Reading a picture**: `POST /groups/{id}/sources/{source_id}/read`
+  → `202 {job_id, source_id}` (organiser+). Poll the job
+  (`GET /jobs/{id}`); on a board photo the job's `progress` is
+  the share of posters read so far. When it lands, the source's
+  flyer has a `transcript` and the review queue holds one
+  candidate per poster. Reading a text/voice source is a 422 in
+  plain words.
+- **Review with regions**: the candidate detail's `provenance`
+  rows now carry `region: [x, y, w, h] | null` (fractions of the
+  picture) alongside `supported`. Draw the box on the flyer
+  image when a reviewer taps a field; `supported: false` means
+  "the model claimed this but could not point at it" — style it
+  as unverified, never hide it. The candidate draft also carries
+  `links: [{url, kind: "qr" | "printed", region?}]` — render
+  them as tappable links.
+- **Boards**: one board photo becomes one child flyer per
+  poster (source detail shows `flyer.parent_flyer_id` +
+  `flyer.region_json`). A poster that defeats the reader is not
+  lost: its source stage is `read_failed` and the wall shows it
+  as such — build a "couldn't read this one" state.
+- **The flyer wall**: `GET /groups/{id}/flyers?period=YYYY-MM`
+  → `{period, entries: [{flyer_id, source_id, image_key,
+  thumbnail_key, alt_text, alt_text_status, generated,
+  created_at, review_status, event}]}` ordered dated-first.
+  `review_status` is the event's status once approved,
+  `pending_review` before, `read_failed` when unreadable. A
+  flyer is never absent from its month — pending ones are the
+  point of the wall.
+- **Alt text is law**: `alt_text` may be the literal string
+  `"awaiting description"` **only** together with
+  `alt_text_status: "awaiting_description"` — treat that pairing
+  as a visible defect state ("no description yet"), never render
+  the placeholder as a description. `PATCH /groups/{id}/flyers/{id}`
+  with `{alt_text}` (member+) writes a human description; the
+  API refuses non-descriptions (a word or two, the filename)
+  with a 422 that says why. Every event's `flyer` face
+  (`{flyer_id, thumbnail_key, alt_text, alt_text_status,
+  generated}`) rides detail, list, agenda, tonight, and the
+  public projection.
+- **Generated images**: `generated: true` on a flyer means the
+  picture was machine-made for the event — the flag is in every
+  projection forever; badge it. Organisers create one with
+  `POST /groups/{id}/events/{id}/generate-image`
+  `{description?}` → `201` event; an event that already has a
+  picture answers 409.
+- **Print month**: `GET /groups/{id}/print/month?month=YYYY-MM`
+  → `{period, events: [rows], text}` — `text` is a complete
+  plain-text month listing (every fact included) for a real
+  noticeboard; the rows carry the same facts structured.
+- **Duplicates**: a candidate may carry the
+  `possible_duplicate` flag and `draft.duplicate_of`
+  `{flyer_id, source_id, candidate_id, event_id, hash_distance}`
+  — surface it as "looks like this poster again" with a link
+  to the earlier one. Nothing is auto-merged, ever.
+- **Voice notes** now transcribe through the same job door:
+  after the `transcribe` job lands, the source is a normal text
+  source (`ready`/`done`) whose chunks carry speaker labels
+  where the note offered them, and it can be extracted like any
+  chat paste.
 
 ## The contract
 

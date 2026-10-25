@@ -29,6 +29,22 @@
         "title": "AgendaResponse",
         "type": "object"
       },
+      "AltTextUpdateRequest": {
+        "description": "A person's own description of a flyer (B-065): the human\nroad to alt_text_status \"complete\". The words are stored as\ngiven (whitespace tidied); an empty or placeholder text is\nrefused by the service \u2014 it would not be a description.",
+        "properties": {
+          "alt_text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Alt Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alt_text"
+        ],
+        "title": "AltTextUpdateRequest",
+        "type": "object"
+      },
       "ApiKeyCreateRequest": {
         "description": "Mint an API key with chosen scopes (B-014).",
         "properties": {
@@ -1755,7 +1771,7 @@
         "type": "object"
       },
       "FlyerResponse": {
-        "description": "An image source's picture record (B-027/B-028).\n\n``alt_text_status`` is the visible-defect flag: it reads\n``awaiting_description`` \u2014 and ``alt_text`` is the literal\nplaceholder \u2014 until a real description of the image exists.",
+        "description": "An image source's picture record (B-027/B-028).\n\n``alt_text_status`` is the visible-defect flag: it reads\n``awaiting_description`` \u2014 and ``alt_text`` is the literal\nplaceholder \u2014 until a real description of the image exists\n(Phase 5: the vision pass's drafted description, or a\nperson's own words via the flyer PATCH).",
         "properties": {
           "alt_text": {
             "title": "Alt Text",
@@ -1765,6 +1781,11 @@
             "title": "Alt Text Status",
             "type": "string"
           },
+          "generated": {
+            "default": false,
+            "title": "Generated",
+            "type": "boolean"
+          },
           "height": {
             "title": "Height",
             "type": "integer"
@@ -1772,6 +1793,28 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "parent_flyer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Flyer Id"
+          },
+          "region_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Json"
           },
           "source_id": {
             "title": "Source Id",
@@ -1804,7 +1847,7 @@
         "type": "object"
       },
       "FlyerView": {
-        "description": "A flyer's public face on an event: the picture and its\ndescription state. An undescribed flyer says so \u2014 the alt\ntext law (B-065) makes the defect visible, never silent.",
+        "description": "A flyer's public face on an event: the picture and its\ndescription state. An undescribed flyer says so \u2014 the alt\ntext law (B-065) makes the defect visible, never silent. A\ngenerated image says so too (B-067): ``generated`` rides\nevery projection because it is a column on the flyer, not a\nlabel a projection could forget.",
         "properties": {
           "alt_text": {
             "default": "",
@@ -1820,6 +1863,11 @@
             "title": "Flyer Id",
             "type": "string"
           },
+          "generated": {
+            "default": false,
+            "title": "Generated",
+            "type": "boolean"
+          },
           "thumbnail_key": {
             "default": "",
             "title": "Thumbnail Key",
@@ -1830,6 +1878,124 @@
           "flyer_id"
         ],
         "title": "FlyerView",
+        "type": "object"
+      },
+      "FlyerWallEntry": {
+        "description": "One poster on the wall: the picture record, its reading\nstate, and its event when approval has made one.\n\n``review_status`` is the honest one-word state: the event's\nown status when an event exists, else ``pending_review`` \u2014 a\nposter nobody has approved yet is ON the wall, labelled,\nnever invisible (B-070). A poster whose reading failed says\n``read_failed`` (B-069's partial truth, on the wall too).",
+        "properties": {
+          "alt_text": {
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "alt_text_status": {
+            "title": "Alt Text Status",
+            "type": "string"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WallEventSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "flyer_id": {
+            "title": "Flyer Id",
+            "type": "string"
+          },
+          "generated": {
+            "default": false,
+            "title": "Generated",
+            "type": "boolean"
+          },
+          "height": {
+            "default": 0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "parent_flyer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Flyer Id"
+          },
+          "review_status": {
+            "title": "Review Status",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_kind": {
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "thumbnail_key": {
+            "default": "",
+            "title": "Thumbnail Key",
+            "type": "string"
+          },
+          "transcript": {
+            "default": "",
+            "title": "Transcript",
+            "type": "string"
+          },
+          "width": {
+            "default": 0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "flyer_id",
+          "source_id",
+          "source_kind",
+          "alt_text",
+          "alt_text_status",
+          "review_status"
+        ],
+        "title": "FlyerWallEntry",
+        "type": "object"
+      },
+      "FlyerWallResponse": {
+        "description": "One period's wall (B-070).",
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/FlyerWallEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period"
+        ],
+        "title": "FlyerWallResponse",
+        "type": "object"
+      },
+      "GenerateImageRequest": {
+        "description": "Ask for a generated event image (B-067). ``description``\nis the organiser's own words for the picture \u2014 they steer\nthe generation and, when they are a genuine description,\nbecome its alt text (B-065's human road).",
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          }
+        },
+        "title": "GenerateImageRequest",
         "type": "object"
       },
       "GroupCreateRequest": {
@@ -2519,6 +2685,91 @@
         "title": "PasteIngestRequest",
         "type": "object"
       },
+      "PrintEventRow": {
+        "description": "One event as the noticeboard needs it: every fact present\nas text (B-072). ``when`` is words (\"Saturday 24 October\n2026, 7:00 PM \u2013 9:00 PM\"), not an instant \u2014 paper has no\ntimezone conversions.",
+        "properties": {
+          "bring": {
+            "default": "",
+            "title": "Bring",
+            "type": "string"
+          },
+          "cost": {
+            "default": "",
+            "title": "Cost",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "host": {
+            "default": "",
+            "title": "Host",
+            "type": "string"
+          },
+          "place": {
+            "default": "",
+            "title": "Place",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "when": {
+            "title": "When",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "title",
+          "when",
+          "status"
+        ],
+        "title": "PrintEventRow",
+        "type": "object"
+      },
+      "PrintMonthResponse": {
+        "description": "A month's print listing (B-072): the structured rows plus\nthe whole listing as one plain-text document the frontend\ncan hand to a printer as-is.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/PrintEventRow"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "title": "Text",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "timezone"
+        ],
+        "title": "PrintMonthResponse",
+        "type": "object"
+      },
       "ProfileUpdateRequest": {
         "description": "Change the editable profile fields (B-011).",
         "properties": {
@@ -2563,7 +2814,7 @@
         "type": "object"
       },
       "ProvenanceEntry": {
-        "description": "One field's evidence: the quote, its chunk, and whether the\npipeline verified it (an unsupported field is shown, never\nhidden \u2014 that is the queue's whole point).",
+        "description": "One field's evidence: the quote, its chunk, and whether the\npipeline verified it (an unsupported field is shown, never\nhidden \u2014 that is the queue's whole point). For a picture's\nfields the evidence is a REGION instead (B-063): the box\n[x, y, w, h] the field was read from, so the queue can\nhighlight the rectangle on the poster.",
         "properties": {
           "chunk_id": {
             "anyOf": [
@@ -2595,6 +2846,20 @@
             "default": "",
             "title": "Quote",
             "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
           },
           "sent_at": {
             "anyOf": [
@@ -3360,6 +3625,25 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VisionReadAcceptedResponse": {
+        "description": "202: the reading is a job (Phase 5, B-069); poll the job\nor watch the stream \u2014 the same acceptance shape as an\nextraction request (B-045).",
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "source_id"
+        ],
+        "title": "VisionReadAcceptedResponse",
+        "type": "object"
+      },
       "VoiceIngestResponse": {
         "description": "A voice source plus its transcription job (B-031): the\njob id is how the note's pending words stay visible.",
         "properties": {
@@ -3486,6 +3770,35 @@
           "transcription_status"
         ],
         "title": "VoiceIngestResponse",
+        "type": "object"
+      },
+      "WallEventSummary": {
+        "description": "The event a flyer became, in the few words the wall needs.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "starts_at",
+          "status"
+        ],
+        "title": "WallEventSummary",
         "type": "object"
       }
     }
@@ -5749,6 +6062,68 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/generate-image": {
+      "post": {
+        "description": "Generate an image for an event that has none (B-067):\nstored with ``generated: true`` on its flyer record, so the\nflag survives every projection \u2014 never passed off as a\nphoto. An event with a picture already is a 409.",
+        "operationId": "generate_image_api_v1_groups__group_id__events__event_id__generate_image_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Image",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/ics": {
       "get": {
         "description": "One event as a downloadable .ics (B-053). Drafts refuse \u2014\na file download is a publishing-out road, and the bright\nline holds for every role here.",
@@ -6313,6 +6688,127 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/flyers": {
+      "get": {
+        "description": "The period's wall (B-070): every poster in the month \u2014\nthe ones approval has made events of AND the ones still\nwaiting, which show as ``pending_review``, never invisible.",
+        "operationId": "flyer_wall_api_v1_groups__group_id__flyers_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlyerWallResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Flyer Wall",
+        "tags": [
+          "flyers"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/flyers/{flyer_id}": {
+      "patch": {
+        "description": "Give a flyer a person's own description (B-065) \u2014 the\nhuman road to alt-text ``complete``. Words that are not a\ndescription are refused in plain words by the service.",
+        "operationId": "update_alt_text_api_v1_groups__group_id__flyers__flyer_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "flyer_id",
+            "required": true,
+            "schema": {
+              "title": "Flyer Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AltTextUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlyerResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Alt Text",
+        "tags": [
+          "flyers"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/inbound-address": {
       "post": {
         "description": "Open this group's email-in channel (admin+).\n\nThe response carries the full token and the address ONCE;\nonly a hash is kept. Mail to the address becomes a source.",
@@ -6740,6 +7236,65 @@
         "summary": "Month",
         "tags": [
           "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/print/month": {
+      "get": {
+        "description": "A month's listing for a real noticeboard (B-072): every\nevent's facts present as text, in the structured rows and in\nthe rendered plain-text document alike.",
+        "operationId": "print_month_api_v1_groups__group_id__print_month_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrintMonthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Print Month",
+        "tags": [
+          "flyers"
         ]
       }
     },
@@ -7552,6 +8107,58 @@
           }
         },
         "summary": "Request Extraction",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/{source_id}/read": {
+      "post": {
+        "description": "Ask for a vision reading of one flyer/board source\n(Phase 5, B-063/B-064/B-069): a durable job is queued\n(202 + its id). A board is segmented and each poster read;\nthe drafts land in this queue when the worker runs it, and\nthe job's progress says how far through the posters it is.",
+        "operationId": "request_vision_read_api_v1_groups__group_id__sources__source_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionReadAcceptedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Vision Read",
         "tags": [
           "candidates"
         ]
