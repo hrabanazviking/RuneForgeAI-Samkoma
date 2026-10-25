@@ -232,6 +232,11 @@ class ExternalEventLink(Base):
     )
     connector_kind: Mapped[str] = mapped_column(String(48), default="samtal")
     external_id: Mapped[str] = mapped_column(String(240), default="")
+    # The outside copy's own address, when the outside system
+    # has one (a Facebook event's URL, B-131): where a person
+    # can go and LOOK at the copy. Samtal's hall calendar has
+    # no per-event URL, so its rows leave this empty.
+    external_url: Mapped[str] = mapped_column(String(1000), default="")
     payload_hash: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(

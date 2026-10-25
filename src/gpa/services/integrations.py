@@ -208,7 +208,31 @@ def _run_check(db: Session, settings: Settings, row: Integration) -> tuple[str, 
             return "error", str(err)
         except Exception as err:  # A broken client is a health fact too.
             return "error", f"The Samtal connection failed its check: {err}"
-    if row.kind in ("facebook_events", "google_calendar"):
+    if row.kind == "facebook_events":
+        # B-131: the check is the client boundary's ping,
+        # gated on the config carrying a Page and its token.
+        # In this environment the boundary is the unavailable
+        # client (no Page is connected), and ITS refusal is
+        # the verdict — recorded, never dressed up as a green.
+        from gpa.services import facebook_events as facebook_service
+
+        config = read_config(settings, row)
+        missing = [k for k in ("page_id", "access_token") if not config.get(k)]
+        if missing:
+            return (
+                "unconfigured",
+                "Not connected yet — add "
+                f"{' and '.join(missing)} to this integration's "
+                "config, then check again.",
+            )
+        try:
+            facebook_service.get_client().ping()
+            return "ok", ""
+        except facebook_service.FacebookUnavailable as err:
+            return "error", str(err)
+        except Exception as err:  # A broken client is a health fact too.
+            return "error", f"The Facebook connection failed its check: {err}"
+    if row.kind == "google_calendar":
         return (
             "unconfigured",
             "Not connected yet — this integration's live check "

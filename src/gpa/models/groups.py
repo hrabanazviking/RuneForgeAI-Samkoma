@@ -80,6 +80,13 @@ class Group(Base):
     prune_max_passes: Mapped[int] = mapped_column(Integer, default=2)
     prune_token_budget: Mapped[int] = mapped_column(Integer, default=120_000)
     prune_driver: Mapped[str] = mapped_column(String(16), default="hosted")
+    # Phase 12 embed origins (B-135): the web origins allowed
+    # to embed this group's public page/widget, as a JSON list
+    # of origin strings ("https://village.example"). Empty =
+    # no embeds anywhere: CORS answers for the public surfaces
+    # name only origins on this list, and the embed endpoint
+    # refuses any other origin outright.
+    embed_origins_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 
