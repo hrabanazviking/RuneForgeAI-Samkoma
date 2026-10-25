@@ -6,10 +6,10 @@
 > of the noise, writes it down as a draft *with its receipts*, and then waits
 > for a human being to say yes.
 
-| 📍 Where we are | Phases 0–12 complete · Phase 13 (security hardening, privacy, erasure) next |
+| 📍 Where we are | Phases 0–13 complete · Phase 14 (submission freeze and demo proof) in progress |
 |---|---|
-| 🧩 Roadmap | **138 of 350 slices** built — B-001 → B-138 of a 29-phase roadmap |
-| ✅ Tests | **797 passing**, counted from one clean run against the committed tree |
+| 🧩 Roadmap | **149 of 350 slices** built — B-001 → B-149 of a 29-phase roadmap |
+| ✅ Tests | **841 passing**, counted from one clean run against the committed tree |
 | 📜 API contract | **182 paths · 212 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
 | 🐍 Stack | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · SQLite (WAL) today, PostgreSQL on the roadmap |
 | 🏠 Born for | The Meta Global AI Developer Hackathon — a team entry, built Oct 26 → Nov 4, 2026 |

@@ -23,10 +23,11 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **797 tests, all passing** (138/350 slices:
-Phases 0–12 complete) — the count taken from one clean run against
-the final Phase 12 tree at the B-138 gate (769 at the Phase 11
-close + 28 new Phase 12 tests = 797, collected count reconciled).
+Alembic up/down/up clean; **841 tests, all passing** (149/350 slices:
+Phases 0–13 complete + Phase 14 B-147→B-149) — the count taken from
+one clean full run against the B-149 tree 2026-10-25 (835 at the
+Phase 13 gate + 6 new Phase 14 tests = 841, reconciled from the
+run's own log; the run was slow under shared VM load, ~45 min).
 ZIP-Beta cut at the Phase 8 gate
 (releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); ZIP-RC cut
 at the Phase 12 gate (releases/gpa-backend-v0.4-2026-10-25.zip,
@@ -1193,8 +1194,108 @@ recorded NOT RUN in TEST_REPORT, never faked.
   threading (above) and the press/sync missing-copy
   restore split (edits stand, deletions restore).
 
+## Phase 13 — Security hardening, privacy, and erasure (B-139 → B-146) ✅
+
+The phase that re-attacks everything before it. `THREAT_MODEL.md`
+lives in the repo root now (B-139): assets, actors, Henry's-first-
+version as Case #1, one abuse case per route family mapped to
+its test, accepted risks named — largest: group content is NOT
+field-sealed in this build (B-167, Phase 17). A coherence test
+parses the model so it cannot drift from the code.
+
+- **B-140 fuzz**: two marked groups × 8 attacker principals ×
+  ~400 seeded cases — zero leaks. FINDING (fixed at root):
+  `GET /jobs/{id}` answered ANY signed-in caller; group-named
+  jobs are now members-only (404 otherwise). The fuzz world
+  fixture is module-scoped (`make_settings` +
+  `tmp_path_factory`) — per-test worlds timed out the suite.
+- **B-141**: per-group upload quota (`Group.upload_quota_bytes`,
+  default 100 MiB, `quota_exceeded` 422, settings dial);
+  migration 0016 also carries `source_retention_days`.
+  `SourceResponse.storage_key` REMOVED (D-17) — the phase's one
+  deliberate contract break; four earlier tests superseded to
+  read the key from the row. The .ics door equals the view
+  door; drafts refuse for every role (B-053's bright line).
+  `thumbnail_key` STAYS in flyer projections for now: a named
+  accepted exposure with a binding rule — any future media
+  route authorises by flyer/source id through the view door,
+  never by raw key.
+- **B-142**: prompt render is ONE pass (`ai/promptlib.py`) —
+  values are never rescanned; benign output is byte-identical
+  so fixture recordings (keyed by rendered hash) survive.
+  FINDING (fixed): the digest Jinja env escaped by `.j2`
+  suffix, so PLAIN-TEXT digests carried HTML entities —
+  escaping now follows the file kind via a named callable
+  (jinja's select_autoescape keys on the final extension).
+- **B-143**: `services/erasure.py` — ONE deletion plan
+  (group_id seeds + FK fixpoint) serves export and erasure.
+  Export ZIP: domain JSON + iCal + files; secrets withheld by
+  column rule; integration configs export key NAMES only.
+  Erase door: owner + live person session (keys refused) +
+  exact-name/ERASE double confirmation; commits, then sweeps
+  storage objects no other group references, then VACUUM —
+  the raw DB file greps clean. Audit keeps only the fact.
+  DRILL-FOUND FIX (B-146): the vacuum's output itself rides
+  the WAL, and on newer SQLite the raw main file still shows
+  the pre-vacuum image afterwards — erase now checkpoints
+  AGAIN after VACUUM so the on-disk file is the vacuumed
+  image (the drill's restored tree failed the grep 5/5
+  until this landed; the main tree's older SQLite had been
+  masking it).
+- **B-144**: `GET /users/me/data` (services/me_data.py — no
+  hashes by construction), sources/permissions listing, and
+  retention (`services/retention.py`): `retention_sweep` job
+  chain anchored by the settings pack (03:30 group-local);
+  expiry hard-removes WITHOUT a tombstone, stamps candidates'
+  `source_deleted_at`, spares approved events. Privacy routes
+  register BEFORE sources in main.py — the literal
+  `sources/permissions` segment must not be swallowed by
+  `{source_id}`.
+- **B-145**: prod refuses known-default + <32-char secrets
+  (config.py denylist); access log redacts the segment after
+  feed/invites/email-in/source (`main._redact_path`).
+  FINDING (fixed): httpx/httpcore INFO lines log full URLs —
+  quieted to WARNING in `_configure_logging`. pip-audit over
+  the uv-exported lockfile: **no known vulnerabilities**
+  (verbatim output in TEST_REPORT's Phase 13 addendum).
+- **B-146**: `scripts/backup.py` (SQLite online backup +
+  storage + sha256 manifest + RESTORE.md), `scripts/restore.py`
+  (verify-then-place; damaged bundle restores nothing),
+  `scripts/restore_drill.py` (plant → backup → copy tree →
+  restore → FRESH `uv sync` → full suite → API read-back;
+  drill children run with VIRTUAL_ENV/PYTHONPATH scrubbed —
+  the first drill run failed on the leak). Contract
+  regenerated: 187 paths / 217 schemas (was 182 / 212).
+  Suite at the gate: **835 passed, 0 failed** (797 + 38 new
+  Phase 13 tests, reconciled; totals from the run's own
+  report file). No ZIP this phase — folds into ZIP-Final
+  at B-151.
+
+### Phase 14 — Submission freeze and demo proof (B-147 → B-151): IN PROGRESS
+- **B-147 demo data, final** (`services/demo.py`, `seeds/demo_story.json`,
+  `demo.sh`): the seed is the story — Riverbend Community Trust
+  (nonprofit) + Northside Hiking Club + the B-010 demo group, a cast
+  of 7 people (seed loader grew an idempotent `memberships` section),
+  the club's 40-message trip argument as a chat_paste source, the
+  Trust's 12-section newsletter source, a pinned board announcement,
+  and 8 published history events (Oct–Nov 2026). Idempotent by
+  natural key (group + title); `scripts/seed.py --demo` loads the
+  story; second load creates nothing (pinned by test).
+- **B-148 demo script → tests** (`tests/test_demo_flows.py`): Flow C
+  (golden newsletter → 12 drafts → re-extraction supersedes, never
+  doubles → reviewer date edit + approve → agenda) and Flow D
+  (Saturday-night tonight view, pinned first, tomorrow excluded).
+  Flows A/B already stand as the Phase 5 / Phase 7 gate tests.
+- **B-149 numbers page** (`scripts/make_results.py` → `RESULTS.md`):
+  generated from the three harnesses over their shipped corpora;
+  a test asserts byte-identical regeneration and that the honest
+  imperfections are quoted (place 0.50/0.50, cost recall 0.00,
+  vision overall 0.8125, pruning precision 0.94).
+- Remaining in phase: B-150 (submission pack), B-151 (freeze drill
+  + ZIP-Final).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 13 begins at B-139.
+Phase 15 begins at B-152.
 
 ## Decisions & deviations (from the roadmap defaults)
 
