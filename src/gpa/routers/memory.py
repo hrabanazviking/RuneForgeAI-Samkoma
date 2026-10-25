@@ -27,6 +27,8 @@ from gpa.schemas.memory import (
     AskResponse,
     CitationResponse,
     PruneRunResponse,
+    SummariseRequest,
+    SummariseResponse,
     SummaryResponse,
 )
 from gpa.services import memory as memory_service
@@ -124,3 +126,26 @@ def list_summaries(
     answers, briefings, and the drafts awaiting a person."""
     rows = memory_service.list_summaries(db, context.group, kind=kind)
     return [_summary_response(row) for row in rows]
+
+
+@router.post(
+    "/{group_id}/summaries/discussion",
+    response_model=SummariseResponse, status_code=201,
+)
+def summarise_discussion(
+    body: SummariseRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Summarise a thread (B-116). The summary is stored as a
+    draft; the decisions and next actions it names arrive as
+    review-queue candidates — never as written decisions."""
+    result = memory_service.summarise_thread(
+        db, actor_label=context.principal.label, group=context.group,
+        parent_type=body.parent_type, parent_id=body.parent_id,
+        viewer_role=context.role,
+    )
+    return SummariseResponse(
+        summary=_summary_response(result["summary"]),
+        candidate_ids=[c.id for c in result["candidates"]],
+    )

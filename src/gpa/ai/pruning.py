@@ -76,6 +76,13 @@ class MemoryChunk:
     sent_at: datetime | None = None
     origin: str = "source"  # source | decision | summary | comment
 
+    @property
+    def id(self) -> str:
+        """The extraction pipeline's name for a chunk's id
+        (B-040 reads ``chunk.id``) — one chunk, two pipelines,
+        no translation layer."""
+        return self.chunk_id
+
 
 @dataclass
 class PrunePass:

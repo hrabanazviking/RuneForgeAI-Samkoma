@@ -87,6 +87,15 @@ class SummariseRequest(BaseModel):
     parent_id: str = Field(min_length=1)
 
 
+class SummariseResponse(BaseModel):
+    """A discussion summary and the candidates it proposed
+    (B-116): the summary is a draft; the candidates wait in the
+    review queue — the queue disposes."""
+
+    summary: SummaryResponse
+    candidate_ids: list[str]
+
+
 class NewsletterDraftRequest(BaseModel):
     """The month whose approved recaps become a newsletter
     draft (B-118)."""

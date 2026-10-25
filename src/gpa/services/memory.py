@@ -497,3 +497,165 @@ def list_summaries(
     if kind is not None:
         query = query.filter(Summary.kind == kind)
     return query.order_by(Summary.created_at.desc(), Summary.id.desc()).all()
+
+
+# --- Discussion summaries (B-116) ----------------------------------
+
+SUMMARY_AUTHOR = "system:summary"
+
+
+def summarise_thread(
+    db: Session,
+    settings: Settings | None = None,
+    *,
+    actor_label: str,
+    group: Group,
+    parent_type: str,
+    parent_id: str,
+    viewer_role: str | None,
+    client=None,
+) -> dict:
+    """Summarise one thread — and let the summary PROPOSE, never
+    dispose (B-116).
+
+    The thread's live comments (hidden and deleted words are
+    never summarised into the group's memory — moderation hid
+    them for a reason) become the summary prompt's chunks. The
+    summary itself is stored as a draft Summary. Then the
+    decisions and next actions the summary NAMES are extracted
+    — by the ordinary extraction pipeline, over the thread's
+    own words, so every candidate's fields carry quotes that
+    verify against what people actually said — and land in the
+    review queue as candidates (``created_by=system:summary``,
+    flagged ``from_summary``). A summary never writes a
+    Decision or a Task: the queue disposes.
+    """
+    from gpa.ai import extraction as pipeline
+    from gpa.ai import promptlib
+    from gpa.ai.client import ModelError
+    from gpa.errors import AppError
+    from gpa.models.groups import Candidate
+    from gpa.services import discussion as discussion_service
+    from gpa.services.quality import SUBJECT_FIELD
+
+    settings = settings or get_settings()
+    client = client if client is not None else resolve_client(settings, group)
+
+    comments = discussion_service.list_comments(
+        db, group=group, parent_type=parent_type, parent_id=parent_id,
+        viewer_role=viewer_role,
+    )
+    # Whatever the viewer's role, hidden/deleted words stay out
+    # of the summary: list_comments shows them to organisers for
+    # MODERATION, and moderation material is not memory.
+    live = [c for c in comments if c.hidden_at is None and c.deleted_at is None]
+    if not live:
+        raise AppError(
+            "validation_error",
+            detail="That thread has no discussion to summarise yet.",
+        )
+    chunks = [
+        pruning.MemoryChunk(
+            chunk_id=f"comment:{comment.id}",
+            position=index,
+            text=comment.body,
+            sender=comment.author_label,
+            sent_at=comment.created_at,
+            origin="comment",
+        )
+        for index, comment in enumerate(live)
+    ]
+
+    template = promptlib.load_prompt("summary")
+    schema = template.schema or {}
+    prompt = template.render(CHUNKS=pruning.render_chunks(chunks))
+    result = client.complete_json(prompt=prompt, schema=schema, tier="wonder")
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, operation="summary:summary",
+        prompt_name="summary", prompt_version=template.version,
+    )
+    if not isinstance(result.data, dict) or not isinstance(
+        result.data.get("text"), str
+    ):
+        raise ModelError(
+            "The summary answer was malformed (no 'text'); refusing to store it."
+        )
+    text = result.data["text"]
+
+    summary = Summary(
+        group_id=group.id,
+        kind="discussion",
+        title=f"Discussion summary — {parent_type}",
+        body=text,
+        status="draft",
+        verified=True,
+        citations_json="[]",
+        range_json=json.dumps(
+            {
+                "chunk_ids": [c.chunk_id for c in chunks],
+                "parent_type": parent_type,
+                "parent_id": parent_id,
+            }
+        ),
+        created_by=actor_label,
+    )
+    db.add(summary)
+    db.flush()
+
+    # Extraction over the thread's own words. A candidate is
+    # proposed only when the summary NAMES its subject — the
+    # summary proposes, extraction supplies the receipts, the
+    # queue disposes.
+    def record(result, prompt_name):
+        usage_service.record_usage(
+            db, result=result, group_id=group.id,
+            operation=f"summary:{prompt_name}", prompt_name=prompt_name,
+            prompt_version=None,
+        )
+
+    normalised_summary = " ".join(text.lower().split())
+    created: list[Candidate] = []
+    for kind in ("decision", "task"):
+        extracted = pipeline.extract_kind(
+            client, kind=kind, chunks=chunks,  # type: ignore[arg-type]
+            group_timezone=group.home_timezone or "UTC",
+            source_created_at=live[0].created_at, record_usage=record,
+        )
+        subject_field = SUBJECT_FIELD.get(kind, "title")
+        for item in extracted:
+            subject = (
+                item.draft.get("fields", {}).get(subject_field, {}).get("value")
+            )
+            if not subject:
+                continue
+            if " ".join(str(subject).lower().split()) not in normalised_summary:
+                continue  # extracted, but the summary did not name it
+            flags = list(dict.fromkeys(item.flags + ["from_summary"]))
+            candidate = Candidate(
+                group_id=group.id,
+                kind=kind,
+                title=str(subject)[:240],
+                created_by=SUMMARY_AUTHOR,
+                status="pending",
+                source_id=None,
+                draft_json=json.dumps(item.draft),
+                confidence=item.confidence,
+                prompt_name=item.prompt_name,
+                prompt_version=item.prompt_version,
+                job_id=None,
+                flags_json=json.dumps(flags),
+            )
+            db.add(candidate)
+            db.flush()
+            created.append(candidate)
+
+    audit.record(
+        db, actor=actor_label, action="memory.summary_created",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={
+            "parent_type": parent_type, "parent_id": parent_id,
+            "candidates": len(created),
+        },
+    )
+    db.commit()
+    return {"summary": summary, "candidates": created}
