@@ -304,6 +304,54 @@ def resource_booking_view(booking, resource_name: str = "", conflicts=()) -> Res
     )
 
 
+# ------------------------------------------------------------------
+# Attendance (B-109) — aggregates only, by design
+# ------------------------------------------------------------------
+
+
+class AttendanceMarkRequest(BaseModel):
+    """Mark one member present at the event in the path."""
+
+    user_id: str
+
+
+class AttendanceMarkResponse(BaseModel):
+    """The mark's own receipt — the ONLY response in this area
+    that names a person, because it echoes the organiser's act
+    itself. There is no list shape beside it, deliberately."""
+
+    event_id: str
+    user_id: str
+    marked_by: str
+    marked_at: str
+
+
+class EventAttendanceResponse(BaseModel):
+    """One event's attendance, as a count and nothing else."""
+
+    event_id: str
+    attendee_count: int
+
+
+class AttendanceEventSummary(BaseModel):
+    """One recent event in the planning summary: the event and
+    its headcount. No people."""
+
+    event_id: str
+    title: str
+    starts_at: str
+    attendee_count: int
+
+
+class AttendanceSummaryResponse(BaseModel):
+    """"Last three club nights drew ~20", as data: recent
+    events, their headcounts, and the average."""
+
+    events_considered: int
+    average_attendance: float
+    events: list[AttendanceEventSummary] = Field(default_factory=list)
+
+
 def subgroup_view(subgroup, member_count: int = 0) -> SubGroupResponse:
     """Build one sub-group's response from its row (the router
     supplies the enrolled headcount — views never query)."""
