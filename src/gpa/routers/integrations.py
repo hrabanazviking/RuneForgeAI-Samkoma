@@ -25,6 +25,7 @@ from gpa.schemas.integrations import (
     AccountLinkCreateRequest,
     AccountLinkResponse,
     LiveSyncResponse,
+    SamtalCalendarSyncResponse,
     SpeakerMember,
     SpeakerResponse,
 )
@@ -169,3 +170,35 @@ def list_speakers(
         )
         for row in livechat_service.speakers_of(db, context.group, source)
     ]
+
+
+# --- The Samtal calendar return path (B-124) ---------------------------
+
+
+@router.post(
+    "/{group_id}/sources/{source_id}/calendar-sync",
+    response_model=SamtalCalendarSyncResponse,
+)
+def sync_samtal_calendar(
+    source_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Run the calendar return path for a Samtal source.
+
+    Out: published events appear on the hall's calendar.
+    In: Samtal-side edits arrive as CHANGE CANDIDATES in the
+    review queue — never as silent writes. The event itself
+    does not move until a person approves the candidate."""
+    from gpa.services import samtal_calendar as calendar_service
+
+    source = source_service.get_source(db, context.group, source_id)
+    result = calendar_service.sync_calendar(
+        db, actor_label=principal.label, group=context.group, source=source
+    )
+    return SamtalCalendarSyncResponse(
+        source_id=source.id,
+        pushed=result["pushed"],
+        candidates_created=result["candidates_created"],
+    )

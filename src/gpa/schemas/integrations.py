@@ -71,6 +71,16 @@ class LiveSyncResponse(BaseModel):
     stage: str
 
 
+class SamtalCalendarSyncResponse(BaseModel):
+    """One run of the Samtal calendar return path (B-124):
+    how many events were pushed out, and how many Samtal-side
+    edits arrived as change candidates for the queue."""
+
+    source_id: str
+    pushed: int
+    candidates_created: int
+
+
 # --- The integration framework (B-127) -------------------------------
 
 
