@@ -25,13 +25,13 @@ spec.loader.exec_module(make_release_zip)
 
 
 def test_zip_info_carries_an_executable_mode():
-    info = make_release_zip._zip_info("gpa-backend/demo.sh", 0o100770, 0.0)
+    info = make_release_zip._zip_info("gpa-backend/demo.sh", 0o100770, 1700000000.0)
     assert stat.S_IMODE(info.external_attr >> 16) == 0o770
     assert info.create_system == 3  # Unix: the mode is meaningful.
 
 
 def test_zip_info_carries_a_plain_mode():
-    info = make_release_zip._zip_info("gpa-backend/README.md", 0o100644, 0.0)
+    info = make_release_zip._zip_info("gpa-backend/README.md", 0o100644, 1700000000.0)
     assert stat.S_IMODE(info.external_attr >> 16) == 0o644
 
 
