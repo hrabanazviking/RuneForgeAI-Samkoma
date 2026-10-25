@@ -446,6 +446,18 @@ export interface EmbedOriginsResponse {
   origins?: string[];
 }
 
+export interface EraseRequest {
+  confirm_name: string;
+  confirm_word: string;
+}
+
+export interface EraseResponse {
+  deleted: Record<string, unknown>;
+  erased: boolean;
+  group_id: string;
+  storage_objects_removed: number;
+}
+
 export interface EventAttendanceResponse {
   attendee_count: number;
   event_id: string;
@@ -707,7 +719,9 @@ export interface GroupSettingsResponse {
   reminder_rules: ReminderRule[];
   review_approvals_required: number;
   review_min_role: string;
+  source_retention_days: number | unknown | null | null;
   template_set: string;
+  upload_quota_bytes: number | unknown | null | null;
 }
 
 export interface GroupSettingsUpdateRequest {
@@ -721,7 +735,9 @@ export interface GroupSettingsUpdateRequest {
   reminder_rules?: ReminderRule[] | unknown | null | null;
   review_approvals_required?: number | unknown | null | null;
   review_min_role?: string | unknown | null | null;
+  source_retention_days?: number | unknown | null | null;
   template_set?: string | unknown | null | null;
+  upload_quota_bytes?: number | unknown | null | null;
 }
 
 export interface GroupUpdateRequest {
@@ -913,6 +929,21 @@ export interface MatchView {
   event_title?: string;
   likely?: boolean;
   score?: number;
+}
+
+export interface MeDataResponse {
+  account: Record<string, unknown>;
+  candidates_i_authored: Record<string, unknown>[];
+  comments_i_wrote: Record<string, unknown>[];
+  my_api_keys: Record<string, unknown>[];
+  my_attendance: Record<string, unknown>[];
+  my_groups: Record<string, unknown>[];
+  my_linked_accounts: Record<string, unknown>[];
+  my_notifications: Record<string, unknown>;
+  my_poll_votes: Record<string, unknown>[];
+  my_rsvps: Record<string, unknown>[];
+  seats_i_created: Record<string, unknown>[];
+  tasks_assigned_to_me: Record<string, unknown>[];
 }
 
 export interface MemberExportRow {
@@ -1385,6 +1416,11 @@ export interface ResourceResponse {
   updated_at: string;
 }
 
+export interface RetentionRunResponse {
+  sources_expired: number;
+  storage_objects_removed: number;
+}
+
 export interface RoleChangeRequest {
   role: string;
 }
@@ -1526,9 +1562,17 @@ export interface SourceDetailResponse {
   progress?: number;
   stage?: string;
   status: string;
-  storage_key?: string | unknown | null | null;
   title: string;
   url?: string;
+}
+
+export interface SourcePermissionEntry {
+  added_by: string;
+  added_on: string;
+  kind: string;
+  permission: string;
+  source_id: string;
+  title: string;
 }
 
 export interface SourceResponse {
@@ -1545,7 +1589,6 @@ export interface SourceResponse {
   progress?: number;
   stage?: string;
   status: string;
-  storage_key?: string | unknown | null | null;
   title: string;
   url?: string;
 }
@@ -1753,7 +1796,6 @@ export interface VoiceIngestResponse {
   progress?: number;
   stage?: string;
   status: string;
-  storage_key?: string | unknown | null | null;
   title: string;
   transcription_job_id: string;
   transcription_status: string;

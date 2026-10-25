@@ -97,3 +97,44 @@ read back through the API. Connecting a real Page or Google
 account is an operator act done with the platform's own
 consent flow; the tokens it issues are what the integration
 config holds.
+
+## Backup & restore (B-146)
+
+Three scripts, all in `scripts/`:
+
+```sh
+uv run python scripts/backup.py [--out DIR]     # take a bundle
+uv run python scripts/restore.py <bundle> <dir> # verify + place
+uv run python scripts/restore_drill.py          # prove it all, timed
+```
+
+A **bundle** is a directory: `data.db` (copied with SQLite's
+online backup API — safe against the live WAL database),
+`storage/` (every stored file), `manifest.json` (sha256 +
+size of everything, written at backup time), and
+`RESTORE.md`. Default output: `backups/gpa-backup-<UTC
+timestamp>` beside the deployment.
+
+**Restore** verifies every manifest hash BEFORE placing
+anything — a damaged bundle restores nothing and says which
+file failed. It writes `<dir>/data.db` and `<dir>/storage/`;
+run against them with `GPA_DATABASE_URL=sqlite:///<dir>/data.db`
+and `GPA_STORAGE_DIR=<dir>/storage`.
+
+**The drill** is the standing proof: it plants marker data
+in a throwaway instance, backs it up, copies the source
+tree to a clean directory (never the `.venv` — a copied
+environment is a broken one), restores, builds with a fresh
+`uv sync`, runs the FULL test suite in the copied tree, and
+reads the marker back through the real API. Run it after
+any change to backup/restore and before calling a release
+done; the latest timings are recorded in TEST_REPORT.md's
+Phase 13 addendum. Drill lessons baked into the script:
+child processes run with `VIRTUAL_ENV`/`PYTHONPATH` scrubbed
+and the main tree's venv bin off `PATH` (a leaked environment
+makes the restored tree's suite run the WRONG interpreter —
+the drill's first two runs died on exactly this); the build
+uses `uv sync --extra dev`, the project's documented install
+(a bare sync is runtime-only and the suite finds no runner);
+and the contract snapshot must be current before the drill's
+suite step can be green.

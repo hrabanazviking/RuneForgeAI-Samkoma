@@ -911,6 +911,66 @@ and the project owner's word.
   a missing copy returns at the next press/sync; a differing
   copy stands until a person settles it.
 
+## Security, privacy, and erasure (Phase 13) — NEW, folds into ZIP-Final
+
+Phase 13 re-attacked everything before it and added the
+privacy surfaces. What the frontend needs to know:
+
+- **`storage_key` is GONE from source responses (contract
+  change).** It was an internal locator, never fetchable —
+  no route serves file bytes by key. If your UI needs to
+  SHOW a flyer image, the road is a media route authorised
+  by flyer/source id through the view door; that route is
+  not in this build, so render flyers from their metadata
+  (dimensions, alt text) for now and ask us before assuming
+  a bytes URL of any shape. Guessed file URLs return 404 —
+  that is deliberate, and tested.
+- **Group export** — `POST /groups/{id}/export` (owner,
+  live session only; API keys get 403): returns a ZIP
+  (`Content-Disposition` filename). Offer it as "Download
+  everything this group has" in owner settings.
+- **Group erasure** — `POST /groups/{id}/erase` (same
+  door): body `{confirm_name, confirm_word}` where
+  confirm_name is the group's EXACT name and confirm_word
+  is the literal `ERASE`. A mismatch is a 422 and nothing
+  is erased. Build the confirmation screen to make the
+  person type the name — the API demands it anyway. The
+  response is a receipt of counts; the group is then 404
+  everywhere, its calendar feeds included.
+- **Storage quota.** Group settings now carry
+  `upload_quota_bytes` (default 104857600; `null` = no
+  quota). Uploads that would cross it fail 422
+  `quota_exceeded` with a plain-words detail — surface the
+  detail text as-is. Show usage as the sum of file sizes
+  you already list; the quota counts stored upload bytes.
+- **"What do you hold about me?"** — `GET /users/me/data`:
+  one payload, sections named in plain words (`account`,
+  `my_groups`, `my_api_keys`, `seats_i_created`,
+  `my_notifications`, `comments_i_wrote`, `my_rsvps`,
+  `my_poll_votes`, `my_attendance`,
+  `tasks_assigned_to_me`, `candidates_i_authored`,
+  `my_linked_accounts`). Keys appear by prefix + label only
+  — never render a "full key" from this payload; there
+  isn't one. (Non-technical reader test, B-144: the builder
+  read this payload as a member would — section names and
+  the permission words below needed no glossary; the one
+  wording fix made during the phase was in the digest's
+  plain-text rendering, not here.)
+- **Source permissions** — `GET /groups/{id}/sources/permissions`
+  (any member): `[{source_id, title, kind, added_by,
+  permission, added_on}]`. `permission` is the sharer's own
+  recorded words, or exactly "No permission note was
+  recorded for this source." — render it verbatim; it is
+  the audit surface members will quote.
+- **Retention** — settings carry `source_retention_days`
+  (`null` = keep sources forever; the default). When set,
+  raw sources older than the window are removed nightly
+  (approved events and candidates stay; candidates show
+  their source as deleted). `POST /groups/{id}/retention/run`
+  (admin) runs the sweep now and returns counts only.
+  Suggested settings copy: "Old source material is removed
+  after N days. Events your group approved stay."
+
 ## Run it
 
 ```sh

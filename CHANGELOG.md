@@ -27,6 +27,16 @@ are the roadmap's own words; phases are grouped in build order.
   (additive). Events and tasks gained `subgroup_id` scoping
   (B-105): a scoped item is absent (404) to members outside
   its sub-group on member-facing reads.
+- **Phase 13 contract change (the phase's one deliberate
+  break):** `SourceResponse` no longer carries `storage_key`
+  (B-141, D-17). A stored file's content address is an
+  internal locator: no route serves bytes by key, and the
+  key was never the frontend's to hold. `file_asset_id`
+  stays — an opaque id naming the asset record. Everything
+  else in Phase 13 is additive: five new routes (group
+  export, group erase, retention run, source permissions,
+  /users/me/data) and two new settings dials
+  (`upload_quota_bytes`, `source_retention_days`).
 
 ## Slices
 
@@ -308,3 +318,64 @@ are the roadmap's own words; phases are grouped in build order.
 - **B-138** — Phase gate: one event's full outward life in
   a single scripted test; contract regenerated (182 paths
   / 212 schemas); **ZIP-RC cut** — Phases 9–12 fold into it
+
+### Phase 13 — Security hardening, privacy, and erasure — B-139 → B-146
+
+- **B-139** — Threat-model pass: `THREAT_MODEL.md` lives in
+  the repo — assets, actors, Henry's-first-version as
+  Case #1, one abuse case per route family each mapped to
+  the test that carries it, accepted risks named (largest:
+  group content is not field-sealed until Phase 17). A
+  coherence test keeps the document true: named tests must
+  exist and every router module must be covered
+- **B-140** — Authorisation fuzz: two marked groups, 8
+  attacker principals, ~400 seeded cases across every route
+  family — zero successes, zero leaked marker bytes, zero
+  state change. FINDING, fixed at root: `GET /jobs/{id}`
+  answered any signed-in caller; a job naming a group (via
+  payload, source, notification, or webhook) is now that
+  group's members-only, 404 to everyone else
+- **B-141** — Upload hardening: disguised executables and
+  EICAR refused by content; image payloads stripped by the
+  re-encode; a per-group storage quota (`quota_exceeded`,
+  at the settings dial); storage keys leave the API (see
+  Breaking changes); the .ics door equals the view door —
+  drafts refuse for every role, the B-053 bright line
+- **B-142** — Injection + output safety: prompt rendering
+  is ONE pass (source text can no longer smuggle template
+  placeholders; benign output byte-identical, so fixture
+  recordings hold); a poisoned source yields at most a
+  pending candidate — no publish, no mail. FINDING, fixed:
+  plain-text digests carried HTML entities because escaping
+  followed the `.j2` suffix — it now follows the file kind
+- **B-143** — Group export + erasure: one schema-derived
+  deletion plan serves both acts. Export is a real ZIP
+  (domain JSON + iCal + the files themselves; secrets
+  withheld by column rule; integration configs export key
+  NAMES only). Erase is owner + live person session +
+  double confirmation; storage objects die only when no
+  other group shares them; the database is vacuumed so the
+  raw file greps clean; the audit keeps only the fact.
+  (Post-vacuum checkpoint added at the phase gate: the
+  B-146 drill proved the vacuum's output can linger in the
+  WAL leaving the raw file stale on newer SQLite builds.)
+- **B-144** — Privacy surfaces: `GET /users/me/data` (the
+  whole footprint, plain sections, no hashes by
+  construction); per-source permission records in plain
+  words; retention — an opt-in window hard-expires raw
+  sources nightly with NO tombstone (candidates keep their
+  stamp, approved events stand)
+- **B-145** — Secrets + config audit: prod startup refuses
+  known-default and short secrets; the access log redacts
+  token-carrying path segments. FINDING, fixed: httpx's
+  INFO request lines log full URLs — quieted to WARNING.
+  pip-audit ran for real over the exported lockfile: no
+  known vulnerabilities (TEST_REPORT has the output)
+- **B-146** — Backup + restore drill: `scripts/backup.py`
+  (SQLite online backup + storage + sha256 manifest),
+  `scripts/restore.py` (verify-then-place), and
+  `scripts/restore_drill.py`, which plants marker data,
+  backs up, restores into a clean tree, builds with a
+  FRESH `uv sync`, runs the whole suite there, and reads
+  the marker back through the API. Phase gate; no ZIP —
+  folds into ZIP-Final at B-151

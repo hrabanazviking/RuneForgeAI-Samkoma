@@ -545,6 +545,14 @@ def erase_group(
     try:
         connection.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
         connection.exec_driver_sql("VACUUM")
+        # The vacuum's own output travels through the WAL
+        # like any other write, and on newer SQLite builds
+        # the raw main file still shows the PRE-vacuum image
+        # until a checkpoint settles it (the B-146 restore
+        # drill caught exactly this: logically erased, raw
+        # bytes stale). Checkpoint once more so the file on
+        # disk IS the vacuumed image and the WAL is empty.
+        connection.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
     finally:
         connection.close()
 

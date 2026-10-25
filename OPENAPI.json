@@ -2367,6 +2367,61 @@
         "title": "EmbedOriginsResponse",
         "type": "object"
       },
+      "EraseRequest": {
+        "description": "The double confirmation (B-143): the group's EXACT\nname, typed back, and the word ERASE. Anything less is a\n422 and the group stands untouched \u2014 a destructive act\nmust be impossible to perform by accident or by a stray\nclient retry with a stale body.",
+        "properties": {
+          "confirm_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Confirm Name",
+            "type": "string"
+          },
+          "confirm_word": {
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Confirm Word",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm_name",
+          "confirm_word"
+        ],
+        "title": "EraseRequest",
+        "type": "object"
+      },
+      "EraseResponse": {
+        "description": "What an erasure reports: the fact, the per-table row\ncounts that were destroyed, and how many stored files went\nwith them. Never any content \u2014 the content is gone, and\nthe receipt must not become a copy of it.",
+        "properties": {
+          "deleted": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Deleted",
+            "type": "object"
+          },
+          "erased": {
+            "title": "Erased",
+            "type": "boolean"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "storage_objects_removed": {
+            "title": "Storage Objects Removed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "group_id",
+          "erased",
+          "deleted",
+          "storage_objects_removed"
+        ],
+        "title": "EraseResponse",
+        "type": "object"
+      },
       "EventAttendanceResponse": {
         "description": "One event's attendance, as a count and nothing else.",
         "properties": {
@@ -3944,9 +3999,31 @@
             "title": "Review Min Role",
             "type": "string"
           },
+          "source_retention_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Retention Days"
+          },
           "template_set": {
             "title": "Template Set",
             "type": "string"
+          },
+          "upload_quota_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Quota Bytes"
           }
         },
         "required": [
@@ -3960,7 +4037,9 @@
           "ai_daily_budget_micros",
           "prune_max_passes",
           "prune_token_budget",
-          "prune_driver"
+          "prune_driver",
+          "upload_quota_bytes",
+          "source_retention_days"
         ],
         "title": "GroupSettingsResponse",
         "type": "object"
@@ -4093,6 +4172,19 @@
             ],
             "title": "Review Min Role"
           },
+          "source_retention_days": {
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Retention Days"
+          },
           "template_set": {
             "anyOf": [
               {
@@ -4104,6 +4196,18 @@
               }
             ],
             "title": "Template Set"
+          },
+          "upload_quota_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Quota Bytes"
           }
         },
         "title": "GroupSettingsUpdateRequest",
@@ -5109,6 +5213,117 @@
           "event_id"
         ],
         "title": "MatchView",
+        "type": "object"
+      },
+      "MeDataResponse": {
+        "description": "Everything the system holds about the caller (B-144),\nin sections named the way a person would name them. The\nleaves are plain records; the service guarantees no hash\nor secret appears anywhere in them.",
+        "properties": {
+          "account": {
+            "additionalProperties": true,
+            "title": "Account",
+            "type": "object"
+          },
+          "candidates_i_authored": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Candidates I Authored",
+            "type": "array"
+          },
+          "comments_i_wrote": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Comments I Wrote",
+            "type": "array"
+          },
+          "my_api_keys": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Api Keys",
+            "type": "array"
+          },
+          "my_attendance": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Attendance",
+            "type": "array"
+          },
+          "my_groups": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Groups",
+            "type": "array"
+          },
+          "my_linked_accounts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Linked Accounts",
+            "type": "array"
+          },
+          "my_notifications": {
+            "additionalProperties": true,
+            "title": "My Notifications",
+            "type": "object"
+          },
+          "my_poll_votes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Poll Votes",
+            "type": "array"
+          },
+          "my_rsvps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "My Rsvps",
+            "type": "array"
+          },
+          "seats_i_created": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Seats I Created",
+            "type": "array"
+          },
+          "tasks_assigned_to_me": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Tasks Assigned To Me",
+            "type": "array"
+          }
+        },
+        "required": [
+          "account",
+          "my_groups",
+          "my_api_keys",
+          "seats_i_created",
+          "my_notifications",
+          "comments_i_wrote",
+          "my_rsvps",
+          "my_poll_votes",
+          "my_attendance",
+          "tasks_assigned_to_me",
+          "candidates_i_authored",
+          "my_linked_accounts"
+        ],
+        "title": "MeDataResponse",
         "type": "object"
       },
       "MemberExportRow": {
@@ -7531,6 +7746,25 @@
         "title": "ResourceResponse",
         "type": "object"
       },
+      "RetentionRunResponse": {
+        "description": "A retention sweep's receipt: counts only (B-144).",
+        "properties": {
+          "sources_expired": {
+            "title": "Sources Expired",
+            "type": "integer"
+          },
+          "storage_objects_removed": {
+            "title": "Storage Objects Removed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sources_expired",
+          "storage_objects_removed"
+        ],
+        "title": "RetentionRunResponse",
+        "type": "object"
+      },
       "RoleChangeRequest": {
         "description": "Change a member's role (B-016).",
         "properties": {
@@ -8229,17 +8463,6 @@
             "title": "Status",
             "type": "string"
           },
-          "storage_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Storage Key"
-          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -8262,6 +8485,45 @@
           "created_at"
         ],
         "title": "SourceDetailResponse",
+        "type": "object"
+      },
+      "SourcePermissionEntry": {
+        "description": "One source's permission record, in plain words (B-144):\nwhat it is, who added it, and the permission they recorded\nwhen they did \u2014 the words the group can audit.",
+        "properties": {
+          "added_by": {
+            "title": "Added By",
+            "type": "string"
+          },
+          "added_on": {
+            "title": "Added On",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "permission": {
+            "title": "Permission",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "title",
+          "kind",
+          "added_by",
+          "permission",
+          "added_on"
+        ],
+        "title": "SourcePermissionEntry",
         "type": "object"
       },
       "SourceResponse": {
@@ -8329,17 +8591,6 @@
           "status": {
             "title": "Status",
             "type": "string"
-          },
-          "storage_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Storage Key"
           },
           "title": {
             "title": "Title",
@@ -9438,17 +9689,6 @@
           "status": {
             "title": "Status",
             "type": "string"
-          },
-          "storage_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Storage Key"
           },
           "title": {
             "title": "Title",
@@ -12805,6 +13045,59 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/erase": {
+      "post": {
+        "description": "Hard-erase the group (B-143). Double confirmation: the\ngroup's exact name typed back, and the word ERASE. A\nmismatch refuses with the group untouched.",
+        "operationId": "erase_group_route_api_v1_groups__group_id__erase_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EraseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EraseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Erase Group Route",
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events": {
       "get": {
         "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers, and\nsub-group-scoped events only for their people (B-105).",
@@ -15747,6 +16040,47 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/export": {
+      "post": {
+        "description": "Download the group's whole archive (B-143): JSON by\ndomain, the calendar as iCal, the stored files as\nthemselves \u2014 one ZIP a human can open.",
+        "operationId": "export_group_api_v1_groups__group_id__export_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Group",
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/flyers": {
       "get": {
         "description": "The period's wall (B-070): every poster in the month \u2014\nthe ones approval has made events of AND the ones still\nwaiting, which show as ``pending_review``, never invisible.",
@@ -18443,6 +18777,49 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/retention/run": {
+      "post": {
+        "description": "Run the group's retention sweep NOW (B-144) \u2014 the same\nsweep the nightly job runs; the receipt is counts only.\nWith no window set, the sweep honestly expires nothing.",
+        "operationId": "run_retention_api_v1_groups__group_id__retention_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Retention",
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/roles/{slot_id}/claim": {
       "post": {
         "description": "Take one of the event's named jobs yourself.",
@@ -19277,6 +19654,53 @@
         "summary": "Paste Source",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/sources/permissions": {
+      "get": {
+        "description": "Who shared what, on what permission (B-144) \u2014 every\nsource's permission record in plain words, readable by\nany member: a group should be able to audit what was\nbrought into it and on whose say-so.",
+        "operationId": "source_permissions_api_v1_groups__group_id__sources_permissions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourcePermissionEntry"
+                  },
+                  "title": "Response Source Permissions Api V1 Groups  Group Id  Sources Permissions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Source Permissions",
+        "tags": [
+          "privacy"
         ]
       }
     },
@@ -21780,6 +22204,28 @@
           }
         },
         "summary": "Revoke Api Key",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/data": {
+      "get": {
+        "description": "Everything the system holds about me (B-144): my\naccount, my groups, my keys by prefix, what I wrote and\nchose. No hashes or secrets \u2014 a person reading their own\nrecord should never meet one.",
+        "operationId": "my_data_api_v1_users_me_data_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Data",
         "tags": [
           "users"
         ]

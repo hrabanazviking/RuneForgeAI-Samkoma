@@ -101,10 +101,23 @@ def test_no_env_file_is_tracked():
     result = subprocess.run(
         ["git", "ls-files"], cwd=root, capture_output=True, text=True
     )
-    assert result.returncode == 0, result.stderr
-    tracked = [line.strip() for line in result.stdout.splitlines()]
-    offenders = [
-        name for name in tracked
-        if name == ".env" or (name.endswith(".env") and "example" not in name)
-    ]
+    if result.returncode == 0:
+        tracked = [line.strip() for line in result.stdout.splitlines()]
+        offenders = [
+            name for name in tracked
+            if name == ".env"
+            or (name.endswith(".env") and "example" not in name)
+        ]
+        assert offenders == []
+        return
+    # No git metadata (a release ZIP, the B-146 drill's clean
+    # restored tree): the same guarantee, proven by walking
+    # the tree — no real .env ships in it either. (.venv and
+    # caches are other tooling's trees; skip them.)
+    offenders = []
+    for path in root.rglob(".env"):
+        parts = set(path.parts)
+        if ".venv" in parts or "__pycache__" in parts:
+            continue
+        offenders.append(str(path))
     assert offenders == []
