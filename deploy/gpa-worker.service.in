@@ -20,6 +20,8 @@ EnvironmentFile=@CONFIG@/gpa.env
 ExecStart=@PREFIX@/.venv/bin/gpa-worker
 Restart=on-failure
 RestartSec=2
+StandardOutput=journal
+StandardError=journal
 
 NoNewPrivileges=true
 PrivateTmp=true

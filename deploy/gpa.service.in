@@ -20,6 +20,8 @@ EnvironmentFile=@CONFIG@/gpa.env
 ExecStart=@PREFIX@/.venv/bin/uvicorn gpa.main:create_app --factory --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=2
+StandardOutput=journal
+StandardError=journal
 
 # Hardening, kept honest: the code tree is read-only to the
 # service; only the data and backup directories are writable
