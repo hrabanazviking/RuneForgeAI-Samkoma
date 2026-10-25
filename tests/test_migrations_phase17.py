@@ -62,9 +62,32 @@ def test_phase17_migration_up_down_up(tmp_path):
 
 def test_phase17_migration_from_scratch_is_a_noop(tmp_path):
     # The fresh-database road: upgrade straight to head; the
-    # guarded create must not collide with 0001's metadata
-    # build, and the chain must end at 0017.
+    # guarded creates must not collide with 0001's metadata
+    # build, and the chain must end at the CURRENT head
+    # (0019 since B-170; asserted against the script
+    # directory's own heads so this test ages with the chain).
     result = _alembic(tmp_path, "upgrade", "head")
     assert "group_keys" in _tables(tmp_path)
-    heads = _alembic(tmp_path, "current")
-    assert "0017_phase17_crypto" in heads.stdout
+    assert "recovery_escrow" in _tables(tmp_path)
+    heads = _alembic(tmp_path, "heads")
+    current = _alembic(tmp_path, "current")
+    assert heads.stdout.split()[0] in current.stdout
+
+
+def test_phase17_keymgmt_and_chain_migrations_up_down_up(tmp_path):
+    # 0018 (recovery_escrow) and 0019 (audit chain columns +
+    # head table): each must drop on the way down and return
+    # on the way up, exactly once each.
+    _alembic(tmp_path, "upgrade", "head")
+    tables = _tables(tmp_path)
+    assert "recovery_escrow" in tables and "audit_chain_head" in tables
+
+    _alembic(tmp_path, "downgrade", "0017_phase17_crypto")
+    tables = _tables(tmp_path)
+    assert "recovery_escrow" not in tables
+    assert "audit_chain_head" not in tables
+    assert "group_keys" in tables
+
+    _alembic(tmp_path, "upgrade", "head")
+    tables = _tables(tmp_path)
+    assert "recovery_escrow" in tables and "audit_chain_head" in tables

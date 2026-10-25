@@ -39,3 +39,27 @@ class GroupKey(Base):
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     rotated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class RecoveryEscrow(Base):
+    """One owner recovery code's escrow row (B-169).
+
+    A recovery code never rests anywhere: what rests is the
+    master key sealed under a scrypt key derived from the
+    code (per-row salt), plus a keyed check value that lets a
+    presented code find its row without trying every seal.
+    ``code_hint`` is the code's last two characters — enough
+    for an owner to recognise which code they hold, useless
+    for reconstruction. A used code is spent (``used_at``);
+    minting a new set deletes the old set outright.
+    """
+
+    __tablename__ = "recovery_escrow"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    code_check: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    code_hint: Mapped[str] = mapped_column(String(8), default="")
+    salt: Mapped[str] = mapped_column(String(64))
+    sealed_master: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

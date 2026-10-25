@@ -46,6 +46,7 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "internal_scope_denied": (403, "That part of the system does not hold the needed internal scope"),
     "internal_bad_payload": (422, "That internal call's payload could not be understood"),
     "internal_tampered": (400, "That internal message failed its integrity check"),
+    "recovery_code_invalid": (401, "That recovery code is not valid"),
     "internal_bad_signature": (401, "That internal message's signature did not verify"),
     "internal_replayed": (401, "That internal message was already seen"),
     "internal_bad_key": (500, "The internal key configuration is invalid"),

@@ -119,6 +119,11 @@ class Settings(BaseSettings):
     # master key) by the EncryptedStorage driver.
     encrypt_storage: bool = False
 
+    # Master-key rotation (B-169): the OLD master key, set
+    # by the operator only for the rotation job's run, then
+    # unset. Never a resting configuration.
+    master_key_old_b64: str = ""
+
     # Replay window for signed internal messages (B-164).
     internal_replay_window_seconds: int = 300
 

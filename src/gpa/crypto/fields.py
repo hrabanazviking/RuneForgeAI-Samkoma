@@ -68,6 +68,12 @@ def _wrap_aad(group_id: str) -> bytes:
     return f"gpa-group-key:{group_id}".encode()
 
 
+def wrap_aad(group_id: str) -> bytes:
+    """The public spelling (B-169's rotation re-wraps with
+    the same authenticated data)."""
+    return _wrap_aad(group_id)
+
+
 def ensure_group_key(db: Session, group_id: str, settings: Settings | None = None) -> GroupKey:
     """The group's key row, created on first use: a random
     data key wrapped under the master key. Rides the caller's

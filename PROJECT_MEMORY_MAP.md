@@ -1812,6 +1812,34 @@ Phase 16 begins at B-157.
   passed): raw-disk grep finds neither a planted text file's
   words nor a picture's bytes; the API-path upload seals on
   disk and serves whole; wrong master opens nothing.
+- **FULL-SUITE CHECKPOINT (after B-168)**:
+  `~/workspace/.verify-tmp/p17-full-gate1.log` — 960
+  collected: **955 passed / 4 skipped / 1 failed in 39m18s**.
+  The one failure was this map's author's own B-167 test
+  asserting the migration head is literally 0017 — stale
+  the moment 0018/0019 landed; the test now asserts against
+  the script directory's live head. Phase 17's first eight
+  slices are full-suite green.
+- **B-169 key management + owner recovery** ✅:
+  `gpa/services/keymgmt.py` + `KEY_MANAGEMENT.md` (the
+  hierarchy in one page). Master rotation = re-wrap only
+  (one transaction, lands whole or not at all; job
+  `crypto.rotate_master`, old key from
+  GPA_MASTER_KEY_OLD_B64, operator-set, never resting).
+  Recovery: RecoveryEscrow rows (migration 0018) hold the
+  master sealed under per-code scrypt keys; codes are
+  shown once and rested NOWHERE; the row-finding check is
+  keyed by the APP SECRET precisely so it can be computed
+  on the day the master is lost; minting deletes the old
+  set (mint = revocation); a code spends once. Acceptance
+  (tests/test_key_management.py, 4 passed): mint → lose →
+  restore round trip (sealed field opens again under the
+  recovered master); rotation re-wraps (version bump,
+  sealed data untouched; wrong old key stops whole); the
+  REAL B-146 bundle script's output greps clean for the
+  master, a data key, and all eight codes, raw and base64.
+  Migration 0019 (audit chain schema) landed in this commit
+  with its migration test; the chain itself wires at B-170.
 
 ## Standing laws in force here
 

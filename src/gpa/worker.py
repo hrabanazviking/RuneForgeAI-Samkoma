@@ -24,6 +24,7 @@ from gpa.services import vision as _vision  # noqa: F401 — registers the visio
 from gpa.services import outbound as _outbound  # noqa: F401 — registers the webhook_deliver handler on import (Phase 11)
 from gpa.services import reconcile as _reconcile  # noqa: F401 — registers the reconcile handler on import (Phase 12)
 from gpa.services import retention as _retention  # noqa: F401 — registers the retention_sweep handler on import (Phase 13)
+from gpa.services import keymgmt as _keymgmt  # noqa: F401 — registers the crypto.rotate_master handler on import (Phase 17)
 from gpa.storage import LocalStorage, set_storage
 
 
