@@ -22,6 +22,11 @@ from gpa.schemas.nonprofit import (
     AnnouncementCreateRequest,
     AnnouncementPatchRequest,
     AnnouncementResponse,
+    ResourceBookingCreateRequest,
+    ResourceBookingResponse,
+    ResourceCreateRequest,
+    ResourcePatchRequest,
+    ResourceResponse,
     ShiftCreateRequest,
     ShiftGapReportResponse,
     ShiftResponse,
@@ -31,11 +36,14 @@ from gpa.schemas.nonprofit import (
     SubGroupPatchRequest,
     SubGroupResponse,
     announcement_view,
+    resource_booking_view,
+    resource_view,
     shift_gap_view,
     shift_view,
     subgroup_view,
 )
 from gpa.services import announcements as announcement_service
+from gpa.services import resources as resource_service
 from gpa.services import shifts as shift_service
 from gpa.services import subgroups as subgroup_service
 
@@ -366,6 +374,140 @@ def shift_gaps(
     end = parse(to) or start + timedelta(days=7)
     rows = shift_service.gap_report(db, context.group, start=start, end=end)
     return ShiftGapReportResponse(events=[shift_gap_view(row) for row in rows])
+
+
+# ------------------------------------------------------------------
+# Resources + bookings (B-108)
+# ------------------------------------------------------------------
+
+resources_router = APIRouter(prefix="/api/v1/groups", tags=["resources"])
+
+
+@resources_router.post(
+    "/{group_id}/resources", response_model=ResourceResponse, status_code=201
+)
+def create_resource(
+    body: ResourceCreateRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Register a bookable item (organiser+)."""
+    row = resource_service.create_resource(
+        db, actor_label=principal.label, group=context.group,
+        name=body.name, notes=body.notes,
+        keeper_user_id=body.keeper_user_id, keeper_label=body.keeper_label,
+    )
+    return resource_view(row)
+
+
+@resources_router.get("/{group_id}/resources", response_model=list[ResourceResponse])
+def list_resources(
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """The group's bookable items, name order."""
+    return [
+        resource_view(row)
+        for row in resource_service.list_resources(db, context.group)
+    ]
+
+
+@resources_router.patch(
+    "/{group_id}/resources/{resource_id}", response_model=ResourceResponse
+)
+def update_resource(
+    resource_id: str,
+    body: ResourcePatchRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Edit an item (organiser+)."""
+    row = resource_service.update_resource(
+        db, actor_label=principal.label, group=context.group,
+        resource_id=resource_id, changes=body.model_dump(exclude_unset=True),
+    )
+    return resource_view(row)
+
+
+@resources_router.delete("/{group_id}/resources/{resource_id}", status_code=204)
+def delete_resource(
+    resource_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Remove an item and its bookings (organiser+)."""
+    resource_service.delete_resource(
+        db, actor_label=principal.label, group=context.group,
+        resource_id=resource_id,
+    )
+
+
+@resources_router.post(
+    "/{group_id}/events/{event_id}/resource-bookings",
+    response_model=ResourceBookingResponse,
+    status_code=201,
+)
+def book_resource(
+    event_id: str,
+    body: ResourceBookingCreateRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Book a resource for an event (organiser+). The response
+    carries any double-booking this creates — flagged, never
+    blocked (B-057's law, completed by B-108)."""
+    booking, conflicts = resource_service.book_resource(
+        db, actor_label=principal.label, group=context.group,
+        viewer_role=context.role, viewer_user_id=principal.user_id,
+        event_id=event_id, resource_id=body.resource_id,
+    )
+    resource = resource_service.get_resource(db, context.group, booking.resource_id)
+    return resource_booking_view(booking, resource.name, conflicts)
+
+
+@resources_router.get(
+    "/{group_id}/events/{event_id}/resource-bookings",
+    response_model=list[ResourceBookingResponse],
+)
+def list_event_bookings(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+):
+    """What an event has booked."""
+    from gpa.services import events as event_service
+
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role,
+        viewer_user_id=principal.user_id,
+    )
+    return [
+        resource_booking_view(booking, resource.name)
+        for booking, resource in resource_service.list_bookings_for_event(
+            db, context.group, event
+        )
+    ]
+
+
+@resources_router.delete(
+    "/{group_id}/resource-bookings/{booking_id}", status_code=204
+)
+def unbook_resource(
+    booking_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Release one booking (organiser+)."""
+    resource_service.unbook(
+        db, actor_label=principal.label, group=context.group,
+        booking_id=booking_id,
+    )
 
 
 @subgroups_router.delete(

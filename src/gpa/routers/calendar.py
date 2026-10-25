@@ -188,7 +188,7 @@ class MonthResponse(BaseModel):
 
 
 class ConflictFlag(BaseModel):
-    kind: str  # host_overlap | place_overlap | travel_impossible
+    kind: str  # host_overlap | place_overlap | travel_impossible | resource_overlap
     event_id: str
     occurrence_start: str
     other_event_id: str
@@ -197,15 +197,19 @@ class ConflictFlag(BaseModel):
     distance_km: float | None = None
     needed_minutes: int | None = None
     available_minutes: int | None = None
+    # Resource flags (B-108) name the double-booked item.
+    resource_id: str | None = None
+    resource_name: str | None = None
 
 
 class ConflictsResponse(BaseModel):
     flags: list[ConflictFlag]
-    # The honest boundary, on the response itself: resource
-    # double-booking needs Phase 9's resource model.
+    # Resource double-booking (B-108) rides the same flags:
+    # kind "resource_overlap", with the item named on the flag.
     resource_note: str = (
-        "Resource booking arrives in a later phase; "
-        "no resource conflicts are computed yet."
+        "Resource double-bookings appear above as resource_overlap "
+        "flags when two published events hold the same resource "
+        "over overlapping times."
     )
 
 

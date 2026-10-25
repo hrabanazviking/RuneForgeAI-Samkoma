@@ -204,6 +204,106 @@ def shift_gap_view(row: dict) -> ShiftGapResponse:
     )
 
 
+# ------------------------------------------------------------------
+# Resources + bookings (B-108)
+# ------------------------------------------------------------------
+
+
+class ResourceCreateRequest(BaseModel):
+    """Register a bookable item, with its keeper: a member's id
+    (their words become the label), or plain words."""
+
+    name: str = Field(min_length=1, max_length=160)
+    notes: str = ""
+    keeper_user_id: str | None = None
+    keeper_label: str = ""
+
+
+class ResourcePatchRequest(BaseModel):
+    """Edit an item; only sent fields change."""
+
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    notes: str | None = None
+    keeper_user_id: str | None = None
+    keeper_label: str | None = None
+
+
+class ResourceResponse(BaseModel):
+    """One bookable item and its keeper."""
+
+    id: str
+    group_id: str
+    name: str
+    notes: str = ""
+    keeper_user_id: str | None = None
+    keeper_label: str = ""
+    created_by: str
+    created_at: str
+    updated_at: str
+
+
+def resource_view(row) -> ResourceResponse:
+    """Build one resource's response from its row."""
+    return ResourceResponse(
+        id=row.id,
+        group_id=row.group_id,
+        name=row.name,
+        notes=row.notes,
+        keeper_user_id=row.keeper_user_id,
+        keeper_label=row.keeper_label,
+        created_by=row.created_by,
+        created_at=row.created_at.isoformat() + "Z",
+        updated_at=row.updated_at.isoformat() + "Z",
+    )
+
+
+class ResourceConflictFlag(BaseModel):
+    """One double-booking a booking takes part in (B-057's
+    shape, on the booking that created it)."""
+
+    kind: str = "resource_overlap"
+    resource_id: str
+    resource_name: str
+    other_event_id: str
+    other_event_title: str
+    message: str
+
+
+class ResourceBookingCreateRequest(BaseModel):
+    """Book one resource for the event in the path."""
+
+    resource_id: str
+
+
+class ResourceBookingResponse(BaseModel):
+    """One booking. ``conflicts`` carries the double-bookings
+    this booking takes part in — the booker sees the clash in
+    the response that makes it (flags, never blocks)."""
+
+    id: str
+    group_id: str
+    resource_id: str
+    resource_name: str = ""
+    event_id: str
+    booked_by: str
+    created_at: str
+    conflicts: list[ResourceConflictFlag] = Field(default_factory=list)
+
+
+def resource_booking_view(booking, resource_name: str = "", conflicts=()) -> ResourceBookingResponse:
+    """Build one booking's response from its row."""
+    return ResourceBookingResponse(
+        id=booking.id,
+        group_id=booking.group_id,
+        resource_id=booking.resource_id,
+        resource_name=resource_name,
+        event_id=booking.event_id,
+        booked_by=booking.booked_by,
+        created_at=booking.created_at.isoformat() + "Z",
+        conflicts=[ResourceConflictFlag(**flag) for flag in conflicts],
+    )
+
+
 def subgroup_view(subgroup, member_count: int = 0) -> SubGroupResponse:
     """Build one sub-group's response from its row (the router
     supplies the enrolled headcount — views never query)."""
