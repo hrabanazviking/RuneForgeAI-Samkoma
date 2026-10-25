@@ -1,0 +1,292 @@
+"""Event / calendar schemas (roadmap Phase 4).
+
+The shapes here are the frontend's calendar contract. Two
+disciplines run through the file:
+
+- **Projections are built here, server-side** (B-059): one event,
+  three levels — ``public`` (what an unauthenticated public page
+  may see), ``member`` (the group's own view), ``organiser``
+  (plus the working state: version, needs_reannounce, the
+  minting candidate). Member-only fields (access notes, host,
+  cost, bring lists) simply do not exist in a public projection —
+  absence, not redaction, is the leak-proofing.
+- **Datetimes on the wire are ISO-8601 with their offset**:
+  stored UTC instants render with a ``Z``; occurrence times
+  render in the event's own timezone with its true offset, so
+  the frontend does zero date maths (B-055).
+"""
+
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:  # annotations only
+    from gpa.models.events import Event, EventChange, Rsvp
+
+
+def iso_utc(value: datetime | None) -> str | None:
+    """A stored UTC-naive datetime → its wire form (``…Z``)."""
+    if value is None:
+        return None
+    return value.isoformat() + "Z"
+
+
+def to_utc_naive(value: datetime) -> datetime:
+    """A wire datetime → the stored convention (UTC, naive).
+
+    Aware values convert through their offset; naive values are
+    read as UTC already (the API's documented convention)."""
+    if value.tzinfo is not None:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
+# ------------------------------------------------------------------
+# Requests
+# ------------------------------------------------------------------
+
+
+class EventCreateRequest(BaseModel):
+    """Direct organiser entry (B-049). Times are ISO-8601; the
+    router converts them to stored UTC before the service runs."""
+
+    title: str = Field(min_length=1, max_length=240)
+    description: str = ""
+    starts_at: datetime
+    ends_at: datetime
+    timezone: str | None = None
+    all_day: bool = False
+    place_name: str = ""
+    place_address: str = ""
+    lat: float | None = None
+    lng: float | None = None
+    host_label: str = ""
+    host_id: str | None = None
+    cost_text: str = ""
+    cost_cents: int | None = None
+    bring_list: str = ""
+    access_notes: str = ""
+    event_type: str = ""
+    sub_group: str = ""
+    capacity: int | None = Field(default=None, ge=1)
+    status: str = "published"  # draft | published (service validates)
+
+
+class EventPatchRequest(BaseModel):
+    """An event edit (B-050). Every field optional; the router
+    passes only the fields actually sent (exclude_unset) — an
+    absent field is untouched, an explicit value is a change."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=240)
+    description: str | None = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    timezone: str | None = None
+    all_day: bool | None = None
+    place_name: str | None = None
+    place_address: str | None = None
+    lat: float | None = None
+    lng: float | None = None
+    host_label: str | None = None
+    host_id: str | None = None
+    cost_text: str | None = None
+    cost_cents: int | None = None
+    bring_list: str | None = None
+    access_notes: str | None = None
+    event_type: str | None = None
+    sub_group: str | None = None
+    capacity: int | None = Field(default=None, ge=1)
+    reason: str = ""  # carried into every change row of this patch
+
+
+class CancelRequest(BaseModel):
+    """Cancellation carries the reason in the canceller's words."""
+
+    reason: str = ""
+
+
+class RecurrenceRequest(BaseModel):
+    """Set/replace a series rule (B-052). ``exceptions`` replaces
+    the whole exception list; omit it to keep the existing ones."""
+
+    rrule: str = Field(min_length=1)
+    exceptions: list[dict] | None = None
+
+
+class ExceptionRequest(BaseModel):
+    """One per-occurrence override: this happening moved, or is
+    cancelled where it stood. Times are LOCAL ISO in the event's
+    timezone (the wall clock the group thinks in)."""
+
+    original_start: str = Field(min_length=1)
+    moved_to: str | None = None
+    cancelled: bool = False
+
+
+# ------------------------------------------------------------------
+# Responses
+# ------------------------------------------------------------------
+
+
+class FlyerView(BaseModel):
+    """A flyer's public face on an event: the picture and its
+    description state. An undescribed flyer says so — the alt
+    text law (B-065) makes the defect visible, never silent."""
+
+    flyer_id: str
+    thumbnail_key: str = ""
+    alt_text: str = ""
+    alt_text_status: str = ""
+
+
+class EventResponse(BaseModel):
+    """One event at one projection level (B-059). Fields above a
+    level's line are simply absent (None / default) below it."""
+
+    id: str
+    group_id: str
+    title: str
+    description: str = ""
+    starts_at: str
+    ends_at: str
+    timezone: str
+    all_day: bool = False
+    place_name: str = ""
+    place_address: str = ""
+    status: str
+    flyer: FlyerView | None = None
+    # member level and up
+    host_label: str | None = None
+    cost_text: str | None = None
+    cost_cents: int | None = None
+    bring_list: str | None = None
+    access_notes: str | None = None
+    event_type: str | None = None
+    sub_group: str | None = None
+    capacity: int | None = None
+    lat: float | None = None
+    lng: float | None = None
+    rsvp_summary: dict | None = None
+    # organiser level
+    etag: str | None = None
+    needs_reannounce: bool | None = None
+    created_by: str | None = None
+    candidate_id: str | None = None
+    cancelled_reason: str | None = None
+    links: dict | None = None
+
+
+class EventChangeResponse(BaseModel):
+    """One row of an event's change history (B-050)."""
+
+    id: str
+    event_id: str
+    field: str
+    old_value: str
+    new_value: str
+    changed_by: str
+    reason: str = ""
+    created_at: str
+
+
+class RecurrenceResponse(BaseModel):
+    """A series rule as stored, with its exceptions (B-052)."""
+
+    event_id: str
+    rrule: str
+    exceptions: list[dict] = Field(default_factory=list)
+
+
+class OccurrenceResponse(BaseModel):
+    """One concrete happening (B-052/B-055): the event's identity
+    fields plus THIS occurrence's times — rendered in the event's
+    timezone with true offsets, UTC alongside. A frontend never
+    expands a rule itself."""
+
+    event_id: str
+    title: str
+    status: str  # the event's status; cancelled occurrence says so too
+    occurrence_start: str  # local ISO with offset
+    occurrence_end: str
+    starts_at: str  # UTC ISO (Z)
+    ends_at: str
+    timezone: str
+    all_day: bool = False
+    place_name: str = ""
+    is_exception: bool = False
+    occurrence_cancelled: bool = False
+    needs_reannounce: bool = False
+    flyer: FlyerView | None = None
+
+
+def project_event(
+    event: "Event",
+    level: str,
+    *,
+    flyer: FlyerView | None = None,
+    rsvp_summary: dict | None = None,
+    links: dict | None = None,
+) -> EventResponse:
+    """Build one event's response at a projection level (B-059).
+
+    The level decides which fields EXIST in the response; the
+    caller decides the level from the caller's role — public for
+    the unauthenticated public routes, member for the group's
+    own reads, organiser for organiser+ callers."""
+    base = dict(
+        id=event.id,
+        group_id=event.group_id,
+        title=event.title,
+        description=event.description,
+        starts_at=iso_utc(event.starts_at),
+        ends_at=iso_utc(event.ends_at),
+        timezone=event.timezone,
+        all_day=event.all_day,
+        place_name=event.place_name,
+        place_address=event.place_address,
+        status=event.status,
+        flyer=flyer,
+    )
+    if level == "public":
+        return EventResponse(**base)
+    base.update(
+        host_label=event.host_label,
+        cost_text=event.cost_text,
+        cost_cents=event.cost_cents,
+        bring_list=event.bring_list,
+        access_notes=event.access_notes,
+        event_type=event.event_type,
+        sub_group=event.sub_group,
+        capacity=event.capacity,
+        lat=event.lat,
+        lng=event.lng,
+        rsvp_summary=rsvp_summary,
+    )
+    if level == "member":
+        return EventResponse(**base)
+    from gpa.services.events import etag_of
+
+    base.update(
+        etag=etag_of(event),
+        needs_reannounce=event.needs_reannounce,
+        created_by=event.created_by,
+        candidate_id=event.candidate_id,
+        cancelled_reason=event.cancelled_reason or None,
+        links=links,
+    )
+    return EventResponse(**base)
+
+
+def change_row(change: "EventChange") -> EventChangeResponse:
+    """One change-history row → its wire shape."""
+    return EventChangeResponse(
+        id=change.id,
+        event_id=change.event_id,
+        field=change.field,
+        old_value=change.old_value,
+        new_value=change.new_value,
+        changed_by=change.changed_by,
+        reason=change.reason,
+        created_at=iso_utc(change.created_at),
+    )

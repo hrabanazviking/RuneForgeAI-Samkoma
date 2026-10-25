@@ -9,10 +9,22 @@ Alembic and the test fixtures both rely on that. Domain files:
     sources.py   sources, ordered chunks, provenance, flyers,
                  inbound email addresses
     ai.py        the AI usage ledger (Phase 3)
+    events.py    events, their changes, recurrences, calendar
+                 feeds, discussion threads/comments, RSVPs (Phase 4)
 """
 
 from gpa.models.ai import AiUsage
 from gpa.models.core import AuditLog, FileAsset, Job
+from gpa.models.events import (
+    CalendarFeed,
+    Comment,
+    Event,
+    EventChange,
+    EventSourceLink,
+    Recurrence,
+    Rsvp,
+    Thread,
+)
 from gpa.models.groups import AgentSeat, Candidate, Group, Membership
 from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User
 from gpa.models.sources import Flyer, InboundAddress, Provenance, Source, SourceChunk
@@ -22,7 +34,12 @@ __all__ = [
     "ApiKey",
     "AgentSeat",
     "AuditLog",
+    "CalendarFeed",
     "Candidate",
+    "Comment",
+    "Event",
+    "EventChange",
+    "EventSourceLink",
     "FileAsset",
     "Flyer",
     "Group",
@@ -31,8 +48,11 @@ __all__ = [
     "Membership",
     "OneTimeToken",
     "Provenance",
+    "Recurrence",
     "RefreshToken",
+    "Rsvp",
     "Source",
     "SourceChunk",
+    "Thread",
     "User",
 ]

@@ -42,6 +42,10 @@ from gpa.models.identity import new_id, now_utc
 # Every way material can arrive (roadmap §4). Each kind gets its own
 # ingest slice in Phase 2; the core accepts all of them from day one
 # so no later slice needs a schema change to name its kind.
+# "manual" (Phase 4, B-049) is the direct-entry record: when an
+# organiser types an event in by hand, the entry itself is recorded
+# as a source of this kind — direct entry is material too, with a
+# person as its provenance.
 SOURCE_KINDS: tuple[str, ...] = (
     "chat_paste",
     "chat_live",
@@ -52,6 +56,7 @@ SOURCE_KINDS: tuple[str, ...] = (
     "link",
     "voice",
     "file",
+    "manual",
 )
 
 

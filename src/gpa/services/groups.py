@@ -356,6 +356,19 @@ def approve_candidate(
         raise AppError("conflict", detail="That candidate has already been decided.")
     candidate.status = "approved"
     candidate.approved_by = actor_label
+    # Phase 4 (B-049): approval of an event candidate MINTS the
+    # event, in this same transaction — the candidate's
+    # resulting_entity_* fills in and the event is born published.
+    # Minting refuses (and the whole approval rolls back, the
+    # candidate still pending) when the draft cannot become an
+    # event yet, e.g. it never resolved a start date. Other kinds
+    # mint nothing here: their entities are later phases' work,
+    # and approval for them stays a recorded decision only.
+    from gpa.services import events as event_service
+
+    event_service.mint_from_candidate(
+        db, group=group, candidate=candidate, actor_label=actor_label
+    )
     audit.record(
         db, actor=actor_label, action="candidate.approved",
         group_id=group.id, entity_type="candidate", entity_id=candidate.id,

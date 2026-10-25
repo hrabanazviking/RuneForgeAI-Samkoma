@@ -80,8 +80,10 @@ def test_detail_carries_full_provenance(world, client):
 def test_edit_recomputes_flags_and_then_approves(world, client):
     """A reviewer corrects the place; the draft turns "edited",
     flags are recomputed server-side, and approval accepts an
-    edited draft — recording the decision only (Phase 4 owns
-    minting; the entity link stays honestly empty)."""
+    edited draft — and since Phase 4 (B-049) approval MINTS: the
+    candidate's entity link names the published event it became.
+    (Phase 3 asserted the link stayed empty; that boundary was
+    Phase 4's to lift, and this assertion is its lifting.)"""
     rows = candidates_by_kind(client, world)
     event = rows["event"]
     gid = world["group"]["id"]
@@ -107,8 +109,15 @@ def test_edit_recomputes_flags_and_then_approves(world, client):
     )
     assert approved.status_code == 200, approved.text
     assert approved.json()["status"] == "approved"
-    assert approved.json()["resulting_entity_id"] is None
-    assert approved.json()["resulting_entity_type"] is None
+    assert approved.json()["resulting_entity_type"] == "event"
+    event_id = approved.json()["resulting_entity_id"]
+    assert event_id
+    minted = client.get(
+        f"/api/v1/groups/{gid}/events/{event_id}", headers=headers
+    )
+    assert minted.status_code == 200, minted.text
+    assert minted.json()["status"] == "published"
+    assert minted.json()["place_name"] == "the village hall"
 
 
 def test_reject_keeps_the_draft_and_refuses_later_decisions(world, client):

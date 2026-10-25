@@ -77,10 +77,15 @@ def perform(client, world, action: str, session: dict):
             headers=headers,
         )
     if action == "approve_candidate":
-        # Each approver needs their own pending candidate.
+        # Each approver needs their own pending candidate. Kind
+        # "task" on purpose: since Phase 4 (B-049), approving an
+        # event candidate MINTS an event and a title-only draft
+        # (no resolved date) is refused in plain words — the
+        # matrix is about ROLES, and a task approval exercises
+        # the identical permission door without the mint.
         candidate = client.post(
             f"/api/v1/groups/{gid}/candidates",
-            json={"kind": "event", "title": "Approve me"},
+            json={"kind": "task", "title": "Approve me"},
             headers=bearer(world["people"]["owner"]),
         ).json()
         return client.post(

@@ -31,6 +31,7 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "seat_cannot_approve": (403, "Agent seats can draft, but a person must approve"),
     "not_found": (404, "That could not be found"),
     "conflict": (409, "That conflicts with the current state"),
+    "stale_version": (409, "That version is out of date"),
     "last_owner": (409, "A group must keep at least one owner"),
     "email_taken": (409, "That email already has an account"),
     "rate_limited": (429, "Too many attempts — please wait a little"),
