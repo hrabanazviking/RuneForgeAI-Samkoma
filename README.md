@@ -6,11 +6,11 @@
 > of the noise, writes it down as a draft *with its receipts*, and then waits
 > for a human being to say yes.
 
-| 📍 Where we are | Phases 0–11 complete · Phase 12 (external publishing integrations) next |
+| 📍 Where we are | Phases 0–12 complete · Phase 13 (security hardening, privacy, erasure) next |
 |---|---|
-| 🧩 Roadmap | **130 of 350 slices** built — B-001 → B-130 of a 29-phase roadmap |
-| ✅ Tests | **769 passing**, counted from one clean run against the committed tree |
-| 📜 API contract | **174 paths · 204 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
+| 🧩 Roadmap | **138 of 350 slices** built — B-001 → B-138 of a 29-phase roadmap |
+| ✅ Tests | **797 passing**, counted from one clean run against the committed tree |
+| 📜 API contract | **182 paths · 212 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
 | 🐍 Stack | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · SQLite (WAL) today, PostgreSQL on the roadmap |
 | 🏠 Born for | The Meta Global AI Developer Hackathon — a team entry, built Oct 26 → Nov 4, 2026 |
 
@@ -80,7 +80,7 @@ sentence.
 
 ## ✨ What it can do today
 
-Everything below is built, tested, and committed (Phases 0–11).
+Everything below is built, tested, and committed (Phases 0–12).
 
 ### 📥 Feed it anything
 
@@ -522,7 +522,7 @@ code provably the team's own work).
 | 9 | Members, nonprofit pack, and resources | B-105 → B-112 | ✅ |
 | 10 | Context pruning and group memory | B-113 → B-122 | ✅ |
 | 11 | Samtal bridge and live sources | B-123 → B-130 | ✅ |
-| 12 | External publishing integrations | B-131 → B-138 | ⬜ |
+| 12 | External publishing integrations | B-131 → B-138 | ✅ |
 | 13 | Security hardening, privacy, and erasure | B-139 → B-146 | ⬜ |
 | 14 | Submission freeze and demo proof | B-147 → B-151 | ⬜ |
 | 15 | Deployment and operations | B-152 → B-156 | ⬜ |
@@ -553,7 +553,7 @@ slice range it covers. Anything inside that isn't finished is labelled
 | **ZIP-0** — Foundation | → B-010 | ✅ built, in [`releases/`](releases/) with its sha256 sidecar |
 | **ZIP-Alpha** | → B-048 | folded into Beta — no separate Alpha was cut |
 | **ZIP-Beta** | → B-104 | ✅ built — `releases/gpa-backend-v0.3-2026-10-24.zip` (762,377 bytes, sha256 `2c767bae…`), sidecar alongside |
-| **ZIP-RC** | → B-138 | ⬜ |
+| **ZIP-RC** | → B-138 | ✅ built — `releases/gpa-backend-v0.4-2026-10-25.zip` (1,073,243 bytes, sha256 `05ff1dda…`), sidecar alongside |
 | **ZIP-Final** | → B-151 | ⬜ |
 
 ## 👥 Who builds what
@@ -572,8 +572,8 @@ lockfile-recorded packages.
 
 A README that only boasts is marketing. This one keeps the ledger:
 
-- **This README describes the committed tree (Phases 0–11).** Phase 12 is
-  next in the forge; everything past B-130 in the roadmap table above is
+- **This README describes the committed tree (Phases 0–12).** Phase 13 is
+  next in the forge; everything past B-138 in the roadmap table above is
   a plan, not a claim.
 - **No live model endpoint** has been called from this environment (see the
   adapter section). Fixture and mock drivers carry every demo and test.
