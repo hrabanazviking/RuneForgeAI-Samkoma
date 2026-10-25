@@ -171,3 +171,34 @@ are the roadmap's own words; phases are grouped in build order.
 - **B-110** — Member import/export
 - **B-111** — Group settings pack
 - **B-112** — Phase gate (no ZIP — folds into ZIP-RC at B-138)
+
+### Phase 10 — Context pruning and group memory (Sun Nov 1) — B-113 → B-122
+
+- **B-113** — Pruning core: a full LLM judges chunk relevance
+  (Geoffrey's design — NOT embedding RAG, and the code says
+  so); every run writes a PruneRun (kept, dropped, model,
+  cost). Golden 500-message corpus: 100% recall at ≤25% of
+  original tokens
+- **B-114** — Multi-pass pruning with gap-driven reconsider;
+  passes/budget/driver are group settings with hard caps
+- **B-115** — Ask-the-group-memory: prune → answer with
+  citations verified by the quote rule; failure returns
+  "I couldn't verify this", never a confident guess
+- **B-116** — Discussion summaries propose CANDIDATE
+  decisions/tasks only — the queue disposes
+- **B-117** — Event briefings: pruned history + past
+  decisions, open questions, role gaps
+- **B-118** — Recaps + newsletter drafting; an approved
+  newsletter returns as a source — the memory loop closes
+- **B-119** — Local-inference driver (OpenAI-compatible,
+  text-only); per-group pruning may run local while
+  extraction stays hosted
+- **B-120** — Memory transparency: inspect and purge prune
+  runs; summaries are never deleted by a purge
+- **B-121** — Pruning evaluation: golden set scored through
+  the engine (mean recall 0.88, precision 0.94, one
+  deliberate judge miss included)
+- **B-122** — Phase gate: the three memory demos (ask,
+  briefing, recap) in mock AND live-wire modes; contract
+  regenerated (160 paths / 189 schemas); no ZIP — folds
+  into ZIP-RC at B-138

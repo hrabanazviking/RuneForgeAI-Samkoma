@@ -435,6 +435,59 @@
         "title": "ApplyWinnerRequest",
         "type": "object"
       },
+      "AskRequest": {
+        "description": "A member's question to the group's approved history.",
+        "properties": {
+          "question": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AskRequest",
+        "type": "object"
+      },
+      "AskResponse": {
+        "description": "The ask answer (B-115). ``verified`` False means\n``answer`` IS the honest refusal \u2014 its first words are\n\"I couldn't verify this\" \u2014 and its citations are labelled\nunverified by their null chunk ids.",
+        "properties": {
+          "answer": {
+            "title": "Answer",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/CitationResponse"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "prune_run_id": {
+            "title": "Prune Run Id",
+            "type": "string"
+          },
+          "summary_id": {
+            "title": "Summary Id",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "answer",
+          "verified",
+          "citations",
+          "summary_id",
+          "prune_run_id"
+        ],
+        "title": "AskResponse",
+        "type": "object"
+      },
       "AttendanceEventSummary": {
         "description": "One recent event in the planning summary: the event and\nits headcount. No people.",
         "properties": {
@@ -730,6 +783,40 @@
           "paid_cents"
         ],
         "title": "BalanceResponse",
+        "type": "object"
+      },
+      "BriefingResponse": {
+        "description": "A host briefing (B-117): the woven text, the questions\nthe history leaves open (the model's list), and the role\ngaps (the data's list \u2014 unclaimed slots, counted, not\nimagined).",
+        "properties": {
+          "open_questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Open Questions",
+            "type": "array"
+          },
+          "prune_run_id": {
+            "title": "Prune Run Id",
+            "type": "string"
+          },
+          "role_gaps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Role Gaps",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SummaryResponse"
+          }
+        },
+        "required": [
+          "summary",
+          "open_questions",
+          "role_gaps",
+          "prune_run_id"
+        ],
+        "title": "BriefingResponse",
         "type": "object"
       },
       "BudgetResponse": {
@@ -1402,6 +1489,44 @@
           "text"
         ],
         "title": "ChunkResponse",
+        "type": "object"
+      },
+      "CitationResponse": {
+        "description": "One claim's receipt. ``chunk_id``/``position`` are null\nonly on an unverified answer, where the quote is shown as\nfound material, never as proof.",
+        "properties": {
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "quote": {
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quote",
+          "chunk_id",
+          "position"
+        ],
+        "title": "CitationResponse",
         "type": "object"
       },
       "CommentCreateRequest": {
@@ -3549,6 +3674,18 @@
             ],
             "title": "Digest Weekday"
           },
+          "prune_driver": {
+            "title": "Prune Driver",
+            "type": "string"
+          },
+          "prune_max_passes": {
+            "title": "Prune Max Passes",
+            "type": "integer"
+          },
+          "prune_token_budget": {
+            "title": "Prune Token Budget",
+            "type": "integer"
+          },
           "reminder_rules": {
             "items": {
               "$ref": "#/components/schemas/ReminderRule"
@@ -3577,7 +3714,10 @@
           "digest_time",
           "digest_enabled",
           "template_set",
-          "ai_daily_budget_micros"
+          "ai_daily_budget_micros",
+          "prune_max_passes",
+          "prune_token_budget",
+          "prune_driver"
         ],
         "title": "GroupSettingsResponse",
         "type": "object"
@@ -3632,6 +3772,44 @@
               }
             ],
             "title": "Digest Weekday"
+          },
+          "prune_driver": {
+            "anyOf": [
+              {
+                "pattern": "^(hosted|local)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prune Driver"
+          },
+          "prune_max_passes": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prune Max Passes"
+          },
+          "prune_token_budget": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prune Token Budget"
           },
           "reminder_rules": {
             "anyOf": [
@@ -4783,6 +4961,29 @@
         "title": "MonthResponse",
         "type": "object"
       },
+      "NewsletterDraftRequest": {
+        "description": "The month whose approved recaps become a newsletter\ndraft (B-118).",
+        "properties": {
+          "month": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month",
+            "type": "integer"
+          },
+          "year": {
+            "maximum": 2100.0,
+            "minimum": 2000.0,
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "month"
+        ],
+        "title": "NewsletterDraftRequest",
+        "type": "object"
+      },
       "NotificationResponse": {
         "description": "One notification: one row, both channels, full state.",
         "properties": {
@@ -5692,6 +5893,87 @@
         "title": "ProvenanceEntry",
         "type": "object"
       },
+      "PruneRunResponse": {
+        "description": "One pruning run's full account (B-120): input, kept,\ndropped, passes, model, cost \u2014 dropping is visible.",
+        "properties": {
+          "cost_micros": {
+            "title": "Cost Micros",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "dropped_chunk_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dropped Chunk Ids",
+            "type": "array"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input_chunks": {
+            "title": "Input Chunks",
+            "type": "integer"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "kept_chunk_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kept Chunk Ids",
+            "type": "array"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "passes": {
+            "title": "Passes",
+            "type": "integer"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "purpose",
+          "question",
+          "input_chunks",
+          "input_tokens",
+          "kept_chunk_ids",
+          "dropped_chunk_ids",
+          "passes",
+          "model_id",
+          "cost_micros",
+          "created_by",
+          "created_at"
+        ],
+        "title": "PruneRunResponse",
+        "type": "object"
+      },
       "PublicInviteResponse": {
         "description": "An invite's public face: the event, and whether an\naccount is on offer (it always is, after answering).",
         "properties": {
@@ -6152,6 +6434,19 @@
           "end"
         ],
         "title": "QuietHours",
+        "type": "object"
+      },
+      "RecapResponse": {
+        "description": "A recap draft (B-118) \u2014 a draft, always: it becomes\nmemory only through approval.",
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/SummaryResponse"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "RecapResponse",
         "type": "object"
       },
       "RecurrenceRequest": {
@@ -7554,6 +7849,134 @@
           "created_at"
         ],
         "title": "SubGroupResponse",
+        "type": "object"
+      },
+      "SummariseRequest": {
+        "description": "Which thread to summarise (B-116): the discussion\nparents the thread system knows (B-084).",
+        "properties": {
+          "parent_id": {
+            "minLength": 1,
+            "title": "Parent Id",
+            "type": "string"
+          },
+          "parent_type": {
+            "pattern": "^(event|task|decision|poll)$",
+            "title": "Parent Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parent_type",
+          "parent_id"
+        ],
+        "title": "SummariseRequest",
+        "type": "object"
+      },
+      "SummariseResponse": {
+        "description": "A discussion summary and the candidates it proposed\n(B-116): the summary is a draft; the candidates wait in the\nreview queue \u2014 the queue disposes.",
+        "properties": {
+          "candidate_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Candidate Ids",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SummaryResponse"
+          }
+        },
+        "required": [
+          "summary",
+          "candidate_ids"
+        ],
+        "title": "SummariseResponse",
+        "type": "object"
+      },
+      "SummaryResponse": {
+        "description": "One thing the memory engine said, with its receipts.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/CitationResponse"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "source_range": {
+            "additionalProperties": true,
+            "title": "Source Range",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "kind",
+          "title",
+          "body",
+          "status",
+          "verified",
+          "question",
+          "citations",
+          "source_range",
+          "event_id",
+          "created_by",
+          "created_at"
+        ],
+        "title": "SummaryResponse",
         "type": "object"
       },
       "SupplyEventResponse": {
@@ -9320,6 +9743,59 @@
         "summary": "Update Announcement",
         "tags": [
           "announcements"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/ask": {
+      "post": {
+        "description": "Ask the group's approved history a question. The answer\ncarries citations, or is the honest refusal \u2014 and either\nway it was committed (run + summary) before this answer\nwas sent.",
+        "operationId": "ask_api_v1_groups__group_id__ask_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask",
+        "tags": [
+          "memory"
         ]
       }
     },
@@ -11630,6 +12106,58 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/briefing": {
+      "post": {
+        "description": "The host's briefing for one event: past decisions, last\nrecap, open questions, role gaps \u2014 and the pruned history\nthat matters, landmines included.",
+        "operationId": "brief_event_api_v1_groups__group_id__events__event_id__briefing_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BriefingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Brief Event",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/budget": {
       "get": {
         "description": "The balance summary: total + per-member paid totals,\nevery number exact integer cents (B-089).",
@@ -12971,6 +13499,58 @@
         "summary": "Approve Reannouncement",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/recap": {
+      "post": {
+        "description": "Draft the event's recap from its discussion, its\nattendance count, and its photos' completed alt text.\nA draft \u2014 it becomes memory only on approval.",
+        "operationId": "recap_event_api_v1_groups__group_id__events__event_id__recap_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecapResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recap Event",
+        "tags": [
+          "memory"
         ]
       }
     },
@@ -14470,6 +15050,132 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/memory/runs": {
+      "delete": {
+        "description": "Delete all of the group's run records.",
+        "operationId": "purge_all_runs_api_v1_groups__group_id__memory_runs_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge All Runs",
+        "tags": [
+          "memory"
+        ]
+      },
+      "get": {
+        "description": "Every prune/ask/brief run, with kept and dropped chunk\nids and the cost \u2014 the group can always see what its\nmemory engine did.",
+        "operationId": "list_runs_api_v1_groups__group_id__memory_runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PruneRunResponse"
+                  },
+                  "title": "Response List Runs Api V1 Groups  Group Id  Memory Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Runs",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/memory/runs/{run_id}": {
+      "delete": {
+        "description": "Delete one run record. Summaries are never deleted\nhere \u2014 the receipts go, the group's words stay.",
+        "operationId": "purge_run_api_v1_groups__group_id__memory_runs__run_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge Run",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/month": {
       "get": {
         "description": "The month grid (B-055): whole weeks, days marked\nin/out of month, occurrences already placed.",
@@ -14532,6 +15238,59 @@
         "summary": "Month",
         "tags": [
           "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/newsletters/draft": {
+      "post": {
+        "description": "Weave a month's approved recaps into a newsletter\ndraft. Drafts only.",
+        "operationId": "draft_newsletter_api_v1_groups__group_id__newsletters_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewsletterDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecapResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Draft Newsletter",
+        "tags": [
+          "memory"
         ]
       }
     },
@@ -17384,6 +18143,174 @@
         "summary": "Unenroll Member",
         "tags": [
           "subgroups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/summaries": {
+      "get": {
+        "description": "What the engine has said in this group, newest first \u2014\nanswers, briefings, and the drafts awaiting a person.",
+        "operationId": "list_summaries_api_v1_groups__group_id__summaries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SummaryResponse"
+                  },
+                  "title": "Response List Summaries Api V1 Groups  Group Id  Summaries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Summaries",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/summaries/discussion": {
+      "post": {
+        "description": "Summarise a thread (B-116). The summary is stored as a\ndraft; the decisions and next actions it names arrive as\nreview-queue candidates \u2014 never as written decisions.",
+        "operationId": "summarise_discussion_api_v1_groups__group_id__summaries_discussion_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummariseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummariseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summarise Discussion",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/summaries/{summary_id}/approve": {
+      "post": {
+        "description": "Approve a draft summary into group memory. Approving a\nnewsletter also files it as a source \u2014 the loop closes:\nnext month's memory reads this month's letter.",
+        "operationId": "approve_summary_api_v1_groups__group_id__summaries__summary_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "summary_id",
+            "required": true,
+            "schema": {
+              "title": "Summary Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Summary",
+        "tags": [
+          "memory"
         ]
       }
     },

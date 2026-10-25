@@ -23,12 +23,12 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **704 tests, all passing** (112/340 slices:
-Phases 0–9 complete) — the count taken from one clean run against
-the final Phase 9 tree (673 at the Phase 8 gate + 31 new = 704,
+Alembic up/down/up clean; **735 tests, all passing** (122/350 slices:
+Phases 0–10 complete) — the count taken from one clean run against
+the final Phase 10 tree (704 at the Phase 9 gate + 31 new = 735,
 collected count reconciled). ZIP-Beta cut at the Phase 8 gate
-(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phase 9
-cut no ZIP — it folds into ZIP-RC at B-138.
+(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phases 9
+and 10 cut no ZIP — they fold into ZIP-RC at B-138.
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
@@ -902,8 +902,102 @@ login, no API key, no network).
   now use --basetemp on the workspace overlay. Final clean
   run: 704 passed (673 + 31), read from the run's own log.
 
+### Phase 10 — Context pruning and group memory (B-113 → B-122): COMPLETE (2026-10-25)
+- Tables live in models/memory.py (Summary, PruneRun); Group
+  gained prune_max_passes (default 2), prune_token_budget
+  (default 120000), prune_driver (default "hosted").
+  Migration 0013_phase10_memory (guarded, in the 0012 style).
+- The corpus law: memory reads APPROVED history only —
+  sources scoped "group-history" + CURRENT decisions +
+  APPROVED summaries of kind discussion/recap — assembled by
+  services/memory.approved_corpus, positions renumbered in
+  chronological order, chunk ids source:/decision:/summary:.
+- B-113 pruning core (ai/pruning.py): Geoffrey's design — a
+  full LLM judges relevance chunk by chunk; the module says
+  plainly it is NOT embedding RAG (a test asserts the words
+  and the absence of embedding/vector imports). Windows ride
+  extraction.chunk_windows; tier "wonder"; the token budget
+  is checked BEFORE each window call on the rendered
+  prompt's estimate (unjudged chunks stay dropped, outcome
+  flagged budget_stopped). Golden 500-message corpus: 12/12
+  human-marked chunks kept at ≤25% of corpus tokens.
+- B-114 multi-pass: prune_multi = prune_once +
+  reconsider_dropped per extra pass over the dropped set;
+  ceiling MAX_PASSES_CEILING = 3 above the settings caps.
+  B-115's gap pass reuses reconsider against the unverified
+  draft's text.
+- B-115 ask (services/memory.ask_question): prune → draft
+  from survivors only → EVERY citation verified by B-040's
+  quote rule (extraction.find_quote); zero citations is
+  unverifiable by construction. Failure returns the refusal
+  led by "I couldn't verify this" with found material
+  labelled and its citations carrying null chunk ids —
+  never a confident guess (the acceptance test). Run +
+  Summary(kind=ask) committed before the answer.
+- B-116 summaries propose, the queue disposes:
+  summarise_thread stores a draft Summary and lands the
+  decisions/tasks the summary NAMES as Candidates
+  (created_by "system:summary", flag "from_summary",
+  source_id NULL, NO provenance rows — comments are not
+  SourceChunks; the quotes live in the draft fields). It
+  writes NO Decision/Task rows. Hidden/deleted comments
+  never enter a summary (read at the caller's role, then
+  filtered regardless).
+- B-117 briefings weave the structured present (decisions
+  linked to or word-matching the event, latest APPROVED
+  recap, open OpenQuestions, unclaimed RoleSlots) with
+  history pruned on the event's own terms; the run's kept
+  set is the briefing's receipt. Golden: an August landmine
+  about the flooding marquee lands in the November briefing.
+- B-118 recaps read discussion + the attendance COUNT +
+  Flyers with alt_text_status "complete" only (the alt-text
+  law both ways). Approval is the only door from draft to
+  memory; approving a newsletter creates a Source
+  (kind "newsletter", paragraphs as chunks) — the loop
+  closes, and the loop test proves a distinctive phrase
+  from an approved letter survives into a later prune.
+- B-119 LocalDriver (ai/drivers_local.py): OpenAI-compatible
+  chat-completions, text only (media calls raise plain-words
+  ModelError), one model all tiers, cost_micros 0 (own
+  hardware), endpoint token counts when reported. Selected
+  per-group by prune_driver="local" in
+  services/memory.resolve_client; a missing endpoint config
+  is a plain refusal, never a silent fallback. Extraction
+  always uses the process client. Swap test: same corpus,
+  same survivors, both drivers.
+- B-120 transparency: GET /memory/runs (member) lists runs
+  with kept/dropped ids, passes, model, cost; DELETE one or
+  all (organiser) purges the ledger — summaries are never
+  deleted by a purge (their source ranges keep chunk ids
+  naming sources/decisions that still exist).
+- B-121 evaluation (ai/pruning_evaluation.py +
+  pruning_eval_corpus.json): golden questions with
+  human-marked relevants, scored through the real engine
+  against a recorded judge that is DELIBERATELY imperfect
+  (one named miss, recall 0.50; one over-keep, precision
+  0.75). Means: recall 0.88, precision 0.94; floors asserted
+  in tests; the table lives in TEST_REPORT's Phase 10
+  addendum.
+- B-122 gate: the three demos in mock mode (honest outcomes
+  — the mock keeps nothing, so ask returns the refusal) and
+  live mode (LiveDriver over a content-aware stub
+  transport; no real Meta endpoint exists in this
+  environment — the standing boundary, recorded not faked).
+  Contract regenerated: 160 paths / 189 schemas (was
+  151 / 179). Bruno collections unchanged (still the B-010
+  skeleton, as at the Phase 9 gate). No ZIP.
+- Gate findings: (1) two AppError("not_found", status=404)
+  calls in the new service passed a kwarg the error chassis
+  does not take — the registry owns statuses; fixed and
+  covered by the B-120 cross-group purge test. (2) The recap
+  service first read its discussion viewer-less, and the
+  visibility bright line (visible_to with role None) hides
+  EVERY event from a viewer-less read — the recap now reads
+  at the organiser role its door guarantees, then filters
+  hidden/deleted regardless.
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 10 begins at B-113.
+Phase 11 begins at B-123.
 
 ## Decisions & deviations (from the roadmap defaults)
 

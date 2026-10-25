@@ -128,3 +128,74 @@ One Phase 4 assertion was updated as superseded (the Phase 8
 pattern): tests/test_calendar_views.py's conflict note now
 asserts "resource_overlap" — B-108 made Phase 4's deferred
 resource-conflict flag real; intent unchanged.
+
+---
+
+# Addendum — Phase 10 (B-122 gate, 2026-10-25; no ZIP)
+
+Phase 10 cut no ZIP (it folds into ZIP-RC at B-138, per the
+roadmap's train), so this addendum carries its numbers until
+the RC report supersedes it.
+
+## Suite
+
+- **735 passed, 0 failed, 0 errors** — the reconciled clean
+  run against the final Phase 10 tree (pytest, one warning:
+  a Starlette TestClient deprecation notice), temp base on
+  the workspace overlay per the standing /tmp practice.
+- Collected = passed = 735. Reconciliation: 704 at the
+  Phase 9 gate + 31 new Phase 10 tests = 735.
+- Contract: 160 OpenAPI paths, 189 schemas (was 151 / 179) —
+  `OPENAPI.json` regenerated at this gate is the exact schema
+  the snapshot test passed against; `frontend_types.ts`
+  generated from it. The Bruno collections remain the B-010
+  skeleton, unchanged (as at the Phase 9 gate).
+- Two defects were found and fixed inside the phase's own
+  work, both covered by its tests: two `AppError` calls
+  passed a `status=` kwarg the error chassis does not take
+  (the registry owns statuses — the cross-group purge test
+  caught it as a 500), and the recap service's viewer-less
+  discussion read met the visibility bright line (a
+  viewer-less read sees no events at all); the recap now
+  reads at the organiser role its door guarantees.
+
+## Phase 10's new tests (31)
+
+| File | Tests | Covers |
+|---|---|---|
+| test_pruning.py | 4 | B-113 golden 500-message corpus (recall floor 100%, kept ≤25% of tokens), approved-history-only corpus scope, PruneRun written, the not-embedding-RAG wording + import audit |
+| test_migrations_phase10.py | 1 | Migration 0013 up/down/up |
+| test_pruning_multipass.py | 5 | B-114 pass-2 recovery of a dropped landmine, pass cap, ceiling, token-budget stop (zero calls, all dropped, flagged), settings round-trip + refusals |
+| test_ask.py | 5 | B-115 verified answer with chunk-linked citations, the unverifiable-answer acceptance (fabricated quote → the refusal), gap-pass rescue, nothing-relevant refusal, stranger 404 |
+| test_summaries.py | 2 | B-116 summary → 2 pending candidates (system:summary, from_summary), zero Decision/Task rows written; empty thread refused plainly |
+| test_briefings.py | 1 | B-117 golden briefing carries the August landmine; role gaps from data; the run's kept set names the landmine chunk |
+| test_recaps.py | 1 | B-118 the loop closes: recap draft → approval → newsletter draft → approval → newsletter is a Source and its golden phrase survives a later prune; drafts are not memory; double approval 409 |
+| test_local_driver.py | 5 | B-119 wire shape + honest provenance (local model id, zero cost), text-only refusals, config refusals, per-group selection with no silent fallback, driver-swap same-survivors |
+| test_memory_runs.py | 3 | B-120 runs inspectable (kept/dropped/model/cost), purge one then all with summaries surviving, organiser door + cross-group purge is a not-found |
+| test_pruning_evaluation.py | 2 | B-121 golden set scored through the engine; floors; the deliberate miss asserted by name; table renders |
+| test_phase10_gate.py | 2 | B-122 the three demos (ask, briefing, recap) in mock mode (honest refusal) and live mode (live wire path, content-aware stub transport) |
+
+## Pruning evaluation (B-121)
+
+The golden pruning set — human-marked relevant chunks,
+scored through the real engine against a recorded judge
+(deliberately imperfect, so the table measures rather than
+flatters):
+
+| Question | Chunks | Relevant | Kept | Recall | Precision |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Where do club nights happen? | 8 | 2 | 2 | 1.00 | 1.00 |
+| What did we decide about food for the supper? | 10 | 3 | 4 | 1.00 | 0.75 |
+| Who is bringing the marquee and when? | 9 | 2 | 1 | 0.50 | 1.00 |
+| What warnings were given about the venue? | 12 | 3 | 3 | 1.00 | 1.00 |
+| **Mean** | | | | **0.88** | **0.94** |
+
+## The honest boundary
+
+No real Meta model endpoint or credential exists in this
+environment. The gate's "live mode" is the hosted driver's
+real code path — wire shape, headers, retries, parsing —
+exercised against a stub transport whose answers are
+content-aware (it reads the prompt it was sent and judges
+the chunks in it). Fixture and mock remain the demo drivers;
+nothing in this phase pretends a real model judged anything.

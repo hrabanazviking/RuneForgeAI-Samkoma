@@ -78,6 +78,18 @@ export interface ApplyWinnerRequest {
   title?: string | unknown | null | null;
 }
 
+export interface AskRequest {
+  question: string;
+}
+
+export interface AskResponse {
+  answer: string;
+  citations: CitationResponse[];
+  prune_run_id: string;
+  summary_id: string;
+  verified: boolean;
+}
+
 export interface AttendanceEventSummary {
   attendee_count: number;
   event_id: string;
@@ -141,6 +153,13 @@ export interface BalanceResponse {
   member_id?: string | unknown | null | null;
   member_label?: string;
   paid_cents: number;
+}
+
+export interface BriefingResponse {
+  open_questions: string[];
+  prune_run_id: string;
+  role_gaps: string[];
+  summary: SummaryResponse;
 }
 
 export interface BudgetResponse {
@@ -254,6 +273,12 @@ export interface ChunkResponse {
   sent_at?: string | unknown | null | null;
   text: string;
   timestamp_text?: string | unknown | null | null;
+}
+
+export interface CitationResponse {
+  chunk_id: string | unknown | null | null;
+  position: number | unknown | null | null;
+  quote: string;
 }
 
 export interface CommentCreateRequest {
@@ -625,6 +650,9 @@ export interface GroupSettingsResponse {
   digest_enabled: boolean;
   digest_time: string;
   digest_weekday: number | unknown | null | null;
+  prune_driver: string;
+  prune_max_passes: number;
+  prune_token_budget: number;
   reminder_rules: ReminderRule[];
   review_approvals_required: number;
   review_min_role: string;
@@ -636,6 +664,9 @@ export interface GroupSettingsUpdateRequest {
   digest_enabled?: boolean | unknown | null | null;
   digest_time?: string | unknown | null | null;
   digest_weekday?: number | unknown | null | null;
+  prune_driver?: string | unknown | null | null;
+  prune_max_passes?: number | unknown | null | null;
+  prune_token_budget?: number | unknown | null | null;
   reminder_rules?: ReminderRule[] | unknown | null | null;
   review_approvals_required?: number | unknown | null | null;
   review_min_role?: string | unknown | null | null;
@@ -859,6 +890,11 @@ export interface MonthResponse {
   year: number;
 }
 
+export interface NewsletterDraftRequest {
+  month: number;
+  year: number;
+}
+
 export interface NotificationResponse {
   attempts: number;
   body_html: string;
@@ -1023,6 +1059,22 @@ export interface ProvenanceEntry {
   supported?: boolean;
 }
 
+export interface PruneRunResponse {
+  cost_micros: number;
+  created_at: string;
+  created_by: string;
+  dropped_chunk_ids: string[];
+  group_id: string;
+  id: string;
+  input_chunks: number;
+  input_tokens: number;
+  kept_chunk_ids: string[];
+  model_id: string;
+  passes: number;
+  purpose: string;
+  question: string;
+}
+
 export interface PublicInviteResponse {
   account_offered: boolean;
   description: string;
@@ -1109,6 +1161,10 @@ export interface QuietHours {
   end: string;
   start: string;
   timezone?: string | unknown | null | null;
+}
+
+export interface RecapResponse {
+  summary: SummaryResponse;
 }
 
 export interface RecurrenceRequest {
@@ -1385,6 +1441,32 @@ export interface SubGroupResponse {
   id: string;
   member_count?: number;
   name: string;
+}
+
+export interface SummariseRequest {
+  parent_id: string;
+  parent_type: string;
+}
+
+export interface SummariseResponse {
+  candidate_ids: string[];
+  summary: SummaryResponse;
+}
+
+export interface SummaryResponse {
+  body: string;
+  citations: CitationResponse[];
+  created_at: string;
+  created_by: string;
+  event_id: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  kind: string;
+  question: string;
+  source_range: Record<string, unknown>;
+  status: string;
+  title: string;
+  verified: boolean;
 }
 
 export interface SupplyEventResponse {

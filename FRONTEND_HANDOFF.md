@@ -707,6 +707,61 @@ settings pack. All live and tested; contract is now
   the API returns 403 `seat_cannot_approve`. Approval UI is for
   people (organiser+) only.
 
+## Context pruning and group memory (Phase 10) — NEW, folds into ZIP-RC
+
+The group's memory engine: the approved history (sources,
+current decisions, approved summaries) can be asked
+questions, woven into briefings and recaps, and inspected.
+All live and tested; contract is now 160 paths /
+189 schemas.
+
+- **Ask the memory** — `POST /groups/{id}/ask` `{question}`
+  (member+) → `{answer, verified, citations, summary_id,
+  prune_run_id}`. Every citation is `{quote, chunk_id,
+  position}` and was verified against its source chunk
+  before the answer shipped. **When `verified` is false,
+  the answer BEGINS with "I couldn't verify this"** and any
+  citations carry `chunk_id: null` — render unverified
+  answers visibly differently (they are labelled found
+  material, not fact). Never restyle a refusal as an answer.
+- **Summaries** — `GET /groups/{id}/summaries?kind=`
+  (member+) lists answers, briefings, recaps, newsletters
+  with `status` draft/approved/final. Drafts become memory
+  only via `POST /groups/{id}/summaries/{summary_id}/approve`
+  (organiser+). Approving a **newsletter** also files it as
+  a source — next month's memory reads it.
+- **Discussion summaries** — `POST
+  /groups/{id}/summaries/discussion` `{parent_type,
+  parent_id}` (organiser+) → a draft summary plus
+  `candidate_ids`: the decisions/next actions it named,
+  waiting in the review queue as ordinary candidates
+  (`created_by: "system:summary"`, flag `from_summary`).
+  A summary never writes a decision itself.
+- **Event briefings** — `POST
+  /groups/{id}/events/{event_id}/briefing` (member+) →
+  `{summary, open_questions, role_gaps, prune_run_id}`:
+  the host's woven briefing (past decisions, last recap,
+  pruned history — landmines included), the model's open
+  questions, and the data's unclaimed role names.
+- **Recaps + newsletters** — `POST
+  /groups/{id}/events/{event_id}/recap` (organiser+) drafts
+  a recap from discussion + attendance count + **completed
+  alt text only**; `POST /groups/{id}/newsletters/draft`
+  `{year, month}` (organiser+) weaves that month's
+  APPROVED recaps into a newsletter draft.
+- **Memory transparency** — `GET /groups/{id}/memory/runs`
+  (member+) lists every prune/ask/brief run with kept and
+  dropped chunk ids, passes, model, and cost. `DELETE
+  /groups/{id}/memory/runs/{run_id}` and `DELETE
+  /groups/{id}/memory/runs` (organiser+) purge run records;
+  **summaries are never deleted by a purge**.
+- **Pruning settings** — the settings pack gains
+  `prune_max_passes` (1–3), `prune_token_budget`, and
+  `prune_driver` (`hosted` | `local`). Local pruning runs
+  on the group's own OpenAI-compatible endpoint when the
+  operator has configured one; extraction always stays on
+  the process driver.
+
 ## Run it
 
 ```sh
