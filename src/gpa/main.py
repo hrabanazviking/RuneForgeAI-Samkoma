@@ -40,6 +40,7 @@ from gpa.routers import (
     notifications,
     planning,
     polls,
+    privacy,
     rsvps,
     sources,
     templates,
@@ -230,6 +231,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(nonprofit.members_io_router)
     app.include_router(nonprofit.settings_router)
     app.include_router(memory.router)
+    app.include_router(privacy.router)
     app.include_router(integrations.router)
     app.include_router(integrations.webhook_router)
 
