@@ -1840,6 +1840,26 @@ Phase 16 begins at B-157.
   master, a data key, and all eight codes, raw and base64.
   Migration 0019 (audit chain schema) landed in this commit
   with its migration test; the chain itself wires at B-170.
+- **B-170 tamper-evident audit chain** ✅: AuditLog gains
+  prev_hash/row_hash; AuditChainHead (id=1) holds the tip,
+  extended inside each writer's transaction by
+  audit.record's new flush-and-hash step (flush, never a
+  commit — change and audit entry still land or roll back
+  together). Hash = HMAC-SHA256 keyed by a chain key
+  derived from the app secret (set_chain_secret in all
+  composition roots). `gpa/services/audit_chain.py`
+  verifies by LINK WALK: follows prev-hash links from
+  GENESIS (or a uniquely re-anchored start), recomputes
+  every row, requires the walk to consume exactly the
+  hashed rows, and checks the head — edits, deletes,
+  forged inserts, forks, and tail cuts each fail AT the
+  wound with the row named. Endpoint:
+  GET /groups/{id}/audit/verify (admin of any group; the
+  chain is instance-wide). Acceptance
+  (tests/test_audit_chain.py, 5 passed): ordered links
+  verify; edited row fails naming the row; deleted row
+  breaks; forged insert detected; endpoint answers the
+  same verdict. Audit-heavy regression batch: 62 passed.
 
 ## Standing laws in force here
 

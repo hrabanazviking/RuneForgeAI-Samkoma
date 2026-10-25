@@ -328,3 +328,18 @@ def read_audit(
         )
         for row in audit_service.list_for_group(db, context.group.id)
     ]
+
+
+@router.get("/{group_id}/audit/verify")
+def verify_audit_chain(
+    context: GroupContext = Depends(require_group_role("admin")),
+    db: Session = Depends(get_db),
+):
+    """Verify the tamper-evident audit hash chain (B-170).
+
+    The chain is instance-wide, so this answers for the whole
+    log, not one group — an admin of any group may ask. The
+    report names the first broken row when there is one."""
+    from gpa.services import audit_chain
+
+    return audit_chain.verify_chain(db, audit_service._chain_key())

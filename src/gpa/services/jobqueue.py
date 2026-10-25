@@ -297,6 +297,9 @@ async def arq_startup(ctx: dict) -> None:
     from gpa.crypto import fields as _fields
 
     _fields.set_settings(settings)
+    from gpa.services import audit as _audit
+
+    _audit.set_chain_secret(settings.secret_key)
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)

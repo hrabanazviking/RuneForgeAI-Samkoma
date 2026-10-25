@@ -171,6 +171,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from gpa.services import outbound
 
     outbound.set_settings(settings)
+    from gpa.services import audit as _audit
+
+    _audit.set_chain_secret(settings.secret_key)
     app.state.db = Database(settings.database_url)
     # Storage: the local driver, sealed per-file when the
     # deployment asks (B-168, GPA_ENCRYPT_STORAGE).

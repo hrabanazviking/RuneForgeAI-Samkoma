@@ -48,6 +48,9 @@ def main() -> None:
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)
+    from gpa.services import audit as _audit
+
+    _audit.set_chain_secret(settings.secret_key)
     from gpa.storage.encrypted import build_storage
 
     set_storage(build_storage(settings))
