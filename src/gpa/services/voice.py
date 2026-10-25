@@ -2,12 +2,13 @@
 
 What this file is for: a member records a voice note — "the hall
 is booked for seven, Ana brings the projector" — and uploads the
-audio. Today the note is stored safely, opened as a ``voice``
-source whose single chunk says plainly that it awaits
-transcription, and a ``transcribe`` job is enqueued for it. The
-real speech-to-text driver arrives in Phase 5, behind the AI
-adapter; the stub handler (services/transcribe.py) registers the
-wait without pretending to hear anything.
+audio. The note is stored safely, opened as a ``voice`` source
+whose single chunk says plainly that it awaits transcription,
+and a ``transcribe`` job is enqueued for it. The handler
+(services/transcribe.py) runs the audio through the AI adapter
+(Phase 5, B-068) and replaces the marker chunk with the note's
+real words; until that job lands, the wait is stated, never
+dressed up as a transcript.
 
 Audio is sniffed by content, as everywhere in Phase 2: WAV, MP3,
 Ogg, FLAC, and M4A/MP4-audio containers are recognised by their
@@ -33,7 +34,7 @@ from gpa.services.transcribe import JOB_KIND as TRANSCRIBE_KIND
 # in place of words nobody has heard yet.
 AWAITING_CHUNK = (
     "Voice note received — its words arrive with the transcription "
-    "driver (Phase 5). The audio itself is stored with this source."
+    "job. The audio itself is stored with this source."
 )
 
 

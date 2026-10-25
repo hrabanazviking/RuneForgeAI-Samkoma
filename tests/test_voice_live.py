@@ -37,7 +37,7 @@ def test_voice_note_is_stored_and_its_job_is_visible(client, db_session, app):
     assert body["kind"] == "voice"
     assert body["status"] == "awaiting_transcription"
     assert body["stage"] == "awaiting_transcription"
-    assert "transcription driver" in body["chunks"][0]["text"]
+    assert "transcription job" in body["chunks"][0]["text"]
     job_id = body["transcription_job_id"]
     assert body["transcription_status"] == "queued"
 
@@ -45,14 +45,22 @@ def test_voice_note_is_stored_and_its_job_is_visible(client, db_session, app):
     job = client.get(f"/api/v1/jobs/{job_id}", headers=bearer(owner))
     assert job.status_code == 200, job.text
     assert job.json()["kind"] == "transcribe"
-    # …and the stub handler completes it without faking a transcript.
+    # …and the handler completes it. Superseded by Phase 5
+    # (B-068): this once asserted the source still waited after
+    # the job ran, because the handler was an honest stub. The
+    # handler is real now — through the adapter — and on this
+    # app's mock driver the note's words are the mock's own
+    # honestly-labelled canned transcript; the golden words are
+    # proven in tests/test_transcription.py.
     assert job_service.process_one(db_session, app.state.settings, "test-worker") is True
     done = client.get(f"/api/v1/jobs/{job_id}", headers=bearer(owner))
     assert done.json()["status"] == "done"
     source = client.get(
         f"/api/v1/groups/{group['id']}/sources/{body['id']}", headers=bearer(owner)
     )
-    assert source.json()["status"] == "awaiting_transcription"
+    assert source.json()["status"] == "ready"
+    assert source.json()["stage"] == "done"
+    assert "mock driver does not listen" in source.json()["chunks"][0]["text"]
 
 
 def test_voice_rejects_a_disguised_program(client):
