@@ -47,7 +47,9 @@ def main() -> None:
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)
-    set_storage(LocalStorage(settings.storage_dir))
+    from gpa.storage.encrypted import build_storage
+
+    set_storage(build_storage(settings))
     db = Database(settings.database_url)
     db.create_all()
     worker_id = f"worker-{uuid.uuid4().hex[:8]}"

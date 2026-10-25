@@ -300,7 +300,9 @@ async def arq_startup(ctx: dict) -> None:
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)
-    set_storage(LocalStorage(settings.storage_dir))
+    from gpa.storage.encrypted import build_storage
+
+    set_storage(build_storage(settings))
     database = Database(settings.database_url)
     database.create_all()
     ctx["database"] = database

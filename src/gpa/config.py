@@ -114,6 +114,11 @@ class Settings(BaseSettings):
     # (development posture); production sets a real one.
     master_key_b64: str = ""
 
+    # Encrypted file storage (B-168): when true, stored
+    # objects are sealed per-file (keys wrapped under the
+    # master key) by the EncryptedStorage driver.
+    encrypt_storage: bool = False
+
     # Replay window for signed internal messages (B-164).
     internal_replay_window_seconds: int = 300
 

@@ -172,7 +172,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     outbound.set_settings(settings)
     app.state.db = Database(settings.database_url)
-    app.state.storage = LocalStorage(settings.storage_dir)
+    # Storage: the local driver, sealed per-file when the
+    # deployment asks (B-168, GPA_ENCRYPT_STORAGE).
+    from gpa.storage.encrypted import build_storage
+
+    app.state.storage = build_storage(settings)
     # The same backend, shared via the storage registry so job
     # handlers reach it too (Phase 5's vision/transcription).
     from gpa.storage import set_storage

@@ -1791,6 +1791,27 @@ Phase 16 begins at B-157.
   keys nowhere in the file; cross-group/cross-field opens
   refused. NOT yet sealed (service is field-generic; named
   next adopters): candidate draft fields and discussion text.
+- **B-168 encrypted file storage** ✅:
+  `gpa/storage/encrypted.py` — a B-007 driver wrapping the
+  local driver: every object sealed with a fresh per-file
+  key (AES-256-GCM), the file key wrapped under the master
+  key and carried in a `GPAE1` header inside the object;
+  reads open transparently; legacy unsealed objects read as
+  themselves. LocalStorage gained `put_at` (key-addressed
+  atomic write) so the sealed blob rests under the
+  PLAINTEXT's content address — keys, dedup, and the
+  erasure shared-object law all survive. Composition:
+  `GPA_ENCRYPT_STORAGE` via build_storage in all roots +
+  the storage registry default. DEVIATION FROM THE ROADMAP'S
+  LETTER, recorded: file keys wrap under the MASTER key, not
+  the group key — the store is content-addressed and shared
+  across groups by design (one object, several owner groups;
+  B-143 keeps it while any owner lives), and a group-wrapped
+  key would make a shared object unreadable to its other
+  owners. Acceptance (tests/test_encrypted_storage.py, 5
+  passed): raw-disk grep finds neither a planted text file's
+  words nor a picture's bytes; the API-path upload seals on
+  disk and serves whole; wrong master opens nothing.
 
 ## Standing laws in force here
 
