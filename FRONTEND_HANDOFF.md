@@ -1,4 +1,4 @@
-# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–6
+# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–7
 
 *Regenerated at each release. Read this first.*
 
@@ -410,6 +410,127 @@ delivery (Phase 11), the Facebook posting integration
   `unresolved_contradictions` — and `needs_attention`, their
   total. The badge is that number; the lists are the work
   queue behind it.
+
+## Planning: tasks, decisions, polls, checklists (Phase 7)
+
+Phase 7 folds into **ZIP-Beta** (cut at the Phase 8 gate) — no
+separate ZIP. The planning screens below are the group's home.
+
+- **Group home / "state of the plan" (B-093).** `GET
+  /groups/{id}/planning-digest` is one call for the home
+  screen: `week_start`/`week_end` (Monday → Monday,
+  group-local), `events_this_week`, `unclaimed_tasks`,
+  `open_questions`, `undecided_polls` (each poll with its
+  tally). Render the four sections as the home's lists; the
+  counts are the badges.
+- **Tasks (B-083).** `GET/POST /groups/{id}/tasks` (filters:
+  `event_id`, `status`, `unclaimed`, `owner_id`), `GET
+  /groups/{id}/events/{eid}/tasks`, `PATCH
+  /groups/{id}/tasks/{tid}`. Every task carries two computed
+  truths — build the UI on them, never recompute:
+  `unclaimed` (nobody owns it — show it loudly) and `overdue`.
+  `suggested_owner_label` is the AI's reading of who
+  volunteered ("Ben said he'd bring it") — render it as a
+  hint ("Ben mentioned this"), NEVER as the owner. `owner_id`
+  is set only by a person: the create form, the assign action
+  (PATCH `owner_id`, `null` unassigns), or a reviewer naming a
+  member in a candidate draft before approving. Status flow:
+  `open → in_progress → done`/`cancelled`, `done → open`
+  reopens; other jumps return 409.
+- **Approvals now mint planning too.** Approving a task /
+  decision / question candidate creates the entity in the same
+  act (`resulting_entity_type` says which). A task candidate
+  whose draft names a non-member `owner_id` cannot be approved
+  (422, plain words) — show the message and offer the draft
+  editor.
+- **Discussion everywhere (B-084).** ONE thread system, four
+  parents. The event thread you already have
+  (`/events/{eid}/comments`) is the same rows as `GET/POST
+  /groups/{id}/comments/{parent_type}/{parent_id}` with
+  `parent_type` in `event|task|decision|poll`. Comment bodies
+  carry `parent_type` + `parent_id` always; `event_id` is set
+  for event parents, null otherwise. Reuse the event thread
+  component for task/decision/poll screens verbatim.
+- **Decisions log (B-085).** `GET/POST /groups/{id}/decisions`;
+  `?current=true` is the settled-truth view (superseded rows
+  hidden). A create may name `supersedes_id` — the old row is
+  kept, marked `superseded`, linked both ways; `GET
+  /groups/{id}/decisions/{did}/chain` returns the whole chain
+  oldest → newest for a "how we got here" view.
+- **Open questions (B-086).** `GET/POST /groups/{id}/questions`,
+  `PATCH` (reassign `asked_of_id`, or `{"drop": true}`),
+  `POST .../questions/{qid}/resolve` — with `decision_text`
+  the answer is recorded as a decision in the same call and
+  the response links it (`resolution_decision_id`). The event
+  screen's "what is still missing?" panel is `GET
+  /groups/{id}/events/{eid}/gaps`: one flat `gaps` list
+  (`kind`: `missing_field` | `open_question` |
+  `unclaimed_role` | `unclaimed_task`) for the badge, plus
+  `missing_fields`, `open_questions`, `unclaimed_roles`,
+  `unclaimed_tasks` sections behind it.
+- **Polls (B-087).** `POST /groups/{id}/polls` (`kind`:
+  `choice` | `date`; `closes_at`; optional `event_id`; ≥2
+  options — date options carry `starts_at`/`ends_at` and
+  their label defaults to the formatted moment). `POST
+  .../polls/{pid}/vote` `{option_id}` votes or CHANGES the
+  caller's one current vote, and the response is the tally
+  read after the vote committed: per-option `votes`,
+  `total_votes`, `leader_option_ids` (two ids = a tie — say
+  so), `my_option_id`. `POST .../polls/{pid}/close`
+  (organiser+) freezes it. `POST .../polls/{pid}/apply-winner`
+  (organiser+) applies a DATE poll's winner: moves the
+  attached event or mints a new one (`{title}` optional);
+  a tie or zero votes is a 409 with plain words — show them,
+  never pick a winner client-side.
+- **Checklists + roles (B-088).** Per event: `GET/POST
+  /groups/{id}/events/{eid}/checklist` (`section`: `bring` |
+  `prepare`, `quantity`), `PATCH /groups/{id}/checklist/{iid}`
+  (incl. `done`), claim/unclaim via `POST
+  /groups/{id}/checklist/{iid}/claim|unclaim` (claiming
+  another's line is 409). Roles: `POST
+  /groups/{id}/events/{eid}/roles` `{role_name, slots}` opens
+  N one-person slots; `GET` lists them with `claimed` flags;
+  claim at `POST /groups/{id}/roles/{sid}/claim|unclaim`.
+  The shopping view is `GET /groups/{id}/supplies?start=&end=`
+  (defaults to this week): lines folded across events by
+  label — `total_quantity` plus the per-event breakdown —
+  "buy once", sorted by label.
+- **Budget-lite (B-089).** `POST
+  /groups/{id}/events/{eid}/costs` `{label, amount_cents,
+  paid_by_id?, paid_by_label?}`; `GET
+  /groups/{id}/events/{eid}/budget` returns `lines`,
+  `balances` (per-member `paid_cents`), `total_cents`.
+  Amounts are **integer cents end to end** — a float
+  `amount_cents` is a 422; format for display only. A
+  words-only payer (`paid_by_label`, e.g. "Cash Pete") is a
+  row with `member_id: null`. Deliberately no ledger and no
+  payments — don't build settle-up UI against this.
+- **Availability (B-090).** Organisers propose slots (`POST
+  /groups/{id}/availability/slots`); members mark `POST
+  .../availability/slots/{sid}/mark` `{can: true|false}`
+  (re-marking updates the one mark). `GET
+  /groups/{id}/availability` returns slots RANKED (most can,
+  then fewest can't, then earliest) with `can_members` /
+  `cant_members` name lists. Only the group's own marks
+  against the group's own proposed slots exist here — no
+  private calendar data is read or shown, ever.
+- **Templates (B-091).** `GET /groups/{id}/templates` — the
+  global starters (`is_starter: true`: meeting, club night,
+  trip, fundraiser, class, match, celebration) plus the
+  group's own. Save with `POST /groups/{id}/templates` or
+  snapshot an event via `POST
+  /groups/{id}/templates/from-event/{eid}` (organiser+).
+  Instantiate with `POST
+  /groups/{id}/templates/{tid}/instantiate` `{starts_at,
+  title?}` (organiser+): returns the new `event_id` plus the
+  built `task_ids` / `checklist_item_ids` / `role_slot_ids`.
+  Instantiated tasks are unclaimed and roles unclaimed —
+  templates carry shapes, not people's promises.
+- **Search (B-092).** `GET /groups/{id}/search?q=` — one
+  ranked list over events, tasks, decisions, questions; each
+  hit has `type`, `title`, `snippet`, `score`, and
+  source links (`candidate_id`, `source_id`, `event_id`)
+  for "where did this come from?" navigation.
 
 ## The contract
 
