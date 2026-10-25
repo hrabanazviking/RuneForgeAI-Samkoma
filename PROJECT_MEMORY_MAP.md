@@ -23,8 +23,11 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **507 tests, all passing** (62/340 slices:
-Phases 0, 1, 2, 3, and 4 complete). Demo verified offline on the mock
+Alembic up/down/up clean; **515 tests, all passing** (62/340 slices:
+Phases 0, 1, 2, 3, and 4 complete) — the count re-verified on the
+final Phase 4 tree in one clean run after the gate (an earlier
+"507" recorded here came from runs that overlapped tree edits and
+was corrected the same evening). Demo verified offline on the mock
 driver (seed + health + demo login, no API key, no network).
 
 ## Slice status
@@ -351,7 +354,13 @@ driver (seed + health + demo login, no API key, no network).
   `test_candidates.py` now asserts approval MINTS (the NULL
   boundary was Phase 4's to lift); the role matrix's approve
   fixture approves a task candidate (same permission door —
-  a title-only event draft is now honestly unmintable).
+  a title-only event draft is now honestly unmintable); and
+  `test_no_direct_event_creation_from_a_candidate` now asserts
+  the property at full strength against the EXISTING create
+  route — a candidate draft POSTed at it is refused (422; the
+  draft shape is not an event), no event exists afterwards,
+  and the candidate is untouched — where Phase 3 could only
+  assert the route's absence (404/405).
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 5 begins at B-063 (vision reading — it fills Flyer

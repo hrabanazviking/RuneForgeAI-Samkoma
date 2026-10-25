@@ -5,7 +5,7 @@
 ## What you have
 
 A running backend with the full identity + groups + permissions
-layer working and tested (507 tests green at Phase 4). You can now build:
+layer working and tested (515 tests green at Phase 4). You can now build:
 
 - **Sign-in screens** — register, password login, magic-link login,
   refresh, logout, password reset, email change.

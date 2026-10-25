@@ -172,14 +172,28 @@ def test_merge_keeps_both_drafts(world, client, db_session):
 
 
 def test_no_direct_event_creation_from_a_candidate(world, client):
-    """Approval is the ONLY path from draft to published entity:
-    there is no events endpoint to POST a candidate-shaped payload
-    at, in this phase or by accident."""
+    """Approval is the ONLY path from a candidate to a published
+    entity: a candidate-shaped payload creates nothing, anywhere.
+
+    Phase 3 asserted 404/405 because no events endpoint existed.
+    Phase 4 (B-049) added one — direct ORGANISER entry, which
+    takes a real event body (title + times), never a candidate
+    draft. The security property is unchanged and now asserted
+    at full strength: posting the draft is refused (404/405, or
+    422 — the draft shape is not an event), no event exists
+    afterwards, and the candidate is untouched."""
     rows = candidates_by_kind(client, world)
     gid = world["group"]["id"]
+    headers = bearer(world["owner"])
     for path in (f"/api/v1/groups/{gid}/events", f"/api/v1/groups/{gid}/candidates/{rows['event']['id']}/publish"):
-        response = client.post(path, json=rows["event"]["draft"], headers=bearer(world["owner"]))
-        assert response.status_code in (404, 405), (path, response.status_code)
+        response = client.post(path, json=rows["event"]["draft"], headers=headers)
+        assert response.status_code in (404, 405, 422), (path, response.status_code)
+    # Nothing was created and the candidate decided nothing.
+    assert client.get(f"/api/v1/groups/{gid}/events", headers=headers).json() == []
+    queue = client.get(f"/api/v1/groups/{gid}/candidates", headers=headers).json()
+    candidate = next(row for row in queue if row["id"] == rows["event"]["id"])
+    assert candidate["status"] == "pending"
+    assert candidate["resulting_entity_id"] is None
 
 
 def test_plain_member_cannot_approve_edit_or_extract(world, client):
