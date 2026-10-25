@@ -150,6 +150,8 @@ SERVICE_MODULES: dict[str, str] = {
     # platform — whole-app health (Phase 15).
     "health": "platform",
     "recovery": "platform",  # B-172: startup assessment & repair
+    "resilience": "platform",  # B-173: breakers + bulkheads per dependency
+    "repair": "platform",  # B-173: the fix-forward data-repair crew
 }
 
 # Modules whose public functions are their whole surface, open

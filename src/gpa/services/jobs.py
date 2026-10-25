@@ -232,16 +232,55 @@ def _finish(db: Session, job: Job, settings: Settings, error: Exception | None) 
     db.commit()
 
 
+def _defer_for_dependency(
+    db: Session, job: Job, dependency: str, *, retry_seconds: float
+) -> None:
+    """Put a claimed job back to sleep WITHOUT spending an attempt
+    (B-173). Its dependency cannot be called right now — breaker
+    open or bulkhead full — so running it would only burn an
+    attempt against a wall. The job stays queued, due again after
+    the breaker's remaining cooldown (or a short breath for a
+    full bulkhead), and its error field says in plain words what
+    is down and that the work is waiting, not lost."""
+    from gpa.services import resilience
+
+    job.status = "queued"
+    job.locked_by = None
+    job.run_at = now_utc() + timedelta(seconds=max(1.0, retry_seconds))
+    job.last_error = resilience.refusal_reason(dependency)
+    db.commit()
+
+
 def process_one(db: Session, settings: Settings, worker_id: str) -> bool:
     """Claim and run one job. True when a job was processed.
 
     A handler that crashes never crashes the worker: the exception
     is the job's failure record, and the loop moves on (B-008
     acceptance).
+
+    B-173: a job whose kind leans on an external dependency first
+    takes that dependency's permit (bulkhead slot + breaker).
+    No permit means DEFER, not fail — see
+    :func:`_defer_for_dependency`. A run that does happen settles
+    the breaker with its true outcome, so consecutive real
+    failures are what open the breaker, and the first success
+    after an outage closes it again.
     """
+    from gpa.services import resilience
+
     job = claim_next(db, worker_id)
     if job is None:
         return False
+    dependency = resilience.dependency_of_kind(job.kind)
+    if dependency is not None and not resilience.try_begin(dependency):
+        breaker = resilience.breaker_for(dependency)
+        retry = (
+            breaker.cooldown_remaining()
+            if breaker.state in ("open", "half_open")
+            else 5.0
+        )
+        _defer_for_dependency(db, job, dependency, retry_seconds=retry)
+        return True
     handler = HANDLERS.get(job.kind)
     try:
         if handler is None:
@@ -249,7 +288,11 @@ def process_one(db: Session, settings: Settings, worker_id: str) -> bool:
         handler(db, payload_of(job, settings))
         db.commit()
         _finish(db, job, settings, None)
+        if dependency is not None:
+            resilience.end(dependency, success=True)
     except Exception as exc:  # The job failed; the worker must not.
         db.rollback()
+        if dependency is not None:
+            resilience.end(dependency, success=False)
         _finish(db, get_job(db, job.id), settings, exc)
     return True

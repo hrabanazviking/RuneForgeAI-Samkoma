@@ -166,6 +166,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # The reconciliation job handler (Phase 12, B-137)
     # registers on import, like the other job services.
     from gpa.services import reconcile as _reconcile  # noqa: F401
+    # Error-correction (B-173): a fresh composition starts
+    # with closed circuit breakers and empty bulkheads — no
+    # tenant of a shared process inherits another's outage —
+    # and the data-repair job handler registers on import.
+    from gpa.services import repair as _repair  # noqa: F401
+    from gpa.services import resilience as _resilience
+
+    _resilience.reset_all()
     # The outbound webhook deliverer (Phase 11, B-128): its
     # job handler receives only db + payload, so the process
     # settings it unseals with are wired in here.

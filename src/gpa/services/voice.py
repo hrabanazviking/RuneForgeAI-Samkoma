@@ -110,4 +110,10 @@ def ingest_voice(
         },
     )
     job = db.get(Job, data["job_id"])
+    # Commit before answering (the house law, made structural
+    # at B-171): this service once rode on the job submission's
+    # commit, but the internal call's audit row (B-165) lands
+    # after that commit — the source, the job, and the audit
+    # story are one transaction and land together here.
+    db.commit()
     return source, job

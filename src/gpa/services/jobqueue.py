@@ -281,6 +281,7 @@ async def arq_startup(ctx: dict) -> None:
     from gpa.services import notifications as _notifications  # noqa: F401
     from gpa.services import outbound as _outbound  # noqa: F401
     from gpa.services import reconcile as _reconcile  # noqa: F401
+    from gpa.services import repair as _repair  # noqa: F401
     from gpa.services import retention as _retention  # noqa: F401
     from gpa.services import transcribe as _transcribe  # noqa: F401
     from gpa.services import vision as _vision  # noqa: F401

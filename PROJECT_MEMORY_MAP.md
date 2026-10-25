@@ -1910,6 +1910,58 @@ Phase 16 begins at B-157.
   B-169→B-172 stands on their affected batches (all green,
   named in the entries above); the next full gate + PG
   parity belong with the B-180 drill.
+- **B-173 error-correction services** ✅ (timer crew,
+  2026-10-25): `gpa/services/resilience.py` — one circuit
+  breaker + one bulkhead per external dependency (meta_ai /
+  mail / facebook / google; threshold 5 consecutive failures,
+  60 s cooldown, one half-open probe, 4 in flight per
+  process; state is per-process memory, reset at every
+  composition — a fresh process re-probes the world).
+  Enforcement is the job chassis: `jobs.process_one` takes
+  the dependency's permit (bulkhead first, so a full
+  compartment never spends the probe slot) for the mapped
+  kinds (notify/digest_run → mail; extract/vision/transcribe
+  → meta_ai); no permit = DEFER — job back to queued with the
+  cooldown as its run time, attempts untouched, plain-words
+  reason on the row. Real outcomes settle the breaker.
+  `resilience.call` is the same door for inline callers.
+  `gpa/services/repair.py` — the `data_repair` job: recomputes
+  derived truths from the rows that own them (done-job
+  progress, chunk positions 0..n-1, flyer alt_text_status via
+  vision.is_genuine_alt), removes provenance pointing at
+  chunks/candidates that no longer exist (event source links
+  deliberately untouched — B-023 tombstone law), re-renders
+  empty-bodied digests through compose_digest for their own
+  week in place; ONE audit row (repair.completed) lists every
+  fix; a second run finds nothing. `DEGRADATION.md` (repo
+  root) is the per-dependency matrix: queued, never silently
+  lost, never a stack trace. Acceptance
+  (tests/test_error_correction.py, 10 passed): parametrized
+  kill-each-dependency (breaker opens, refuses without
+  calling, other breakers stay closed), half-open probe
+  decides both ways, bulkhead refuses only its own
+  dependency, mail outage defers notify jobs attempt-free
+  while data_repair runs to done mid-outage, Meta outage
+  defers extraction while mail sails, planted-damage repair
+  (orphans planted through a raw FK-off engine — the lax
+  road that creates them) fixes forward + audits + is
+  idempotent. Architecture pins 111 → 116 with reasons
+  recorded (jobs→resilience the chassis' own gate;
+  repair→digests/jobs/vision recompute-never-reimplement;
+  jobqueue→repair registration). **Defect found in earlier
+  code, fixed at root**: `services/voice.ingest_voice` never
+  committed — it rode on the job submission's commit, and
+  since B-165 the internal call's audit row lands after that
+  commit, so B-171's guard answered voice uploads 500
+  `uncommitted_writes` (tests/test_stream.py ×3, red on
+  pristine HEAD too — the B-169→B-172 batches never ran it).
+  The service now commits its own transaction; stream +
+  voice + transcription + durability suites green (15
+  passed). Regression batch for the chassis change (jobs,
+  job race, jobqueue, notifications, digest, extraction
+  jobs, inbox, rsvps, internal profiles): 49 passed + the
+  same 3 stream failures, all pre-existing, all fixed by
+  the voice commit above. Progress: **173/350**.
 
 ## Standing laws in force here
 

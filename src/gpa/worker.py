@@ -25,6 +25,8 @@ from gpa.services import outbound as _outbound  # noqa: F401 — registers the w
 from gpa.services import reconcile as _reconcile  # noqa: F401 — registers the reconcile handler on import (Phase 12)
 from gpa.services import retention as _retention  # noqa: F401 — registers the retention_sweep handler on import (Phase 13)
 from gpa.services import keymgmt as _keymgmt  # noqa: F401 — registers the crypto.rotate_master handler on import (Phase 17)
+from gpa.services import repair as _repair  # noqa: F401 — registers the data_repair handler on import (B-173)
+from gpa.services import resilience as _resilience  # noqa: F401 — B-173 breakers start closed in a fresh process
 from gpa.storage import LocalStorage, set_storage
 
 
@@ -40,6 +42,8 @@ def main() -> None:
     from gpa.services import jobs as _jobs
 
     _jobs.set_settings(settings)
+    # B-173: breakers start closed in a fresh process.
+    _resilience.reset_all()
     # The field-encryption service's settings (B-167).
     from gpa.crypto import fields as _fields
 

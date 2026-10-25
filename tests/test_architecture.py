@@ -79,6 +79,9 @@ PINNED_SERVICE_EDGES = frozenset(
         # jobs module's public registry — the same surface
         # every handler-bearing service uses (digests above).
         ("src/gpa/services/keymgmt.py", "gpa.services.jobs"),
+        # B-173: the arq composition imports the repair crew so
+        # its data_repair handler registers, like the others.
+        ("src/gpa/services/jobqueue.py", "gpa.services.repair"),
         ("src/gpa/services/jobqueue.py", "gpa.services.digests"),
         ("src/gpa/services/jobqueue.py", "gpa.services.extraction"),
         ("src/gpa/services/jobqueue.py", "gpa.services.mailer"),
@@ -89,6 +92,10 @@ PINNED_SERVICE_EDGES = frozenset(
         ("src/gpa/services/jobqueue.py", "gpa.services.retention"),
         ("src/gpa/services/jobqueue.py", "gpa.services.transcribe"),
         ("src/gpa/services/jobqueue.py", "gpa.services.vision"),
+        # B-173: the job chassis asks the resilience registry
+        # for a permit before running dependency-bound work —
+        # the breaker/bulkhead gate is the chassis' own law.
+        ("src/gpa/services/jobs.py", "gpa.services.resilience"),
         ("src/gpa/services/livechat.py", "gpa.services.groups"),
         ("src/gpa/services/livechat.py", "gpa.services.sources"),
         ("src/gpa/services/mailer.py", "gpa.services.mail"),
@@ -113,6 +120,13 @@ PINNED_SERVICE_EDGES = frozenset(
         ("src/gpa/services/planning.py", "gpa.services.subgroups"),
         ("src/gpa/services/polls.py", "gpa.services.events"),
         ("src/gpa/services/reconcile.py", "gpa.services.jobs"),
+        # B-173: the repair crew registers its handler on the
+        # jobs registry, re-renders stale digests through the
+        # one rendering door, and judges alt text by the vision
+        # module's genuineness rule — recompute, never reimplement.
+        ("src/gpa/services/repair.py", "gpa.services.digests"),
+        ("src/gpa/services/repair.py", "gpa.services.jobs"),
+        ("src/gpa/services/repair.py", "gpa.services.vision"),
         ("src/gpa/services/reminders.py", "gpa.ai.client"),
         ("src/gpa/services/reminders.py", "gpa.ai.promptlib"),
         ("src/gpa/services/resources.py", "gpa.services.events"),
