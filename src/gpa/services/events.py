@@ -42,6 +42,7 @@ from gpa.models.events import (
     Recurrence,
     Rsvp,
     Thread,
+    etag_of,
 )
 from gpa.models.groups import Candidate, Group, role_at_least
 from gpa.models.sources import Provenance, SourceChunk
@@ -64,11 +65,6 @@ EDITABLE_FIELDS: tuple[str, ...] = (
 MATERIAL_FIELDS: frozenset[str] = frozenset(
     {"starts_at", "ends_at", "timezone", "all_day", "place_name", "place_address"}
 )
-
-
-def etag_of(event: Event) -> str:
-    """The event's ETag: its version, in the wire form ``"v<n>"``."""
-    return f'"v{event.version}"'
 
 
 def _stringify(value) -> str:
@@ -896,7 +892,7 @@ def generate_event_image(
     from gpa.services import images as image_service
     from gpa.services import sources as source_service
     from gpa.services import usage as usage_service
-    from gpa.services.vision import _is_genuine_alt
+    from gpa.services.vision import is_genuine_alt
 
     event = get_event(db, group, event_id)
     if event.flyer_id:
@@ -962,7 +958,7 @@ def generate_event_image(
         granted_scope="generated image for an event, requested by an organiser",
         chunks=[], storage_key=storage_key, file_asset_id=asset.id,
     )
-    genuine = _is_genuine_alt(description)
+    genuine = is_genuine_alt(description)
     flyer = Flyer(
         group_id=group.id, source_id=source.id, file_asset_id=asset.id,
         thumbnail_key=thumbnail_key, width=width, height=height,

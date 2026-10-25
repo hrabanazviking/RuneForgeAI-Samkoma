@@ -103,9 +103,9 @@ def update_group(db: Session, *, actor_label: str, group: Group, changes: dict) 
             ]
         )
     if "digest_time" in changes:
-        from gpa.services.notifications import _parse_hhmm
+        from gpa.services.notifications import parse_hhmm
 
-        _parse_hhmm(changes["digest_time"], "digest_time")
+        parse_hhmm(changes["digest_time"], "digest_time")
     for field, value in changes.items():
         setattr(group, field, value)
     audit.record(

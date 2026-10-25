@@ -42,7 +42,7 @@ from gpa.models.sources import Provenance, SourceChunk
 from gpa.services import audit
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
-from gpa.services.matching import _normalised
+from gpa.services.matching import normalised
 
 # Candidate draft field → the event column it feeds, for the
 # text fields a merge can move.
@@ -320,7 +320,7 @@ def _values_agree(current: str, new: str) -> bool:
     """Two statements of a text field agree when they are the
     same words, or one contains the other (a fuller and a
     shorter form of one fact)."""
-    norm_current, norm_new = _normalised(current), _normalised(new)
+    norm_current, norm_new = normalised(current), normalised(new)
     if not norm_current or not norm_new:
         return False
     return norm_current == norm_new or norm_current in norm_new or norm_new in norm_current
@@ -445,7 +445,7 @@ def merge_candidate_into_event(
             outcome["filled"].append(event_field)
             continue
         if _values_agree(current, value):
-            if len(_normalised(value)) > len(_normalised(current)):
+            if len(normalised(value)) > len(normalised(current)):
                 # The fuller form of the same fact refines it.
                 changes[event_field] = value
                 outcome["applied"].append(event_field)

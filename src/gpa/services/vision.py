@@ -118,7 +118,7 @@ def request_vision_read(
     return job
 
 
-def _is_genuine_alt(text: str, *, filename: str = "") -> bool:
+def is_genuine_alt(text: str, *, filename: str = "") -> bool:
     """The accessibility law's test (B-065): a description is
     genuine when it is real words about the picture — long enough
     to say something, not the placeholder, not a filename."""
@@ -278,7 +278,7 @@ def _read_one_flyer(
     # machine draft.
     flyer.transcript = reading.transcript
     asset = db.get(FileAsset, flyer.file_asset_id) if flyer.file_asset_id else None
-    if flyer.alt_text_status != "complete" and _is_genuine_alt(
+    if flyer.alt_text_status != "complete" and is_genuine_alt(
         reading.alt_text, filename=asset.filename if asset else ""
     ):
         flyer.alt_text = " ".join(reading.alt_text.split())[:500]

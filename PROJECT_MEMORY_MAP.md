@@ -1605,6 +1605,39 @@ Phase 16 begins at B-157.
   **160/350 slices, Phases 0–16 complete.** Contract: 188
   paths / 218 schemas.
 
+### Phase 17 — Modularity, internal encrypted API, resilience, craft (B-161 → B-180): IN PROGRESS (2026-10-25)
+- **B-161 module boundaries** ✅: `gpa/internal/` opens with
+  `modulemap.py` (every services file placed in its §6A.3
+  module; composition roots named; audit + crypto recorded as
+  the shared common modules whose public functions are their
+  surface) and `architecture.py` — an AST import scanner +
+  import-linter-style checker. `tests/test_architecture.py`
+  enforces: layering (models import nothing above the data
+  layer; schemas never import services/routers; nothing but
+  composition imports routers; storage never imports upward),
+  a total ban on cross-file private imports, every service
+  file mapped, and TWO exact pinned inventories (cross-module
+  service edges: 115; router → model edges: 14) that may only
+  shrink, in the same commit that removes an edge. Proven by
+  a deliberately violating fixture (private import, two
+  upward leans, an unpinned edge, an unmapped file — each
+  named by rule, file, line) and a stale-pin test.
+  **Evidence corrections this scan made**: (1) the B-017-era
+  note "no router imports any model" is superseded — 14
+  router → model edges exist (small projection fetches, e.g.
+  B-140's members-only job view); they are pinned, not denied.
+  (2) Two schemas imported services; fixed at root by moving
+  the pure row helpers `etag_of` → `models/events.py` and
+  `task_overdue` → `models/planning.py` (services/events keeps
+  `etag_of` as a re-export for its routers). (3) Three private
+  helpers were imported across files; promoted to public names
+  in their owning modules: `vision.is_genuine_alt`,
+  `matching.normalised`, `notifications.parse_hhmm`.
+  Enabler committed alongside: the `cryptography` dependency
+  (AES-256-GCM + Ed25519 for B-163/B-167; the roadmap names
+  both algorithms, and neither exists in the stdlib; wheels
+  ship for every Tier-1 target incl. Pi).
+
 ## Standing laws in force here
 
 - No Docker, anywhere, ever (native installs + uv only).
