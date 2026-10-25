@@ -509,6 +509,61 @@ def list_summaries(
     return query.order_by(Summary.created_at.desc(), Summary.id.desc()).all()
 
 
+def list_runs(db: Session, group: Group) -> list[PruneRun]:
+    """Every prune/ask/brief run the engine has made for this
+    group, newest first (B-120) — the transparency ledger: what
+    was judged, what survived, what it cost."""
+    return (
+        db.query(PruneRun)
+        .filter(PruneRun.group_id == group.id)
+        .order_by(PruneRun.created_at.desc(), PruneRun.id.desc())
+        .all()
+    )
+
+
+def purge_run(
+    db: Session, *, actor_label: str, group: Group, run_id: str
+) -> None:
+    """Delete ONE run record (B-120). The run ledger is the
+    group's to inspect and to clear; the SUMMARIES the runs
+    produced are the group's words and are never deleted
+    here — purging the receipts does not unwrite the answers
+    (their source ranges keep the chunk ids, which name
+    sources and decisions that still exist)."""
+    from gpa.errors import AppError
+
+    run = (
+        db.query(PruneRun)
+        .filter(PruneRun.id == run_id, PruneRun.group_id == group.id)
+        .first()
+    )
+    if run is None:
+        raise AppError("not_found")
+    db.delete(run)
+    audit.record(
+        db, actor=actor_label, action="memory.run_purged",
+        group_id=group.id, entity_type="prune_run", entity_id=run_id,
+        detail={"purpose": run.purpose},
+    )
+    db.commit()
+
+
+def purge_all_runs(db: Session, *, actor_label: str, group: Group) -> int:
+    """Delete ALL of the group's run records (B-120); returns
+    how many went. Summaries stay — see purge_run."""
+    runs = db.query(PruneRun).filter(PruneRun.group_id == group.id).all()
+    count = len(runs)
+    for run in runs:
+        db.delete(run)
+    audit.record(
+        db, actor=actor_label, action="memory.runs_purged",
+        group_id=group.id, entity_type="prune_run",
+        detail={"count": count},
+    )
+    db.commit()
+    return count
+
+
 def get_summary(db: Session, group: Group, summary_id: str) -> Summary:
     """One of the group's summaries, or the platform's
     missing-object answer — another group's summary is
@@ -521,7 +576,7 @@ def get_summary(db: Session, group: Group, summary_id: str) -> Summary:
         .first()
     )
     if row is None:
-        raise AppError("not_found", status=404)
+        raise AppError("not_found")
     return row
 
 

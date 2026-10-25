@@ -16,7 +16,7 @@ and shapes what the group remembers.
 
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
@@ -246,3 +246,44 @@ def approve_summary(
         summary=summary,
     )
     return _summary_response(settled)
+
+
+# --- Memory transparency (B-120) --------------------------------------
+
+
+@router.get("/{group_id}/memory/runs", response_model=list[PruneRunResponse])
+def list_runs(
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """Every prune/ask/brief run, with kept and dropped chunk
+    ids and the cost — the group can always see what its
+    memory engine did."""
+    return [_run_response(run) for run in memory_service.list_runs(db, context.group)]
+
+
+@router.delete("/{group_id}/memory/runs/{run_id}", status_code=204)
+def purge_run(
+    run_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Delete one run record. Summaries are never deleted
+    here — the receipts go, the group's words stay."""
+    memory_service.purge_run(
+        db, actor_label=context.principal.label, group=context.group,
+        run_id=run_id,
+    )
+    return Response(status_code=204)
+
+
+@router.delete("/{group_id}/memory/runs", status_code=204)
+def purge_all_runs(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Delete all of the group's run records."""
+    memory_service.purge_all_runs(
+        db, actor_label=context.principal.label, group=context.group
+    )
+    return Response(status_code=204)
