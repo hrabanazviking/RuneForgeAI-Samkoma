@@ -410,3 +410,157 @@ B-112 / B-122 / B-130 gates.
   DELETED outside is restored by the organiser's own
   press/sync; an edited copy stands until a person
   settles it. No defect was found in Phases 0–11 code.
+
+---
+
+# Addendum — Phase 13 (B-146 gate, 2026-10-25; no ZIP — folds into ZIP-Final at B-151)
+
+Phase 13 re-attacked everything built before it: threat
+model, authorisation fuzz, upload/injection/output abuse
+suites, group export + hard erasure, the privacy surfaces,
+a secrets/config audit (pip-audit run for real), and a
+scripted backup/restore drill. This addendum was written by
+the phase's builder after the forge timer had committed
+B-146 (commit `aced215`, which found the slice complete in
+the tree and committed it unchanged); the numbers below say
+plainly whose run each came from.
+
+## Suite
+
+- **835 passed, 0 failed, 0 errors** at the Phase 13 gate.
+  Reconciliation: 797 at the Phase 12 close + 38 new
+  Phase 13 tests = 835, collected = passed. The full suite
+  was run green against this tree in the main tree by the
+  forge timer at the B-146 commit; independently, the
+  B-146 restore drill (below) ran the ENTIRE suite in a
+  clean restored tree built with a fresh `uv sync`: its own
+  log's tail reads "835 passed, 1 warning in 2235.12s" (the
+  one warning is the Starlette TestClient deprecation
+  notice). The builder's own main-tree gate run was still in
+  flight when the timer's commit landed and was stood down
+  rather than trusted against a moved tree — no totals are
+  claimed from it.
+- Contract: 187 OpenAPI paths, 217 schemas (was 182 / 212)
+  — `OPENAPI.json` regenerated at this gate (five new
+  routes: group export, group erase, retention run, source
+  permissions, /users/me/data; `SourceResponse.storage_key`
+  removed, see Finds); `frontend_types.ts` from it; the
+  snapshot test passed against it in the drill's restored
+  tree run.
+- Later state, for orientation: with Phase 14's first
+  slices (B-147→B-149, built by the forge timer) the tree
+  stands at 841 tests / 149 of 350 slices.
+
+## Phase 13's new tests (38)
+
+| File | Tests | Covers |
+|---|---|---|
+| test_threat_model.py | 6 | The in-repo THREAT_MODEL.md stays true (named tests exist, every router covered, Case #1 present); seat is nobody abroad; meta/health leak nothing; anonymous 401s |
+| test_authz_fuzz.py | 6 | Two marked groups × 8 attacker principals × ~400 seeded reads/writes/id-swaps: zero 2xx, zero marker bytes, zero state change; positive control; capability surfaces refuse everyone for a private group |
+| test_upload_hardening.py | 7 | EICAR/MZ/ELF/ZIP refused by content; image re-encode strips appended + tEXt payloads; per-group quota (`quota_exceeded` 422, others unaffected, null lifts); default quota shown; storage keys absent from responses; guessed file URLs 404/405; ICS door = view door (drafts refuse for every role) |
+| test_migrations_phase13.py | 1 | Migration 0016 up/down/up (upload_quota_bytes backfilled 104857600, source_retention_days NULL) |
+| test_injection_safety.py | 6 | One-pass prompt render (placeholder smuggling closed; benign output byte-identical across all 8 templates); poisoned corpus + obedient fixture model → at most one PENDING candidate, no publish, no mail; digest HTML escapes / text doesn't; iCal folding (exactly 1 VEVENT); JSON carries markup as data |
+| test_erasure.py | 2 | Export is a real ZIP without secrets (key NAMES only); erase: member 403, API-key 403, wrong name 422 intact, correct erase → per-table counts, feeds 404, raw DB + WAL grep clean for group A and intact for group B, shared storage object survives, audit keeps only the fact |
+| test_privacy_surfaces.py | 4 | /users/me/data complete against stored hashes (none appear); source permission records in plain words; retention expiry (no tombstone, candidates stamped, events stand, other group untouched); manual run + no-window honesty |
+| test_secrets_audit.py | 5 | Prod refuses known-default secrets and <32-char secrets, accepts a real one; dev unaffected; access log redacts token-carrying segments (feed/invite/email-in/webhook) incl. the httpx line; no tracked .env |
+| test_backup_restore.py | 1 | Backup → restore round-trip is byte-identical (rows + storage); a tampered bundle is refused as damaged and places nothing |
+
+## Dependency audit (B-145) — ran for real, no waiver
+
+`uv export --format requirements-txt --no-hashes
+--all-groups` (38 `==` pins, 45 resolved) →
+`uvx pip-audit -r <export>`, run 2026-10-25 in this
+environment against the live vulnerability database:
+
+```
+No known vulnerabilities found
+Name                             Skip Reason
+-------------------------------- -----------------------------------------------------------------------------------------------
+group-planning-assistant-backend Dependency not found on PyPI and could not be audited: group-planning-assistant-backend (0.1.0)
+```
+
+The single skip is the project package itself (not
+published to PyPI) — every actual dependency was audited.
+No waiver was needed.
+
+## The restore drill (B-146) — five runs, two real defects
+
+`scripts/restore_drill.py` plants marker data, backs it up
+(`scripts/backup.py`), copies the tree clean, restores
+(`scripts/restore.py`, verify-then-place), builds with a
+FRESH `uv sync --extra dev`, runs the whole suite in the
+restored tree, and reads the marker back through the API.
+
+- Runs 1–3 failed at the suite step on environment leaks
+  from the drill's own launcher (a leaked `VIRTUAL_ENV`,
+  then the main tree's venv bin on `PATH`, then a bare
+  runtime-only `uv sync` with no test runner). The script
+  now scrubs all three and syncs `--extra dev`; the lessons
+  are written into DEPLOYMENT.md's runbook section.
+- Run 4's suite completed: 833 passed, **2 failed** — both
+  failures were real defects the drill existed to catch:
+  (1) `test_erase_then_grep` failed 5/5 in the restored
+  tree (newer SQLite) while passing 5/5 in the main tree:
+  the VACUUM's own output rides the WAL, so the raw main
+  file still showed the pre-vacuum image — logically
+  erased, raw bytes stale. **Fix (in B-143's service, at
+  the root): erase checkpoints AGAIN after VACUUM**, so
+  the on-disk file is the vacuumed image. (2) The secrets
+  test demanded a git checkout; a restored/release tree
+  has none. **Fix: with no git metadata, the same
+  no-.env guarantee is proven by walking the tree.**
+- Run 5 (final code): plant 6.0s, backup 0.5s, copy 0.9s,
+  restore 0.1s, build 3.1s, **suite step ok in 2245.0s —
+  835 passed**. Its verify step then failed on the DRILL
+  SCRIPT's own call to a "list groups" route that does not
+  exist (405) — the read-back now goes through
+  `/users/me/data`, the door a person uses; re-run against
+  run 5's restored tree + data it prints "marker data
+  verified in the restored instance".
+
+## Finds — defects in earlier code (all fixed at the root, all covered)
+
+- **B-140 — `GET /api/v1/jobs/{id}` answered ANY signed-in
+  caller.** A job naming a group (payload, or via its
+  source/notification/webhook) is now that group's
+  members-only; everyone else gets 404. Group-less
+  internal jobs unchanged.
+- **B-141 — `SourceResponse` exposed `storage_key`**,
+  against the project's own law (D-17: storage keys never
+  appear in the API). Field removed — the phase's one
+  deliberate contract break, recorded in CHANGELOG's
+  Breaking changes. `thumbnail_key` deliberately STAYS in
+  flyer projections under a binding rule: any future media
+  route authorises by flyer/source id through the view
+  door, never by raw key.
+- **B-142 — plain-text digests carried HTML entities**
+  (`&lt;` in text mail): the digest Jinja env escaped by
+  the `.j2` suffix, which both templates share. Escaping
+  now follows the file kind via a named callable; HTML
+  still escapes.
+- **B-145 — httpx/httpcore log full request URLs at INFO**
+  (feed tokens, invite tokens — a second copy of every
+  token in any log). Quieted to WARNING in the app's
+  logging setup; the app access log redacts token-carrying
+  path segments itself.
+- **B-146 — backup.py failed on nested storage
+  directories** (parents not created on copy); found by
+  its own round-trip test, fixed there.
+- The drill-found erasure checkpoint and git-less secrets
+  test fixes are recorded in the drill section above.
+
+## The honest boundaries
+
+- **Group content is NOT field-sealed in this build.**
+  THREAT_MODEL.md names it the largest accepted gap;
+  sealing is Phase 17 work (B-167), and the audit log is
+  append-only by discipline, not yet a hash chain
+  (B-170). Neither is claimed anywhere as built.
+- Erasure/export were exercised only on groups the suite
+  itself creates — no real user data exists in this
+  environment.
+- Retention expiry is deliberately NOT recoverable (no
+  tombstone): it is a privacy act; manual source deletion
+  keeps its tombstone + restore, unchanged.
+- No ZIP this phase, per the train: Phase 13 folds into
+  ZIP-Final at B-151.
