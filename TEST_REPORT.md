@@ -85,9 +85,24 @@ the RC report supersedes it.
 
 ## Suite
 
-- **704 passed, 0 failed, 0 errors** (489s, pytest, one
-  warning: a Starlette TestClient deprecation notice) — one
-  clean run against the final Phase 9 tree.
+- **704 passed, 0 failed, 0 errors** — the reconciled clean
+  run against the final Phase 9 tree (pytest, one warning: a
+  Starlette TestClient deprecation notice). Told plainly, it
+  took two runs to earn this line: the first gate run came
+  back **703 passed / 1 failed** — the failure was in the
+  B-110 test itself, not the code under it (the dry-run test
+  asserted the roster was the owner alone, forgetting its own
+  fixture's accepted member; the dry run had changed exactly
+  nothing, as designed). The same run exposed a latent
+  logging defect from the foundation: the request-id filter
+  sat on the root LOGGER, whose filters never run for records
+  propagated from child loggers, so third-party records
+  (httpx) reached the root handler's formatter without a
+  request_id and the formatter raised on them; the filter now
+  rides the handler, where every emitted record meets it.
+  Both fixes landed, and the re-run — temp base on the
+  workspace overlay after a /tmp-full run died at 100% tmpfs,
+  the standing hazard — is the clean 704 above.
 - Collected = passed = 704. Reconciliation: 673 at ZIP-Beta's
   gate (Phase 8) + 31 new Phase 9 tests = 704.
 - Contract: 151 OpenAPI paths, 179 schemas (was 133 / 150) —

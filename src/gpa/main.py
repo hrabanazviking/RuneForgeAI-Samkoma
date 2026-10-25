@@ -59,6 +59,15 @@ def _configure_logging(settings: Settings) -> None:
         fmt = "%(asctime)s %(levelname)-7s %(name)s [%(request_id)s] %(message)s"
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(fmt))
+    # The request-id filter rides the HANDLER, not only the
+    # root logger: a logger's filters never run for records
+    # propagated UP from child loggers (httpx, sqlalchemy, …),
+    # but a handler's filters run for every record it emits —
+    # the handler is where "the format never fails" is made
+    # true (found at the Phase 9 gate, B-112: third-party
+    # records reached this formatter without a request_id and
+    # the formatter raised on them).
+    handler.addFilter(_RequestIdFilter())
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(logging.INFO)

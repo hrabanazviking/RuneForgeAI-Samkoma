@@ -68,12 +68,21 @@ def test_dry_run_reports_everything_and_changes_nothing(client, world):
     assert report["dry_run"] is True
     _check_messy_report(report)
 
-    # Nothing landed: the roster is still just the owner, and
-    # no Kitchen Crew exists.
+    # Nothing landed: the roster is still exactly who the
+    # fixture put there (owner + the accepted member), none of
+    # the spreadsheet's people are on it, and no Kitchen Crew
+    # exists.
     members = client.get(
         f"/api/v1/groups/{gid}/members", headers=bearer(world["owner"])
     ).json()
-    assert {m["email"] for m in members} == {world["owner"]["email"]}
+    assert {m["email"] for m in members} == {
+        world["owner"]["email"], world["member"]["email"],
+    }
+    golden_addresses = {
+        "ana@example.org", "ben@example.org", "cy@example.org",
+        "eli@example.org", "frank@example.org",
+    }
+    assert not golden_addresses & {m["email"] for m in members}
     subgroups = client.get(
         f"/api/v1/groups/{gid}/subgroups", headers=bearer(world["owner"])
     ).json()
