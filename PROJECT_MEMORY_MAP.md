@@ -781,8 +781,115 @@ login, no API key, no network).
   the phase's own slices win). (5) GroupResponse grew comms
   fields (additive).
 
+### Phase 9 — Members, nonprofit pack, resources (B-105 → B-112): COMPLETE (2026-10-24)
+- Tables live in models/nonprofit.py (SubGroup,
+  SubGroupMembership, Announcement, Resource, ResourceBooking,
+  AttendanceMark, CandidateApproval); Group gained
+  review_min_role (default "organiser"),
+  review_approvals_required (default 1), template_set
+  (default "starter"); Event/Task gained subgroup_id; RoleSlot
+  gained starts_at/ends_at. Migration 0012_phase9_nonprofit.
+- B-105 sub-groups: THE rule lives in services/subgroups.py —
+  visible_subgroup_ids(db, group, *, user_id, role) → None =
+  organiser+ unrestricted, else the enrolled set; scoped-out
+  items are 404/absent on member-facing reads (events list +
+  detail, tasks list/detail/PATCH, calendar agenda/month/
+  tonight/conflicts, planning search incl. decisions/questions
+  via their event, announcements). Enrolment: organiser manages
+  anyone; a member enrols/unenrols THEMSELVES; per-sub-group
+  role grant is organiser-only; enrollee must be an ACTIVE
+  group member (422); duplicate 409. Deleting a sub-group with
+  scoped events/tasks/announcements is refused 409 with counts
+  — a delete must never silently widen an audience.
+- B-106 announcements: services/announcements.py; the B-043
+  law restated for humans — _require_person refuses seats in
+  the service ("announcement ≠ publication"). Pinned first,
+  then newest; expired posts leave the board unless an
+  organiser passes include_expired (the router honours the
+  flag for organiser+ only).
+- B-107 shifts: services/shifts.py — a shift is headcount
+  RoleSlot rows sharing role + window; claim/release rides the
+  B-088 slot endpoints (one claim door, no second truth).
+  gap_report: published events in a window, only events WITH
+  gaps, missing roles in FIRST-OPENED order, one-line summary
+  ("Saturday still needs a driver and a door person."; count
+  1 → "a {role}", else "{count} {role}s").
+- B-108 resources: services/resources.py — items with a keeper
+  (keeper words default from membership); duplicate name 409;
+  booking a cancelled event 422; duplicate (resource, event)
+  booking 409. Double-booking is ALLOWED and flagged:
+  calendar conflicts emit resource_overlap flags (this lands
+  Phase 4's deferred B-057 resource conflicts), booking
+  responses echo their own conflicts (published + strict
+  overlap only; back-to-back never flags).
+- B-109 attendance: services/attendance.py — organiser-marked,
+  published events, active members, idempotent. Reads are
+  COUNTS ONLY: event headcount + summary (recent N begun
+  published events, counts + average). The refusal is a test:
+  per-person attendance routes do not exist (404; the
+  ".../attendees" spelling lands on the unmark route's shape
+  and answers 405 — a write's shape, not a read). The mark
+  receipt is the only response naming a person — it echoes
+  the organiser's own act. No person's identity appears in
+  any aggregate payload.
+- B-110 member import/export: services/member_io.py — CSV in
+  as raw body (admin+), email found BY SHAPE (contains "@"),
+  not position, so unquoted "Carter, Cy" survives its comma
+  and stray trailing columns fall away. Report counts created
+  users / memberships / enrolments / already-members; skipped
+  rows (in-file dupes) and error rows (bad email) named by
+  spreadsheet row number. Imported people arrive INVITED
+  (activation stays the invite law's); sub-groups find-or-
+  created by name; the spreadsheet never overwrites a name a
+  person already has. DRY RUN = the identical work, then
+  rollback — no audit row (a dry run happened to nobody).
+  Export CSV (real quoting; comma names round-trip) or JSON,
+  all memberships, name order, sub-groups joined "; ".
+- B-111 settings pack: services/settings_pack.py — one
+  validated schema over the Group dials (review rules,
+  reminder rules in B-096's vocabulary, digest weekday/time/
+  enabled, template_set closed vocabulary {"starter"},
+  ai_daily_budget_micros with null = no cap). Present governs
+  (incl. null), absent leaves alone; one bad dial changes
+  nothing. Audit group.settings_updated with per-field
+  old→new; digest changes re-anchor via digests.ensure_
+  scheduled in the same transaction. Approval wiring:
+  routers/groups.py approve door dropped to member;
+  services/groups.py::approve_candidate enforces — seat check
+  FIRST (seat_cannot_approve unchanged), then review_min_role
+  (forbidden), then, when required > 1, CandidateApproval
+  rows per DISTINCT approver (repeat = 409), candidate stays
+  pending + audited candidate.approval_recorded until the
+  count is met, when the final approver runs the ordinary
+  mint path. CandidateResponse carries approvals_recorded /
+  approvals_required (additive).
+- B-112 gate: tests/test_phase9_gate.py — import roster →
+  flyer in (fixture driver) → event minted → scoped to the
+  crew (enrolled sees it, unenrolled gets 404) → driver shift
+  opened, gap named, claimed, gap closed → attendance marked,
+  count read → digest sent naming the event, delivered to the
+  crew member's mailbox (capture transport). NO ZIP this
+  phase (folds into ZIP-RC at B-138, roadmap's train).
+  Contract regenerated: 151 paths / 179 schemas (was 133/150).
+- Deviations/boundaries: (1) Migration 0012 on the upgrade
+  road adds subgroup_id as a PLAIN column — SQLite cannot add
+  an FK in place; fresh DBs get the FK from 0001 metadata and
+  services validate the reference on both roads. Downgrade
+  drops the scope indexes first and uses batch mode for the
+  two subgroup_id columns (SQLite cannot drop an FK-carrying
+  column in place). (2) The iCal feed and the weekly digest
+  stay GROUP-WIDE in this phase: organiser-published
+  broadcasts; the digest is one stored row per group (B-099).
+  Interactive member-facing surfaces enforce scoping.
+  (3) One Phase 4 assertion superseded (the Phase 8 pattern):
+  test_calendar_views' conflict note now asserts
+  "resource_overlap" — B-108 made the deferred flag real.
+  (4) Approval door change (member + service-enforced pack)
+  is behaviour-preserving at defaults; recorded in CHANGELOG.
+  (5) Attendance "…/attendees" 405 nuance (above).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 9 begins at B-105.
+Phase 10 begins at B-113.
 
 ## Decisions & deviations (from the roadmap defaults)
 

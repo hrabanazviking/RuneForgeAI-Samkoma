@@ -5,7 +5,7 @@ are the roadmap's own words; phases are grouped in build order.
 
 ## Breaking changes
 
-- **None to the HTTP contract through B-104.** Every change has
+- **None to the HTTP contract through B-112.** Every change has
   been additive (D-12/D-15): new endpoints, new optional fields.
 - Internal (not HTTP): the `notify` job payload gained
   `notification_id` in Phase 8 — the outbox handler delivers the
@@ -18,6 +18,15 @@ are the roadmap's own words; phases are grouped in build order.
   comms settings (`reminder_rules`, `digest_weekday`,
   `digest_time`, `digest_enabled`, `ai_reminder_wording`);
   `AnnouncementDraftResponse` carries `sent_at` / `sent_by`.
+- Phase 9 behaviour: the candidate-approve door is membership
+  now — who may approve, and how many distinct approvers a
+  candidate needs, is the group's settings pack (B-111),
+  enforced in the service; defaults (organiser+, one approver)
+  reproduce the old behaviour exactly. `CandidateResponse`
+  carries `approvals_recorded` / `approvals_required`
+  (additive). Events and tasks gained `subgroup_id` scoping
+  (B-105): a scoped item is absent (404) to members outside
+  its sub-group on member-facing reads.
 
 ## Slices
 
@@ -151,3 +160,14 @@ are the roadmap's own words; phases are grouped in build order.
 - **B-102** — Deliverability records
 - **B-103** — Reminder wording via AI (optional tier)
 - **B-104** — Phase gate
+
+### Phase 9 — Members, nonprofit pack, and resources (Sun Nov 1) — B-105 → B-112
+
+- **B-105** — Sub-groups + chapters
+- **B-106** — Announcements board
+- **B-107** — Volunteer shifts
+- **B-108** — Resources
+- **B-109** — Attendance (aggregates only — no per-person reads exist)
+- **B-110** — Member import/export
+- **B-111** — Group settings pack
+- **B-112** — Phase gate (no ZIP — folds into ZIP-RC at B-138)

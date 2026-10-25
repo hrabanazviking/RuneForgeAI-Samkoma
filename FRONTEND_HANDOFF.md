@@ -608,6 +608,89 @@ The backend now speaks. Everything below is live and tested.
   gate passed on 2026-10-24 and it folded into this Beta,
   whose range is B-001 → B-104.
 
+## Members, nonprofit pack, and resources (Phase 9) — NEW, folds into ZIP-RC
+
+Sub-groups, an announcements board, volunteer shifts, hall
+gear, attendance counts, roster import/export, and one
+settings pack. All live and tested; contract is now
+151 paths / 179 schemas.
+
+- **Sub-groups (chapters)** — `POST/GET /groups/{id}/subgroups`
+  (organiser+ to create), `PATCH/DELETE
+  /groups/{id}/subgroups/{sub_id}`, enrol via `POST
+  /groups/{id}/subgroups/{sub_id}/members` `{user_id, role?}`.
+  Events and tasks carry `subgroup_id`: a scoped item is for
+  its sub-group's members and group organisers — to anyone
+  else in the group it is **absent (404)**, exactly like a
+  private group. Send `subgroup_id` on event/task create or
+  PATCH to scope one. Deleting a sub-group that still scopes
+  anything is a 409 with counts — unscope first.
+- **Announcements board** — `POST/GET /groups/{id}/announcements`
+  (organiser+ posts; members read), `PATCH/DELETE` the same
+  path with the announcement id. `pinned` posts sort first,
+  then newest; `expires_at` hides a post from members when it
+  passes (organisers can pass `?include_expired=true`). A
+  member posting is a 403 — the board is organiser voice,
+  separate from chat and from event discussion.
+- **Volunteer shifts** — `POST /groups/{id}/events/{event_id}/shifts`
+  `{role_name, headcount, starts_at, ends_at}` opens headcount
+  slots over one window; claims ride the role endpoints you
+  already have (`POST /groups/{id}/roles/{slot_id}/claim` and
+  `…/unclaim`). **Gap report**: `GET /groups/{id}/shift-gaps?from=…&to=…`
+  returns only events that still need people, `missing`
+  in first-opened order, plus a ready-made `summary` line
+  ("Saturday still needs a driver and a door person.") —
+  show it verbatim; it is written for humans.
+- **Resources** — `POST/GET/PATCH/DELETE /groups/{id}/resources`
+  `{name, description, keeper_user_id?}` (the keeper is a
+  member; their label shows on the item), bookings via
+  `POST /groups/{id}/events/{event_id}/resource-bookings`
+  `{resource_id}` (list them on the same path; unbook via
+  `DELETE /groups/{id}/resource-bookings/{booking_id}`).
+  **Double-booking is allowed and flagged**,
+  never refused: the calendar conflicts response
+  (`GET /groups/{id}/conflicts`) gains `resource_overlap`
+  flags, and a booking response echoes its own `conflicts`.
+  Build the UI as "booked — and heads up, it clashes", not an
+  error state.
+- **Attendance** — `POST/DELETE
+  /groups/{id}/events/{event_id}/attendance` `{user_id}`
+  (organiser marks), reads are **counts only**: `GET
+  /groups/{id}/events/{event_id}/attendance` →
+  `{attendee_count}`, and `GET /groups/{id}/attendance/summary?recent=3`
+  → per-event counts + an average. There is deliberately
+  **no per-person attendance read anywhere** — do not design
+  a "who came" screen against this API; it refuses by design.
+- **Member import/export** — `POST /groups/{id}/members/import`
+  (admin+) with the CSV as the raw body (`name,email,sub-group`
+  header; `?dry_run=true` reports without changing anything).
+  The response is a report: created / already-members /
+  enrolments / `subgroups_created`, plus `skipped` and
+  `errors` rows named by spreadsheet row number — show it
+  after an import; it is the receipt. Imported people arrive
+  as **invited** members. Export: `GET
+  /groups/{id}/members/export` (JSON) or `?format=csv`.
+- **Settings pack** — `GET /groups/{id}/settings`
+  (organiser+), `PUT` (admin+): one object — `review_min_role`,
+  `review_approvals_required` (1–3 distinct approvers),
+  `reminder_rules`, `digest_weekday` / `digest_time` /
+  `digest_enabled`, `template_set`, `ai_daily_budget_micros`
+  (null = no cap). PUT is partial: absent fields are left
+  alone; a present null clears where null means something.
+  **Approval UI changes**: the approve door is membership
+  now — whether THIS caller may approve, and whether one
+  approval decides, is the group's pack. `CandidateResponse`
+  carries `approvals_recorded` / `approvals_required`, so
+  render "1 of 2 approvals" from those; a recorded-but-not-
+  decided approval returns the candidate still `pending`,
+  and the same person approving twice is a 409.
+- **Scoping boundary (honest)**: the weekly digest and the
+  iCal feed stay group-wide in this phase — they are
+  organiser-published broadcasts, and the digest is one
+  stored row per group. Member-facing interactive reads
+  (events, tasks, calendar, announcements, search) enforce
+  sub-group scoping.
+
 ## The contract
 
 - `OPENAPI.json` in this ZIP is the exact contract the tests passed

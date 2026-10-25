@@ -17,6 +17,14 @@ export interface AnnouncementChangeView {
   old: string;
 }
 
+export interface AnnouncementCreateRequest {
+  body: string;
+  expires_at?: string | unknown | null | null;
+  pinned?: boolean;
+  subgroup_id?: string | unknown | null | null;
+  title: string;
+}
+
 export interface AnnouncementDraftResponse {
   body: string;
   changes: AnnouncementChangeView[];
@@ -27,6 +35,28 @@ export interface AnnouncementDraftResponse {
   id: string;
   sent_at?: string | unknown | null | null;
   sent_by?: string | unknown | null | null;
+}
+
+export interface AnnouncementPatchRequest {
+  body?: string | unknown | null | null;
+  expires_at?: string | unknown | null | null;
+  pinned?: boolean | unknown | null | null;
+  subgroup_id?: string | unknown | null | null;
+  title?: string | unknown | null | null;
+}
+
+export interface AnnouncementResponse {
+  body: string;
+  created_at: string;
+  created_by: string;
+  expired?: boolean;
+  expires_at?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  pinned?: boolean;
+  subgroup_id?: string | unknown | null | null;
+  title: string;
+  updated_at: string;
 }
 
 export interface ApiKeyCreateRequest {
@@ -46,6 +76,30 @@ export interface ApiKeyResponse {
 
 export interface ApplyWinnerRequest {
   title?: string | unknown | null | null;
+}
+
+export interface AttendanceEventSummary {
+  attendee_count: number;
+  event_id: string;
+  starts_at: string;
+  title: string;
+}
+
+export interface AttendanceMarkRequest {
+  user_id: string;
+}
+
+export interface AttendanceMarkResponse {
+  event_id: string;
+  marked_at: string;
+  marked_by: string;
+  user_id: string;
+}
+
+export interface AttendanceSummaryResponse {
+  average_attendance: number;
+  events?: AttendanceEventSummary[];
+  events_considered: number;
 }
 
 export interface AuditEntryResponse {
@@ -136,6 +190,8 @@ export interface CandidateMergeRequest {
 }
 
 export interface CandidateResponse {
+  approvals_recorded?: number;
+  approvals_required?: number;
   approved_by?: string | unknown | null | null;
   confidence?: number | unknown | null | null;
   created_by: string;
@@ -232,6 +288,8 @@ export interface ConflictFlag {
   occurrence_start: string;
   other_event_id: string;
   other_occurrence_start: string;
+  resource_id?: string | unknown | null | null;
+  resource_name?: string | unknown | null | null;
 }
 
 export interface ConflictsResponse {
@@ -328,6 +386,11 @@ export interface EmailInRequest {
   text?: string;
 }
 
+export interface EventAttendanceResponse {
+  attendee_count: number;
+  event_id: string;
+}
+
 export interface EventChangeResponse {
   changed_by: string;
   created_at: string;
@@ -358,6 +421,7 @@ export interface EventCreateRequest {
   starts_at: string;
   status?: string;
   sub_group?: string;
+  subgroup_id?: string | unknown | null | null;
   timezone?: string | unknown | null | null;
   title: string;
 }
@@ -381,6 +445,7 @@ export interface EventPatchRequest {
   reason?: string;
   starts_at?: string | unknown | null | null;
   sub_group?: string | unknown | null | null;
+  subgroup_id?: string | unknown | null | null;
   timezone?: string | unknown | null | null;
   title?: string | unknown | null | null;
 }
@@ -414,6 +479,7 @@ export interface EventResponse {
   starts_at: string;
   status: string;
   sub_group?: string | unknown | null | null;
+  subgroup_id?: string | unknown | null | null;
   timezone: string;
   title: string;
 }
@@ -554,6 +620,28 @@ export interface GroupResponse {
   visibility: string;
 }
 
+export interface GroupSettingsResponse {
+  ai_daily_budget_micros: number | unknown | null | null;
+  digest_enabled: boolean;
+  digest_time: string;
+  digest_weekday: number | unknown | null | null;
+  reminder_rules: ReminderRule[];
+  review_approvals_required: number;
+  review_min_role: string;
+  template_set: string;
+}
+
+export interface GroupSettingsUpdateRequest {
+  ai_daily_budget_micros?: number | unknown | null | null;
+  digest_enabled?: boolean | unknown | null | null;
+  digest_time?: string | unknown | null | null;
+  digest_weekday?: number | unknown | null | null;
+  reminder_rules?: ReminderRule[] | unknown | null | null;
+  review_approvals_required?: number | unknown | null | null;
+  review_min_role?: string | unknown | null | null;
+  template_set?: string | unknown | null | null;
+}
+
 export interface GroupUpdateRequest {
   ai_daily_budget_micros?: number | unknown | null | null;
   ai_reminder_wording?: boolean | unknown | null | null;
@@ -576,6 +664,11 @@ export interface HealthResponse {
   database: string;
   status: string;
   version: string;
+}
+
+export interface ImportRowIssue {
+  reason: string;
+  row: number;
 }
 
 export interface InboundAddressResponse {
@@ -697,6 +790,27 @@ export interface MatchView {
   score?: number;
 }
 
+export interface MemberExportRow {
+  email: string;
+  name: string;
+  role: string;
+  status: string;
+  subgroups: string[];
+}
+
+export interface MemberImportReportResponse {
+  already_members: number;
+  blank_rows: number;
+  created_users: number;
+  dry_run: boolean;
+  enrolments: number;
+  errors: ImportRowIssue[];
+  memberships_created: number;
+  rows_total: number;
+  skipped: ImportRowIssue[];
+  subgroups_created: string[];
+}
+
 export interface MembershipResponse {
   email: string;
   id: string;
@@ -725,6 +839,11 @@ export interface MetaResponse {
   name: string;
   openapi: string;
   version: string;
+}
+
+export interface MissingRole {
+  count: number;
+  role_name: string;
 }
 
 export interface MonthDay {
@@ -1025,6 +1144,56 @@ export interface ResolveContradictionRequest {
   value: string;
 }
 
+export interface ResourceBookingCreateRequest {
+  resource_id: string;
+}
+
+export interface ResourceBookingResponse {
+  booked_by: string;
+  conflicts?: ResourceConflictFlag[];
+  created_at: string;
+  event_id: string;
+  group_id: string;
+  id: string;
+  resource_id: string;
+  resource_name?: string;
+}
+
+export interface ResourceConflictFlag {
+  kind?: string;
+  message: string;
+  other_event_id: string;
+  other_event_title: string;
+  resource_id: string;
+  resource_name: string;
+}
+
+export interface ResourceCreateRequest {
+  keeper_label?: string;
+  keeper_user_id?: string | unknown | null | null;
+  name: string;
+  notes?: string;
+}
+
+export interface ResourcePatchRequest {
+  keeper_label?: string | unknown | null | null;
+  keeper_user_id?: string | unknown | null | null;
+  name?: string | unknown | null | null;
+  notes?: string | unknown | null | null;
+}
+
+export interface ResourceResponse {
+  created_at: string;
+  created_by: string;
+  group_id: string;
+  id: string;
+  keeper_label?: string;
+  keeper_user_id?: string | unknown | null | null;
+  name: string;
+  notes?: string;
+  updated_at: string;
+}
+
 export interface RoleChangeRequest {
   role: string;
 }
@@ -1034,10 +1203,12 @@ export interface RoleSlotResponse {
   claimed_by_id?: string | unknown | null | null;
   claimed_by_label?: string;
   created_at: string;
+  ends_at?: string | unknown | null | null;
   event_id: string;
   group_id: string;
   id: string;
   role_name: string;
+  starts_at?: string | unknown | null | null;
 }
 
 export interface RoleSlotsCreateRequest {
@@ -1106,6 +1277,35 @@ export interface SessionResponse {
   user_id: string;
 }
 
+export interface ShiftCreateRequest {
+  ends_at: string;
+  headcount?: number;
+  role_name: string;
+  starts_at: string;
+}
+
+export interface ShiftGapReportResponse {
+  events?: ShiftGapResponse[];
+}
+
+export interface ShiftGapResponse {
+  event_id: string;
+  event_title: string;
+  missing?: MissingRole[];
+  starts_at: string;
+  summary: string;
+}
+
+export interface ShiftResponse {
+  claimed: number;
+  ends_at?: string | unknown | null | null;
+  event_id: string;
+  headcount: number;
+  role_name: string;
+  slots?: RoleSlotResponse[];
+  starts_at?: string | unknown | null | null;
+}
+
 export interface SourceCreateRequest {
   chunks?: ChunkIn[];
   granted_scope?: string;
@@ -1153,6 +1353,40 @@ export interface SourceResponse {
   url?: string;
 }
 
+export interface SubGroupCreateRequest {
+  description?: string;
+  name: string;
+}
+
+export interface SubGroupEnrollRequest {
+  role?: string | unknown | null | null;
+  user_id: string;
+}
+
+export interface SubGroupMemberResponse {
+  effective_role?: string | unknown | null | null;
+  email?: string;
+  group_role?: string | unknown | null | null;
+  name?: string;
+  subgroup_role?: string | unknown | null | null;
+  user_id: string;
+}
+
+export interface SubGroupPatchRequest {
+  description?: string | unknown | null | null;
+  name?: string | unknown | null | null;
+}
+
+export interface SubGroupResponse {
+  created_at: string;
+  created_by: string;
+  description?: string;
+  group_id: string;
+  id: string;
+  member_count?: number;
+  name: string;
+}
+
 export interface SupplyEventResponse {
   claimed?: boolean;
   event_id: string;
@@ -1171,6 +1405,7 @@ export interface TaskCreateRequest {
   event_id?: string | unknown | null | null;
   notes?: string;
   owner_id?: string | unknown | null | null;
+  subgroup_id?: string | unknown | null | null;
   title: string;
 }
 
@@ -1179,6 +1414,7 @@ export interface TaskPatchRequest {
   notes?: string | unknown | null | null;
   owner_id?: string | unknown | null | null;
   status?: string | unknown | null | null;
+  subgroup_id?: string | unknown | null | null;
   title?: string | unknown | null | null;
 }
 
@@ -1196,6 +1432,7 @@ export interface TaskResponse {
   owner_id?: string | unknown | null | null;
   owner_label?: string;
   status: string;
+  subgroup_id?: string | unknown | null | null;
   suggested_owner_label?: string;
   title: string;
   unclaimed?: boolean;

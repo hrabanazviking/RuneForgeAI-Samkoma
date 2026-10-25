@@ -74,6 +74,56 @@
         "title": "AnnouncementChangeView",
         "type": "object"
       },
+      "AnnouncementCreateRequest": {
+        "description": "Post to the board. Times arrive as ISO-8601; the router\nconverts them to stored UTC before the service runs.",
+        "properties": {
+          "body": {
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "pinned": {
+            "default": false,
+            "title": "Pinned",
+            "type": "boolean"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
+          },
+          "title": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ],
+        "title": "AnnouncementCreateRequest",
+        "type": "object"
+      },
       "AnnouncementDraftResponse": {
         "description": "A drafted re-announcement (B-078): the body names old \u2192\nnew for every material change it covers. ``sent_at`` /\n``sent_by`` record the approval that sent it as change\nalerts (Phase 8, B-097); null until then.",
         "properties": {
@@ -143,6 +193,148 @@
           "created_at"
         ],
         "title": "AnnouncementDraftResponse",
+        "type": "object"
+      },
+      "AnnouncementPatchRequest": {
+        "description": "Edit a post; only sent fields change. An explicit\n``expires_at: null`` un-expires the post.",
+        "properties": {
+          "body": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "pinned": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pinned"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "AnnouncementPatchRequest",
+        "type": "object"
+      },
+      "AnnouncementResponse": {
+        "description": "One board post. ``expired`` is computed at read time \u2014\nexpiry is a state the row grows into, never a deletion.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "expired": {
+            "default": false,
+            "title": "Expired",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "pinned": {
+            "default": false,
+            "title": "Pinned",
+            "type": "boolean"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "title",
+          "body",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AnnouncementResponse",
         "type": "object"
       },
       "ApiKeyCreateRequest": {
@@ -241,6 +433,104 @@
           }
         },
         "title": "ApplyWinnerRequest",
+        "type": "object"
+      },
+      "AttendanceEventSummary": {
+        "description": "One recent event in the planning summary: the event and\nits headcount. No people.",
+        "properties": {
+          "attendee_count": {
+            "title": "Attendee Count",
+            "type": "integer"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "title",
+          "starts_at",
+          "attendee_count"
+        ],
+        "title": "AttendanceEventSummary",
+        "type": "object"
+      },
+      "AttendanceMarkRequest": {
+        "description": "Mark one member present at the event in the path.",
+        "properties": {
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "AttendanceMarkRequest",
+        "type": "object"
+      },
+      "AttendanceMarkResponse": {
+        "description": "The mark's own receipt \u2014 the ONLY response in this area\nthat names a person, because it echoes the organiser's act\nitself. There is no list shape beside it, deliberately.",
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "marked_at": {
+            "title": "Marked At",
+            "type": "string"
+          },
+          "marked_by": {
+            "title": "Marked By",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "user_id",
+          "marked_by",
+          "marked_at"
+        ],
+        "title": "AttendanceMarkResponse",
+        "type": "object"
+      },
+      "AttendanceSummaryResponse": {
+        "description": "\"Last three club nights drew ~20\", as data: recent\nevents, their headcounts, and the average.",
+        "properties": {
+          "average_attendance": {
+            "title": "Average Attendance",
+            "type": "number"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AttendanceEventSummary"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "events_considered": {
+            "title": "Events Considered",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "events_considered",
+          "average_attendance"
+        ],
+        "title": "AttendanceSummaryResponse",
         "type": "object"
       },
       "AuditEntryResponse": {
@@ -700,6 +990,16 @@
       "CandidateResponse": {
         "description": "A candidate as the queue shows it.\n\nGrown in Phase 3 (B-043) with the review queue's triage data \u2014\ndraft, confidence, server-computed flags (B-044), prompt\nprovenance (B-038) \u2014 all additive: the B-018 stub fields are\nunchanged. ``resulting_entity_*`` stay null until Phase 4\nmints published entities; approval records the decision.",
         "properties": {
+          "approvals_recorded": {
+            "default": 0,
+            "title": "Approvals Recorded",
+            "type": "integer"
+          },
+          "approvals_required": {
+            "default": 1,
+            "title": "Approvals Required",
+            "type": "integer"
+          },
           "approved_by": {
             "anyOf": [
               {
@@ -1269,6 +1569,28 @@
           "other_occurrence_start": {
             "title": "Other Occurrence Start",
             "type": "string"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id"
+          },
+          "resource_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Name"
           }
         },
         "required": [
@@ -1292,7 +1614,7 @@
             "type": "array"
           },
           "resource_note": {
-            "default": "Resource booking arrives in a later phase; no resource conflicts are computed yet.",
+            "default": "Resource double-bookings appear above as resource_overlap flags when two published events hold the same resource over overlapping times.",
             "title": "Resource Note",
             "type": "string"
           }
@@ -1763,6 +2085,25 @@
         "title": "EmailInRequest",
         "type": "object"
       },
+      "EventAttendanceResponse": {
+        "description": "One event's attendance, as a count and nothing else.",
+        "properties": {
+          "attendee_count": {
+            "title": "Attendee Count",
+            "type": "integer"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "attendee_count"
+        ],
+        "title": "EventAttendanceResponse",
+        "type": "object"
+      },
       "EventChangeResponse": {
         "description": "One row of an event's change history (B-050).",
         "properties": {
@@ -1935,6 +2276,17 @@
             "default": "",
             "title": "Sub Group",
             "type": "string"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
           },
           "timezone": {
             "anyOf": [
@@ -2159,6 +2511,17 @@
               }
             ],
             "title": "Sub Group"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
           },
           "timezone": {
             "anyOf": [
@@ -2443,6 +2806,17 @@
               }
             ],
             "title": "Sub Group"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
           },
           "timezone": {
             "title": "Timezone",
@@ -3142,6 +3516,178 @@
         "title": "GroupResponse",
         "type": "object"
       },
+      "GroupSettingsResponse": {
+        "description": "The settings pack as read (B-111): the review-queue\nrules, reminder defaults, the digest's moment, the\ntemplate set, and the AI budget cap (null = no cap).",
+        "properties": {
+          "ai_daily_budget_micros": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Daily Budget Micros"
+          },
+          "digest_enabled": {
+            "title": "Digest Enabled",
+            "type": "boolean"
+          },
+          "digest_time": {
+            "title": "Digest Time",
+            "type": "string"
+          },
+          "digest_weekday": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Weekday"
+          },
+          "reminder_rules": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderRule"
+            },
+            "title": "Reminder Rules",
+            "type": "array"
+          },
+          "review_approvals_required": {
+            "title": "Review Approvals Required",
+            "type": "integer"
+          },
+          "review_min_role": {
+            "title": "Review Min Role",
+            "type": "string"
+          },
+          "template_set": {
+            "title": "Template Set",
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_min_role",
+          "review_approvals_required",
+          "reminder_rules",
+          "digest_weekday",
+          "digest_time",
+          "digest_enabled",
+          "template_set",
+          "ai_daily_budget_micros"
+        ],
+        "title": "GroupSettingsResponse",
+        "type": "object"
+      },
+      "GroupSettingsUpdateRequest": {
+        "description": "A settings-pack write. Every field is optional: a field\nthat is ABSENT is left as it was; a field that is present\ngoverns \u2014 including null where null means something\n(budget \u2192 no cap; digest weekday \u2192 the default).",
+        "properties": {
+          "ai_daily_budget_micros": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Daily Budget Micros"
+          },
+          "digest_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Enabled"
+          },
+          "digest_time": {
+            "anyOf": [
+              {
+                "pattern": "^(\\d{2}:\\d{2})?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Time"
+          },
+          "digest_weekday": {
+            "anyOf": [
+              {
+                "maximum": 6.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Weekday"
+          },
+          "reminder_rules": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ReminderRule"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder Rules"
+          },
+          "review_approvals_required": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Approvals Required"
+          },
+          "review_min_role": {
+            "anyOf": [
+              {
+                "pattern": "^(member|organiser|admin|owner)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Min Role"
+          },
+          "template_set": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Set"
+          }
+        },
+        "title": "GroupSettingsUpdateRequest",
+        "type": "object"
+      },
       "GroupUpdateRequest": {
         "description": "Edit a group's settings (admin+; B-015).",
         "properties": {
@@ -3317,6 +3863,25 @@
           "database"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "ImportRowIssue": {
+        "description": "One row of the spreadsheet, named by its row number,\nwith the plain reason it was skipped or failed (B-110).",
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "row": {
+            "title": "Row",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row",
+          "reason"
+        ],
+        "title": "ImportRowIssue",
         "type": "object"
       },
       "InboundAddressResponse": {
@@ -3898,6 +4463,111 @@
         "title": "MatchView",
         "type": "object"
       },
+      "MemberExportRow": {
+        "description": "One exported membership: the roster row, with the\nperson's sub-group names (B-110).",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subgroups": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subgroups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "role",
+          "status",
+          "subgroups"
+        ],
+        "title": "MemberExportRow",
+        "type": "object"
+      },
+      "MemberImportReportResponse": {
+        "description": "What an import did \u2014 or, on a dry run, exactly what it\nWOULD do (the report is computed, then rolled back).",
+        "properties": {
+          "already_members": {
+            "title": "Already Members",
+            "type": "integer"
+          },
+          "blank_rows": {
+            "title": "Blank Rows",
+            "type": "integer"
+          },
+          "created_users": {
+            "title": "Created Users",
+            "type": "integer"
+          },
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "enrolments": {
+            "title": "Enrolments",
+            "type": "integer"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowIssue"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "memberships_created": {
+            "title": "Memberships Created",
+            "type": "integer"
+          },
+          "rows_total": {
+            "title": "Rows Total",
+            "type": "integer"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/ImportRowIssue"
+            },
+            "title": "Skipped",
+            "type": "array"
+          },
+          "subgroups_created": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subgroups Created",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dry_run",
+          "rows_total",
+          "created_users",
+          "memberships_created",
+          "enrolments",
+          "already_members",
+          "blank_rows",
+          "subgroups_created",
+          "skipped",
+          "errors"
+        ],
+        "title": "MemberImportReportResponse",
+        "type": "object"
+      },
       "MembershipResponse": {
         "description": "One membership row: who, with which role, in which state.",
         "properties": {
@@ -4033,6 +4703,25 @@
           "openapi"
         ],
         "title": "MetaResponse",
+        "type": "object"
+      },
+      "MissingRole": {
+        "description": "One role an event still needs people for.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "role_name": {
+            "title": "Role Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role_name",
+          "count"
+        ],
+        "title": "MissingRole",
         "type": "object"
       },
       "MonthDay": {
@@ -5625,6 +6314,260 @@
         "title": "ResolveContradictionRequest",
         "type": "object"
       },
+      "ResourceBookingCreateRequest": {
+        "description": "Book one resource for the event in the path.",
+        "properties": {
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id"
+        ],
+        "title": "ResourceBookingCreateRequest",
+        "type": "object"
+      },
+      "ResourceBookingResponse": {
+        "description": "One booking. ``conflicts`` carries the double-bookings\nthis booking takes part in \u2014 the booker sees the clash in\nthe response that makes it (flags, never blocks).",
+        "properties": {
+          "booked_by": {
+            "title": "Booked By",
+            "type": "string"
+          },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceConflictFlag"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "default": "",
+            "title": "Resource Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "resource_id",
+          "event_id",
+          "booked_by",
+          "created_at"
+        ],
+        "title": "ResourceBookingResponse",
+        "type": "object"
+      },
+      "ResourceConflictFlag": {
+        "description": "One double-booking a booking takes part in (B-057's\nshape, on the booking that created it).",
+        "properties": {
+          "kind": {
+            "default": "resource_overlap",
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "other_event_id": {
+            "title": "Other Event Id",
+            "type": "string"
+          },
+          "other_event_title": {
+            "title": "Other Event Title",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "resource_name",
+          "other_event_id",
+          "other_event_title",
+          "message"
+        ],
+        "title": "ResourceConflictFlag",
+        "type": "object"
+      },
+      "ResourceCreateRequest": {
+        "description": "Register a bookable item, with its keeper: a member's id\n(their words become the label), or plain words.",
+        "properties": {
+          "keeper_label": {
+            "default": "",
+            "title": "Keeper Label",
+            "type": "string"
+          },
+          "keeper_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper User Id"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ResourceCreateRequest",
+        "type": "object"
+      },
+      "ResourcePatchRequest": {
+        "description": "Edit an item; only sent fields change.",
+        "properties": {
+          "keeper_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper Label"
+          },
+          "keeper_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper User Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "title": "ResourcePatchRequest",
+        "type": "object"
+      },
+      "ResourceResponse": {
+        "description": "One bookable item and its keeper.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "keeper_label": {
+            "default": "",
+            "title": "Keeper Label",
+            "type": "string"
+          },
+          "keeper_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keeper User Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "name",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ResourceResponse",
+        "type": "object"
+      },
       "RoleChangeRequest": {
         "description": "Change a member's role (B-016).",
         "properties": {
@@ -5666,6 +6609,17 @@
             "title": "Created At",
             "type": "string"
           },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
           "event_id": {
             "title": "Event Id",
             "type": "string"
@@ -5681,6 +6635,17 @@
           "role_name": {
             "title": "Role Name",
             "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
           }
         },
         "required": [
@@ -6017,6 +6982,149 @@
         "title": "SessionResponse",
         "type": "object"
       },
+      "ShiftCreateRequest": {
+        "description": "Open a shift on an event: one role, one window, a\nheadcount. Times arrive as ISO-8601; the router converts\nthem to stored UTC before the service runs.",
+        "properties": {
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "headcount": {
+            "default": 1,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Headcount",
+            "type": "integer"
+          },
+          "role_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Role Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role_name",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "ShiftCreateRequest",
+        "type": "object"
+      },
+      "ShiftGapReportResponse": {
+        "description": "The window's gap report: only events WITH gaps appear.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ShiftGapResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          }
+        },
+        "title": "ShiftGapReportResponse",
+        "type": "object"
+      },
+      "ShiftGapResponse": {
+        "description": "One event's gaps, with the summary in words a coordinator\ncan read aloud: \"Saturday still needs a driver and a door\nperson.\"",
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_title": {
+            "title": "Event Title",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "$ref": "#/components/schemas/MissingRole"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_title",
+          "starts_at",
+          "summary"
+        ],
+        "title": "ShiftGapResponse",
+        "type": "object"
+      },
+      "ShiftResponse": {
+        "description": "One shift: the role, the window, how many people it\nneeds, how many have claimed \u2014 and the slot rows themselves\n(claims and releases ride the B-088 slot endpoints).",
+        "properties": {
+          "claimed": {
+            "title": "Claimed",
+            "type": "integer"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "headcount": {
+            "title": "Headcount",
+            "type": "integer"
+          },
+          "role_name": {
+            "title": "Role Name",
+            "type": "string"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/RoleSlotResponse"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          }
+        },
+        "required": [
+          "event_id",
+          "role_name",
+          "headcount",
+          "claimed"
+        ],
+        "title": "ShiftResponse",
+        "type": "object"
+      },
       "SourceCreateRequest": {
         "description": "Create a text-native source with its chunks (B-023).",
         "properties": {
@@ -6270,6 +7378,184 @@
         "title": "SourceResponse",
         "type": "object"
       },
+      "SubGroupCreateRequest": {
+        "description": "Open a named sub-group (a chapter, a crew) in a group.",
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "SubGroupCreateRequest",
+        "type": "object"
+      },
+      "SubGroupEnrollRequest": {
+        "description": "Enrol one group member; ``role`` is the optional\nper-sub-group role override (an organiser's grant).",
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "SubGroupEnrollRequest",
+        "type": "object"
+      },
+      "SubGroupMemberResponse": {
+        "description": "One enrolled member: their group role, their per-sub-group\nrole when one was granted, and the effective role.",
+        "properties": {
+          "effective_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Role"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "group_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Role"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "subgroup_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Role"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "SubGroupMemberResponse",
+        "type": "object"
+      },
+      "SubGroupPatchRequest": {
+        "description": "Rename / re-describe a sub-group; only sent fields change.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "SubGroupPatchRequest",
+        "type": "object"
+      },
+      "SubGroupResponse": {
+        "description": "One sub-group, with its enrolled headcount.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "member_count": {
+            "default": 0,
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "name",
+          "created_by",
+          "created_at"
+        ],
+        "title": "SubGroupResponse",
+        "type": "object"
+      },
       "SupplyEventResponse": {
         "properties": {
           "claimed": {
@@ -6367,6 +7653,17 @@
             ],
             "title": "Owner Id"
           },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
+          },
           "title": {
             "maxLength": 240,
             "minLength": 1,
@@ -6427,6 +7724,17 @@
               }
             ],
             "title": "Status"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
           },
           "title": {
             "anyOf": [
@@ -6536,6 +7844,17 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "subgroup_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subgroup Id"
           },
           "suggested_owner_label": {
             "default": "",
@@ -7741,6 +9060,324 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/announcements": {
+      "get": {
+        "description": "The board: pinned first, then newest. Expired posts are\ngone from the board unless an organiser asks to see them.",
+        "operationId": "list_announcements_api_v1_groups__group_id__announcements_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_expired",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Expired",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementResponse"
+                  },
+                  "title": "Response List Announcements Api V1 Groups  Group Id  Announcements Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Announcements",
+        "tags": [
+          "announcements"
+        ]
+      },
+      "post": {
+        "description": "Post to the board (organiser+). Announcement \u2260\npublication: it still takes an organiser ACCOUNT \u2014 a seat\nis refused in the service (the B-043 law for humans).",
+        "operationId": "create_announcement_api_v1_groups__group_id__announcements_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Announcement",
+        "tags": [
+          "announcements"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/announcements/{announcement_id}": {
+      "delete": {
+        "description": "Take a post down (organiser+ person).",
+        "operationId": "delete_announcement_api_v1_groups__group_id__announcements__announcement_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "announcement_id",
+            "required": true,
+            "schema": {
+              "title": "Announcement Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Announcement",
+        "tags": [
+          "announcements"
+        ]
+      },
+      "get": {
+        "description": "One post. A scoped post outside the caller's sub-groups\nis a 404, like every scoped thing (B-105).",
+        "operationId": "read_announcement_api_v1_groups__group_id__announcements__announcement_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "announcement_id",
+            "required": true,
+            "schema": {
+              "title": "Announcement Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Announcement",
+        "tags": [
+          "announcements"
+        ]
+      },
+      "patch": {
+        "description": "Edit a post (organiser+ person \u2014 seats refused inside).",
+        "operationId": "update_announcement_api_v1_groups__group_id__announcements__announcement_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "announcement_id",
+            "required": true,
+            "schema": {
+              "title": "Announcement Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Announcement",
+        "tags": [
+          "announcements"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/attendance/summary": {
+      "get": {
+        "description": "Recent events + headcounts + the average \u2014 the planning\nnumbers, with no person's record anywhere in them.",
+        "operationId": "attendance_summary_api_v1_groups__group_id__attendance_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recent",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 52,
+              "minimum": 1,
+              "title": "Recent",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attendance Summary",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/audit": {
       "get": {
         "description": "The group's audit trail, newest first (admin+).",
@@ -8405,7 +10042,7 @@
     },
     "/api/v1/groups/{group_id}/candidates/{candidate_id}/approve": {
       "post": {
-        "description": "Approve a candidate (organiser+ person with publish rights).\nSeats are refused inside the service itself (B-018's rule).",
+        "description": "Approve a candidate (a person with publish rights).\n\nThe door is membership: WHO may approve is the group's own\nreview rule (settings pack, B-111), enforced inside the\nservice beside B-018's seat rule \u2014 a group may open\napproval to members or hold it to admins, and may require\nmore than one distinct approver before a candidate is\ndecided; below the count this records the approval and the\ncandidate stays pending.",
         "operationId": "approve_candidate_api_v1_groups__group_id__candidates__candidate_id__approve_post",
         "parameters": [
           {
@@ -9544,7 +11181,7 @@
     },
     "/api/v1/groups/{group_id}/events": {
       "get": {
-        "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers.",
+        "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers, and\nsub-group-scoped events only for their people (B-105).",
         "operationId": "list_events_api_v1_groups__group_id__events_get",
         "parameters": [
           {
@@ -9824,6 +11461,172 @@
         "summary": "Update Event",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/attendance": {
+      "get": {
+        "description": "One event's headcount. A count \u2014 there is no per-person\nread here, deliberately (B-109's refusal).",
+        "operationId": "read_event_attendance_api_v1_groups__group_id__events__event_id__attendance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventAttendanceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Event Attendance",
+        "tags": [
+          "attendance"
+        ]
+      },
+      "post": {
+        "description": "Mark a member present (organiser+). Idempotent \u2014 the\nreceipt is the act's own echo, not a read of anyone's\nrecord.",
+        "operationId": "mark_attendance_api_v1_groups__group_id__events__event_id__attendance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceMarkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceMarkResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Attendance",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/attendance/{user_id}": {
+      "delete": {
+        "description": "Correct a mark (organiser+).",
+        "operationId": "unmark_attendance_api_v1_groups__group_id__events__event_id__attendance__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unmark Attendance",
+        "tags": [
+          "attendance"
         ]
       }
     },
@@ -11388,6 +13191,122 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/resource-bookings": {
+      "get": {
+        "description": "What an event has booked.",
+        "operationId": "list_event_bookings_api_v1_groups__group_id__events__event_id__resource_bookings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceBookingResponse"
+                  },
+                  "title": "Response List Event Bookings Api V1 Groups  Group Id  Events  Event Id  Resource Bookings Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Event Bookings",
+        "tags": [
+          "resources"
+        ]
+      },
+      "post": {
+        "description": "Book a resource for an event (organiser+). The response\ncarries any double-booking this creates \u2014 flagged, never\nblocked (B-057's law, completed by B-108).",
+        "operationId": "book_resource_api_v1_groups__group_id__events__event_id__resource_bookings_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceBookingCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceBookingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Book Resource",
+        "tags": [
+          "resources"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/restore": {
       "post": {
         "description": "Undelete an event inside its 30-day window (B-080): it\ncomes back whole \u2014 history, links, RSVPs and all.",
@@ -11713,6 +13632,122 @@
         "summary": "List Rsvps",
         "tags": [
           "rsvps"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/shifts": {
+      "get": {
+        "description": "An event's shifts, grouped by role + window.",
+        "operationId": "list_shifts_api_v1_groups__group_id__events__event_id__shifts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftResponse"
+                  },
+                  "title": "Response List Shifts Api V1 Groups  Group Id  Events  Event Id  Shifts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Shifts",
+        "tags": [
+          "shifts"
+        ]
+      },
+      "post": {
+        "description": "Open a shift on an event (member+): headcount slots of\none role over one window. Claims ride the B-088 endpoints.",
+        "operationId": "open_shift_api_v1_groups__group_id__events__event_id__shifts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Shift",
+        "tags": [
+          "shifts"
         ]
       }
     },
@@ -12204,6 +14239,127 @@
         "summary": "List Members",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/members/export": {
+      "get": {
+        "description": "The roster out (admin+): JSON by default, or\n``?format=csv`` for the spreadsheet the group keeps.",
+        "operationId": "export_members_api_v1_groups__group_id__members_export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberExportRow"
+                  },
+                  "title": "Response Export Members Api V1 Groups  Group Id  Members Export Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Members",
+        "tags": [
+          "members-io"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/members/import": {
+      "post": {
+        "description": "Import a membership spreadsheet (admin+): CSV of name,\nemail, sub-group, posted as the raw body.\n\nThe answer is a report \u2014 what was created, counted,\nskipped, and refused, row by spreadsheet row number. With\n``?dry_run=true`` the same report is computed and the work\nrolled back: what WOULD happen, truthfully.",
+        "operationId": "import_members_api_v1_groups__group_id__members_import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "text/plain": {
+              "schema": {
+                "title": "Csv Text",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImportReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Members",
+        "tags": [
+          "members-io"
         ]
       }
     },
@@ -13278,6 +15434,254 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/resource-bookings/{booking_id}": {
+      "delete": {
+        "description": "Release one booking (organiser+).",
+        "operationId": "unbook_resource_api_v1_groups__group_id__resource_bookings__booking_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "title": "Booking Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unbook Resource",
+        "tags": [
+          "resources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/resources": {
+      "get": {
+        "description": "The group's bookable items, name order.",
+        "operationId": "list_resources_api_v1_groups__group_id__resources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceResponse"
+                  },
+                  "title": "Response List Resources Api V1 Groups  Group Id  Resources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Resources",
+        "tags": [
+          "resources"
+        ]
+      },
+      "post": {
+        "description": "Register a bookable item (organiser+).",
+        "operationId": "create_resource_api_v1_groups__group_id__resources_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Resource",
+        "tags": [
+          "resources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/resources/{resource_id}": {
+      "delete": {
+        "description": "Remove an item and its bookings (organiser+).",
+        "operationId": "delete_resource_api_v1_groups__group_id__resources__resource_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource_id",
+            "required": true,
+            "schema": {
+              "title": "Resource Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Resource",
+        "tags": [
+          "resources"
+        ]
+      },
+      "patch": {
+        "description": "Edit an item (organiser+).",
+        "operationId": "update_resource_api_v1_groups__group_id__resources__resource_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource_id",
+            "required": true,
+            "schema": {
+              "title": "Resource Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourcePatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Resource",
+        "tags": [
+          "resources"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/roles/{slot_id}/claim": {
       "post": {
         "description": "Take one of the event's named jobs yourself.",
@@ -13383,7 +15787,7 @@
     },
     "/api/v1/groups/{group_id}/search": {
       "get": {
-        "description": "One search over events, tasks, decisions, questions \u2014\nranked, and every hit linked back to its source.",
+        "description": "One search over events, tasks, decisions, questions \u2014\nranked, and every hit linked back to its source. Scoped\nhits outside the caller's sub-groups never appear (B-105).",
         "operationId": "search_api_v1_groups__group_id__search_get",
         "parameters": [
           {
@@ -13529,6 +15933,175 @@
         "summary": "Create Seat",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/settings": {
+      "get": {
+        "description": "The group's settings pack (organiser+): review rules,\nreminder defaults, digest moment, template set, AI budget.",
+        "operationId": "read_settings_api_v1_groups__group_id__settings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Settings",
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "description": "Write the settings pack (admin+). Only the fields sent\nare changed; each is validated whole, the change is\naudited with its old and new values, and a digest change\nre-anchors the digest chain before the answer is sent.",
+        "operationId": "update_settings_api_v1_groups__group_id__settings_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupSettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Settings",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/shift-gaps": {
+      "get": {
+        "description": "The gap report: which events in the window still need\nwhich roles \u2014 \"Saturday still needs a driver and a door\nperson.\" Without a window, the group's coming week.",
+        "operationId": "shift_gaps_api_v1_groups__group_id__shift_gaps_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftGapReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Shift Gaps",
+        "tags": [
+          "shifts"
         ]
       }
     },
@@ -14391,6 +16964,429 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/subgroups": {
+      "get": {
+        "description": "The group's sub-groups, name order, with headcounts.",
+        "operationId": "list_subgroups_api_v1_groups__group_id__subgroups_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubGroupResponse"
+                  },
+                  "title": "Response List Subgroups Api V1 Groups  Group Id  Subgroups Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Subgroups",
+        "tags": [
+          "subgroups"
+        ]
+      },
+      "post": {
+        "description": "Open a named sub-group (organiser+).",
+        "operationId": "create_subgroup_api_v1_groups__group_id__subgroups_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubGroupCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubGroupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Subgroup",
+        "tags": [
+          "subgroups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/subgroups/{subgroup_id}": {
+      "delete": {
+        "description": "Remove a sub-group (organiser+). Refused while content is\nstill scoped to it \u2014 a delete must never widen an audience.",
+        "operationId": "delete_subgroup_api_v1_groups__group_id__subgroups__subgroup_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Subgroup",
+        "tags": [
+          "subgroups"
+        ]
+      },
+      "get": {
+        "description": "One sub-group.",
+        "operationId": "read_subgroup_api_v1_groups__group_id__subgroups__subgroup_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubGroupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Subgroup",
+        "tags": [
+          "subgroups"
+        ]
+      },
+      "patch": {
+        "description": "Rename / re-describe a sub-group (organiser+).",
+        "operationId": "update_subgroup_api_v1_groups__group_id__subgroups__subgroup_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubGroupPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubGroupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Subgroup",
+        "tags": [
+          "subgroups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/subgroups/{subgroup_id}/members": {
+      "get": {
+        "description": "Who is enrolled, with group / per-sub-group / effective roles.",
+        "operationId": "list_subgroup_members_api_v1_groups__group_id__subgroups__subgroup_id__members_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubGroupMemberResponse"
+                  },
+                  "title": "Response List Subgroup Members Api V1 Groups  Group Id  Subgroups  Subgroup Id  Members Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Subgroup Members",
+        "tags": [
+          "subgroups"
+        ]
+      },
+      "post": {
+        "description": "Enrol a group member in a sub-group. Organisers enrol\nanyone; a member may enrol THEMSELVES (the service holds\nthat rule, so no route can forget it).",
+        "operationId": "enroll_member_api_v1_groups__group_id__subgroups__subgroup_id__members_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubGroupEnrollRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubGroupMemberResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enroll Member",
+        "tags": [
+          "subgroups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/subgroups/{subgroup_id}/members/{user_id}": {
+      "delete": {
+        "description": "Remove an enrolment (organiser, or the person themselves).",
+        "operationId": "unenroll_member_api_v1_groups__group_id__subgroups__subgroup_id__members__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subgroup_id",
+            "required": true,
+            "schema": {
+              "title": "Subgroup Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unenroll Member",
+        "tags": [
+          "subgroups"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/supplies": {
       "get": {
         "description": "The \"buy once\" view: checklist lines folded across the\nwindow's events. Without a window the group gets this\nweek (Monday \u2192 Monday, group-local) \u2014 the shopping trip's\nnatural span.",
@@ -14474,7 +17470,7 @@
     },
     "/api/v1/groups/{group_id}/tasks": {
       "get": {
-        "description": "The group's tasks, soonest-due first, filterable.",
+        "description": "The group's tasks, soonest-due first, filterable.\nSub-group-scoped tasks outside the caller's enrolments\nnever reach the list (B-105).",
         "operationId": "list_tasks_api_v1_groups__group_id__tasks_get",
         "parameters": [
           {
@@ -14542,6 +17538,22 @@
                 }
               ],
               "title": "Owner Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "subgroup_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Subgroup Id"
             }
           }
         ],
