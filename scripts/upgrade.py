@@ -4,25 +4,39 @@
         [--root /opt/gpa] [--env-file /etc/gpa/gpa.env]
 
 The order is the roadmap's, and it is not negotiable:
+**backup → migrate → suite smoke → serve**. Mechanically
+the new tree is staged and built FIRST (pure addition —
+nothing about the live deployment changes), because the
+backup itself may need the new tree's tooling:
 
-1. **Backup.** The CURRENT tree's own backup script takes a
-   bundle of the live deployment (database + storage +
-   manifest). The bundle's hashes are re-verified here
-   before anything else happens — an upgrade that cannot
-   prove its way back does not start.
-2. **Stage + build.** The new ZIP is unpacked beside the
+1. **Stage + build.** The new ZIP is unpacked beside the
    installation and given a FRESH virtualenv from its own
    lockfile (a copied venv is a broken venv — B-146).
+2. **Backup.** A bundle of the live deployment (database +
+   storage + manifest) is taken — by the current tree's own
+   backup script when it has one, else by the staged tree's
+   (an installation older than the backup tooling, like
+   v0.4, has none; the bundle format is the same). The
+   bundle's hashes are re-verified here. Nothing that
+   changes the deployment happens before this exists: an
+   upgrade that cannot prove its way back does not proceed.
+   (The bundle covers SQLite deployments; a PostgreSQL
+   deployment's backup is its platform's dump discipline,
+   taken before running this script — DEPLOYMENT.md.)
 3. **Migrate.** The staged tree's Alembic migrations run
    against the LIVE database. If this fails, nothing has
-   been swapped; the way back is step 1's bundle.
+   been swapped; the way back is step 2's bundle.
 4. **Smoke.** The staged server boots against the real
    (now migrated) deployment data on a scratch port and
    must answer /health with status ok before it may serve.
 5. **Serve (the swap).** The old tree moves aside to
    ``<root>.previous-<stamp>``; the staged tree takes the
    root's path, carrying the deployment's data/, backups/
-   and .env with it. The script then prints the restart
+   and .env with it, and its venv is rebuilt in place — a
+   venv is path-bound (its scripts name their interpreter
+   by absolute path), so the serving venv must be born at
+   its final address; the staged one was scaffolding for
+   migrate + smoke. The script then prints the restart
    commands — restarting the service is the operator's
    deliberate act, not a script's side effect.
 
@@ -88,13 +102,24 @@ def verify_bundle(bundle: Path) -> None:
     if not manifest_path.is_file():
         raise UpgradeError(f"backup bundle has no manifest: {bundle}")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    for entry in manifest.get("files", []):
-        path = bundle / entry["path"]
+    # The B-146 manifest shape: one database entry plus one
+    # entry per storage file (paths relative to storage/).
+    entries = []
+    database = manifest.get("database") or {}
+    if database.get("file"):
+        entries.append((bundle / database["file"], database.get("sha256"),
+                        database["file"]))
+    for entry in manifest.get("storage_files", []):
+        entries.append((bundle / "storage" / entry["path"],
+                        entry.get("sha256"), entry["path"]))
+    if not entries:
+        raise UpgradeError("backup bundle's manifest names no files at all")
+    for path, expected, label in entries:
         if not path.is_file():
-            raise UpgradeError(f"backup bundle is missing {entry['path']}")
-        if _sha256(path) != entry["sha256"]:
+            raise UpgradeError(f"backup bundle is missing {label}")
+        if _sha256(path) != expected:
             raise UpgradeError(
-                f"backup bundle file {entry['path']} fails its hash — "
+                f"backup bundle file {label} fails its hash — "
                 "the way back is not proven; refusing to upgrade."
             )
 
@@ -208,30 +233,48 @@ def upgrade(
 
     if not (root / "pyproject.toml").is_file():
         raise UpgradeError(f"{root} does not look like a GPA installation.")
-    # The backup runs with the CURRENT tree's own interpreter:
-    # its code must import against its own environment, not
-    # against whichever Python launched this script.
-    venv_python = root / ".venv" / "bin" / "python"
-    python = str(venv_python) if venv_python.exists() else sys.executable
 
-    # 1 — Backup, with the CURRENT tree's own script, and proof.
-    log("1/5 backup (current tree's scripts/backup.py)…")
+    # 1 — Stage + build the new tree beside the installation.
+    # Pure addition: nothing about the live deployment has
+    # changed yet, and nothing that changes it happens until
+    # the backup below exists and verifies.
+    log("1/5 stage + build the new tree…")
+    stage_dir = root.parent / f"{root.name}.staging-{stamp}"
+    staged = stage_zip(zip_path, stage_dir)
+    # --no-editable is load-bearing: an editable install is a
+    # .pth file naming the STAGING path, and step 5 renames
+    # that path away — the swapped-in tree's venv would point
+    # at a directory that no longer exists and the service
+    # would not boot. The upgrade drill (v0.4 → v0.5) caught
+    # exactly this. A deployment venv must own its packages.
+    _run(["uv", "sync", "--frozen", "--no-editable"], cwd=staged)
+
+    # 2 — Backup, and proof. The runner is the CURRENT tree's
+    # own backup script when it has one, run with its own
+    # interpreter (its code imports against its own
+    # environment). An installation older than the backup
+    # tooling (v0.4 has no scripts/backup.py — the drill's
+    # case) has none: the STAGED tree's script takes the
+    # bundle instead. Same bundle format, same manifest —
+    # restore.py reads any of them; what matters is that the
+    # way back exists before anything mutates.
+    log("2/5 backup (before anything mutates)…")
     bundle_parent = root / "backups"
     bundle_parent.mkdir(parents=True, exist_ok=True)
     bundle = bundle_parent / f"gpa-backup-{stamp}"
+    if (root / "scripts" / "backup.py").is_file():
+        runner_root, runner_python = root, root / ".venv" / "bin" / "python"
+    else:
+        runner_root, runner_python = staged, staged / ".venv" / "bin" / "python"
+        log("  the current tree predates backup tooling; "
+            "the new tree's backup script takes the bundle.")
     _run(
-        [python, "scripts/backup.py", "--out", str(bundle)],
-        cwd=root,
+        [str(runner_python), "scripts/backup.py", "--out", str(bundle)],
+        cwd=runner_root,
         env=dict(os.environ) | env,
     )
     verify_bundle(bundle)
     log(f"  bundle verified: {bundle}")
-
-    # 2 — Stage + build the new tree beside the installation.
-    log("2/5 stage + build the new tree…")
-    stage_dir = root.parent / f"{root.name}.staging-{stamp}"
-    staged = stage_zip(zip_path, stage_dir)
-    _run(["uv", "sync", "--frozen"], cwd=staged)
 
     # 3 — Migrate the LIVE database with the staged tree.
     log("3/5 migrate the live database (staged tree's Alembic)…")
@@ -262,6 +305,17 @@ def upgrade(
         previous.rename(root)  # put the live tree back, then say so
         raise UpgradeError("the swap failed midway; the old tree was put back.")
     shutil.rmtree(stage_dir, ignore_errors=True)
+
+    # The staged venv was born at the staging address — and a
+    # venv is path-bound: its console scripts' shebangs name
+    # the interpreter by absolute path, so after the rename
+    # they point at a directory that no longer exists and
+    # nothing in .venv/bin would run (the drill's final boot
+    # caught this too). The serving venv is therefore rebuilt
+    # in place, born at its final address; the staged venv
+    # was always scaffolding for migrate + smoke.
+    shutil.rmtree(root / ".venv", ignore_errors=True)
+    _run(["uv", "sync", "--frozen", "--no-editable"], cwd=root)
 
     log("")
     log(f"Upgraded: {root} now runs the {zip_path.name} tree.")

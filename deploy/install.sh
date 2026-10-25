@@ -78,7 +78,7 @@ mkdir -p "$PREFIX" "$PREFIX/data" "$PREFIX/backups" "$CONFIG_DIR" "$SYSTEMD_DIR"
 say "code tree installed at $PREFIX"
 
 # The virtualenv, from the lockfile, with the project's own tool.
-( cd "$PREFIX" && uv sync --frozen --no-dev )
+( cd "$PREFIX" && uv sync --frozen --no-dev --no-editable )
 say "virtualenv built from uv.lock"
 
 # --- The environment file -------------------------------------------
