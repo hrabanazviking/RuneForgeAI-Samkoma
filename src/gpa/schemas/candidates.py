@@ -33,6 +33,24 @@ class ProvenanceEntry(BaseModel):
     sent_at: str | None = None
 
 
+class MatchView(BaseModel):
+    """One scored match of this candidate against an existing
+    event (B-075): the event's face, the total score, the
+    per-component scores (title / time / place / host), and the
+    ``likely`` verdict — at or above the threshold the queue
+    shows "likely the same event" beside the merge action."""
+
+    event_id: str
+    event_title: str = ""
+    event_starts_at: str = ""
+    event_place_name: str = ""
+    event_host_label: str = ""
+    event_status: str = ""
+    score: float = 0.0
+    likely: bool = False
+    components: dict = Field(default_factory=dict)
+
+
 class CandidateDetailResponse(BaseModel):
     """The full candidate: the list row plus provenance rows."""
 
@@ -57,6 +75,10 @@ class CandidateDetailResponse(BaseModel):
     resulting_entity_type: str | None = None
     resulting_entity_id: str | None = None
     provenance: list[ProvenanceEntry] = Field(default_factory=list)
+    # Cross-source matches against the group's existing events
+    # (B-075), best first; only meaningful for event-kind
+    # candidates in an open state — empty otherwise.
+    matches: list[MatchView] = Field(default_factory=list)
 
 
 class CandidateEditRequest(BaseModel):
@@ -136,9 +158,15 @@ def candidate_row(candidate: "Candidate"):
     )
 
 
-def candidate_detail(candidate: "Candidate", provenance: list[dict]) -> CandidateDetailResponse:
+def candidate_detail(
+    candidate: "Candidate",
+    provenance: list[dict],
+    matches: list[dict] | None = None,
+) -> CandidateDetailResponse:
     """Build the detail response from a candidate row + its
-    provenance dicts (the service's shape)."""
+    provenance dicts (the service's shape), with the
+    cross-source matches (B-075) when the caller computed
+    them."""
     try:
         draft = json.loads(candidate.draft_json or "{}")
     except json.JSONDecodeError:
@@ -166,4 +194,5 @@ def candidate_detail(candidate: "Candidate", provenance: list[dict]) -> Candidat
         resulting_entity_type=candidate.resulting_entity_type,
         resulting_entity_id=candidate.resulting_entity_id,
         provenance=[ProvenanceEntry(**row) for row in provenance],
+        matches=[MatchView(**row) for row in (matches or [])],
     )

@@ -90,10 +90,18 @@ def get_candidate(
     db: Session = Depends(get_db),
 ):
     """One candidate with its full provenance (B-043): every
-    field's quote, chunk, and support verdict."""
+    field's quote, chunk, and support verdict — plus the
+    cross-source matches (B-075) the queue renders as
+    "likely the same event" with the side-by-side merge
+    action (scored server-side; the machine proposes, the
+    person merges)."""
+    from gpa.services import matching as matching_service
+
     candidate = candidate_service.get_candidate(db, context.group, candidate_id)
     return candidate_detail(
-        candidate, candidate_service.provenance_of(db, candidate)
+        candidate,
+        candidate_service.provenance_of(db, candidate),
+        matches=matching_service.match_candidate(db, context.group, candidate),
     )
 
 

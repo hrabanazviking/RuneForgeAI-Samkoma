@@ -54,6 +54,7 @@ export interface CandidateDetailResponse {
   id: string;
   job_id?: string | unknown | null | null;
   kind: string;
+  matches?: MatchView[];
   merged_into_id?: string | unknown | null | null;
   prompt_name?: string;
   prompt_version?: number | unknown | null | null;
@@ -421,6 +422,18 @@ export interface LoginRequest {
 
 export interface MagicLinkRequest {
   email: string;
+}
+
+export interface MatchView {
+  components?: Record<string, unknown>;
+  event_host_label?: string;
+  event_id: string;
+  event_place_name?: string;
+  event_starts_at?: string;
+  event_status?: string;
+  event_title?: string;
+  likely?: boolean;
+  score?: number;
 }
 
 export interface MembershipResponse {

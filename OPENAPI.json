@@ -267,6 +267,13 @@
             "title": "Kind",
             "type": "string"
           },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/MatchView"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
           "merged_into_id": {
             "anyOf": [
               {
@@ -2423,6 +2430,60 @@
           "email"
         ],
         "title": "MagicLinkRequest",
+        "type": "object"
+      },
+      "MatchView": {
+        "description": "One scored match of this candidate against an existing\nevent (B-075): the event's face, the total score, the\nper-component scores (title / time / place / host), and the\n``likely`` verdict \u2014 at or above the threshold the queue\nshows \"likely the same event\" beside the merge action.",
+        "properties": {
+          "components": {
+            "additionalProperties": true,
+            "title": "Components",
+            "type": "object"
+          },
+          "event_host_label": {
+            "default": "",
+            "title": "Event Host Label",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_place_name": {
+            "default": "",
+            "title": "Event Place Name",
+            "type": "string"
+          },
+          "event_starts_at": {
+            "default": "",
+            "title": "Event Starts At",
+            "type": "string"
+          },
+          "event_status": {
+            "default": "",
+            "title": "Event Status",
+            "type": "string"
+          },
+          "event_title": {
+            "default": "",
+            "title": "Event Title",
+            "type": "string"
+          },
+          "likely": {
+            "default": false,
+            "title": "Likely",
+            "type": "boolean"
+          },
+          "score": {
+            "default": 0.0,
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_id"
+        ],
+        "title": "MatchView",
         "type": "object"
       },
       "MembershipResponse": {
@@ -4915,7 +4976,7 @@
     },
     "/api/v1/groups/{group_id}/candidates/{candidate_id}": {
       "get": {
-        "description": "One candidate with its full provenance (B-043): every\nfield's quote, chunk, and support verdict.",
+        "description": "One candidate with its full provenance (B-043): every\nfield's quote, chunk, and support verdict \u2014 plus the\ncross-source matches (B-075) the queue renders as\n\"likely the same event\" with the side-by-side merge\naction (scored server-side; the machine proposes, the\nperson merges).",
         "operationId": "get_candidate_api_v1_groups__group_id__candidates__candidate_id__get",
         "parameters": [
           {
