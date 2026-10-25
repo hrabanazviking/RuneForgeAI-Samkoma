@@ -95,7 +95,8 @@ events for public-listed groups (B-059/B-135).
 | Live sources (Samtal etc.) | An outside calendar edit silently rewrites the group's event | Outside edits arrive as change candidates; a person approves (B-124): `tests/test_samtal_calendar.py` |
 | Live sources (email-in) | A forged inbound address token posts mail into a group | Forged token: 401 + audit row + no source (B-030): `tests/test_emailin.py` |
 | Public & embed | A stranger's website embeds/reads a group's public page | Only registered origins are answered; an unregistered origin gets nothing (B-135): `tests/test_embed_public.py` |
-| Jobs & stream | A member reads another group's job progress or stream frames | Jobs and the stream are group/recipient-scoped and polled from the durable tables (B-033/B-101): `tests/test_jobs.py`, `tests/test_stream.py` |
+| Jobs & stream | A member reads another group's job progress or stream frames | Jobs and the stream are group/recipient-scoped and polled from the durable tables (B-033/B-101); since B-140 a job whose payload names a group is readable only by that group's members (it was any signed-in caller before the fuzz caught it): `tests/test_jobs.py`, `tests/test_stream.py`, `tests/test_authz_fuzz.py` |
+| Every route, fuzzed | A role × random foreign id finds one door that leaks | The authorisation fuzz: zero leaks is the only passing grade (B-140): `tests/test_authz_fuzz.py` |
 | Settings & subgroups | A settings write half-applies, leaving inconsistent dials | The pack validates whole before writing anything (B-111): `tests/test_settings_pack.py` |
 | Settings & subgroups | A sub-group's scoped event leaks to a member outside it | Scoped items are absent (404) on member-facing reads (B-105): `tests/test_subgroups.py` |
 | Nonprofit pack | Attendance becomes a per-person league table | Reads are counts only; per-person routes do not exist (B-109): `tests/test_attendance.py` |
