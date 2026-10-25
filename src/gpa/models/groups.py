@@ -87,6 +87,19 @@ class Group(Base):
     # name only origins on this list, and the embed endpoint
     # refuses any other origin outright.
     embed_origins_json: Mapped[str] = mapped_column(Text, default="[]")
+    # Phase 13 privacy + storage dials (B-141/B-144), validated
+    # by the settings pack like the dials above. The upload
+    # quota caps the group's TOTAL stored upload bytes
+    # (FileAsset sizes); NULL means no group quota. Retention:
+    # raw sources older than this many days auto-expire (the
+    # approved events they produced stand); NULL means sources
+    # are kept forever — retention is opt-in, never a surprise.
+    upload_quota_bytes: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, default=104_857_600
+    )
+    source_retention_days: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

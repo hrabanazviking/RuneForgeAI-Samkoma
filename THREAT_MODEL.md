@@ -76,7 +76,9 @@ events for public-listed groups (B-059/B-135).
 | Sources & ingest | A chat paste is crafted to drop or reorder messages | Never-drop parsers; unparsed lines join, nothing vanishes (B-024): `tests/test_paste.py`, `tests/test_ingest_corpus.py` |
 | Sources & ingest | A link ingest is pointed at the server's own network (SSRF) | One guarded fetch road: global IPs only, hops re-validated, size-capped (B-029): `tests/test_links.py` |
 | Sources & ingest | A source is deleted and its candidates quietly vanish too | Candidates are never deleted; they keep the id + a tombstone stamp (B-023): `tests/test_sources.py`, `tests/test_tombstones.py` |
-| Files & uploads | An executable is uploaded wearing a document's name | Content is sniffed, never trusted by extension; EICAR + executable magics refused (B-025): `tests/test_files.py` |
+| Files & uploads | An executable is uploaded wearing a document's name | Content is sniffed, never trusted by extension; EICAR + executable magics refused (B-025): `tests/test_files.py`, `tests/test_upload_hardening.py` |
+| Files & uploads | One group's uploads fill the disk for everyone | A per-group storage quota on total stored bytes, refused in plain words at the group's own dial (B-141): `tests/test_upload_hardening.py` |
+| Files & uploads | A stored file is downloaded by guessing its address | No route serves stored bytes; storage keys are internal locators and left the API at B-141 (D-17); the one real download (event `.ics`) opens for exactly who may view the event: `tests/test_upload_hardening.py` |
 | Events & calendar | A draft event leaks to members or the public | Drafts are 404 below organiser on every surface (B-049/B-059): `tests/test_events.py` |
 | Events & calendar | Two editors race; the stale one silently wins | If-Match/ETag on edits; stale is a 409 (B-050): `tests/test_events.py` |
 | Events & calendar | A calendar feed token is guessed, shared, or used after revocation | Tokens hashed, shown once, revocable instantly (B-053): `tests/test_ical.py` |

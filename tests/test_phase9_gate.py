@@ -120,7 +120,13 @@ def test_the_nonprofit_story(client, app, db_session, capture_transport):
     # 2 — FLYER IN → EVENT OUT: photographed, read, approved,
     # minted — the Phase 5 road, unchanged.
     detail = upload_image(client, headers, gid, poster_bytes(RED))
-    stored = app.state.storage.get_bytes(detail["storage_key"])
+    # (B-141 supersession: responses no longer carry storage
+    # keys — the source's row names it, as storage's callers do.)
+    from gpa.models.sources import Source
+
+    stored = app.state.storage.get_bytes(
+        db_session.get(Source, detail["id"]).storage_key
+    )
     fixture = FixtureDriver()
     fixture.add_image(
         build_vision_prompt(), stored, FIXTURE_ANSWER,

@@ -367,6 +367,10 @@ class GroupSettingsResponse(BaseModel):
     prune_max_passes: int
     prune_token_budget: int
     prune_driver: str
+    # Phase 13 dials (B-141/B-144): storage quota + retention
+    # window; null = no quota / keep sources forever.
+    upload_quota_bytes: int | None
+    source_retention_days: int | None
 
 
 class GroupSettingsUpdateRequest(BaseModel):
@@ -392,6 +396,11 @@ class GroupSettingsUpdateRequest(BaseModel):
     prune_driver: str | None = Field(
         default=None, pattern="^(hosted|local)$"
     )
+    # Phase 13 dials. Present governs, including null (null
+    # lifts the quota / keeps sources forever); the service
+    # validates the ranges in plain words.
+    upload_quota_bytes: int | None = Field(default=None, ge=0)
+    source_retention_days: int | None = Field(default=None, ge=1, le=3650)
 
 
 # ------------------------------------------------------------------

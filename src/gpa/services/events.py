@@ -931,6 +931,9 @@ def generate_event_image(
         operation="vision:generate_image", prompt_name="generate_image",
         prompt_version=None,
     )
+    from gpa.services import files as file_service
+
+    file_service.enforce_upload_quota(db, group, len(image_bytes))
     storage_key = storage.put_bytes(image_bytes, "png")
     try:
         image = Image.open(io.BytesIO(image_bytes))

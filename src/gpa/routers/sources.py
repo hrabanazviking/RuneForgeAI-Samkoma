@@ -38,7 +38,7 @@ def _source_response(db: Session, source) -> SourceResponse:
         granted_scope=source.granted_scope, status=source.status,
         stage=source.stage, progress=source.progress,
         chunk_count=source_service.chunk_count(db, source),
-        storage_key=source.storage_key, file_asset_id=source.file_asset_id,
+        file_asset_id=source.file_asset_id,
         url=source.url, connector_kind=source.connector_kind,
         external_id=source.external_id,
         created_at=source.created_at.isoformat(),

@@ -16,7 +16,10 @@ written as a single pack instead of scattered fields:
 - the memory dials (Phase 10): the pruning pass cap and
   per-run token budget (B-114, hard-capped here AND in the
   engine), and which engine judges the group's history —
-  hosted or the group's own local endpoint (B-119).
+  hosted or the group's own local endpoint (B-119);
+- the Phase 13 dials: the per-group upload quota in bytes
+  (B-141; null = no quota) and the source-retention window
+  in days (B-144; null = keep sources forever).
 
 Every change is audited with its old and new values in one
 ``group.settings_updated`` row, and a digest change re-anchors
@@ -78,6 +81,11 @@ def settings_view(group: Group) -> dict:
         "prune_max_passes": group.prune_max_passes,
         "prune_token_budget": group.prune_token_budget,
         "prune_driver": group.prune_driver,
+        # Phase 13 dials (B-141/B-144): the storage quota and
+        # the source-retention window; null = no quota / keep
+        # sources forever.
+        "upload_quota_bytes": group.upload_quota_bytes,
+        "source_retention_days": group.source_retention_days,
     }
 
 
@@ -217,6 +225,36 @@ def update_settings(
             )
         detail["prune_driver"] = {"from": group.prune_driver, "to": value}
         group.prune_driver = value
+
+    if "upload_quota_bytes" in changes:
+        value = changes["upload_quota_bytes"]
+        if value is not None and (
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+        ):
+            raise _invalid(
+                "upload_quota_bytes is a whole number of bytes, "
+                "or null for no quota."
+            )
+        detail["upload_quota_bytes"] = {
+            "from": group.upload_quota_bytes, "to": value,
+        }
+        group.upload_quota_bytes = value
+
+    if "source_retention_days" in changes:
+        value = changes["source_retention_days"]
+        if value is not None and (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or not 1 <= value <= 3650
+        ):
+            raise _invalid(
+                "source_retention_days is a whole number of days "
+                "(1 to 3650), or null to keep sources forever."
+            )
+        detail["source_retention_days"] = {
+            "from": group.source_retention_days, "to": value,
+        }
+        group.source_retention_days = value
 
     if not detail:
         # An empty pack is a valid read of intent but changes
