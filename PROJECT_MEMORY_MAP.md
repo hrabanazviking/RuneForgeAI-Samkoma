@@ -1730,6 +1730,31 @@ Phase 16 begins at B-157.
   story reconstructs from audit alone in order, refusals
   leave their line with the refusal's code, and a seeded
   distinctive title appears in NO audit line in the stream.
+- **B-166 in-process profile, honestly** ✅: the internal
+  client's `wire` mode — a client with a WireClient attached
+  seals+sends instead of dispatching locally, so the split
+  profile is a composition choice and no module's call site
+  changes; the server door's `execute_envelope` carries the
+  split transaction law (per-call session: commit on
+  success, roll back on refusal). Job payloads at rest are
+  envelope-encrypted: `services/jobs.py` seals every payload
+  (`enc:v1:` + AES-256-GCM under the internal key, AAD bound
+  to the use) at `queue()`, at the arq adapter's Redis
+  boundary, and on payload stamps; `payload_of` is the one
+  reading law and tolerates legacy plaintext rows by prefix.
+  DEFECTS FIXED AT ROOT: (1) two key sources — queue() sealed
+  under env settings while process_one opened under the
+  app's explicit settings, making sealed payloads read as
+  tampering wherever Settings are constructed rather than
+  env-read; the chassis now takes composition-injected
+  settings (the mailer/outbound pattern: create_app, worker,
+  arq_startup all inject), one key source per process. (2)
+  reconcile's new except clause referenced AppError without
+  importing it. Tests moved to the reading law where they had
+  read raw columns (digest/reconcile/rsvps/jobqueue).
+  Acceptance (tests/test_internal_profiles.py, 11 passed):
+  the same probes pass in BOTH profiles unchanged; a copied
+  database yields no readable job payload; legacy rows read.
 
 ## Standing laws in force here
 

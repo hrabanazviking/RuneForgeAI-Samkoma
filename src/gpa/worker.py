@@ -35,6 +35,10 @@ def main() -> None:
     from gpa.internal import auditing
 
     auditing.install(settings=settings)
+    # The job chassis' sealing settings (B-166).
+    from gpa.services import jobs as _jobs
+
+    _jobs.set_settings(settings)
     ai_client.set_client(ai_client.build_client(settings))
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))

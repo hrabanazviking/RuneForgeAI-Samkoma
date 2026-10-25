@@ -70,10 +70,17 @@ def _ensure_registered() -> None:
 class InternalClient:
     """The SDK object. One per process is plenty; call sites
     usually want the module-level :func:`call_internal`, which
-    keeps a shared default client."""
+    keeps a shared default client.
 
-    def __init__(self, settings: Settings | None = None) -> None:
+    ``wire`` is the B-166 split profile: when a WireClient is
+    attached, `call` seals the envelope and sends it through
+    the wire instead of dispatching locally — the modules'
+    call sites do not change, the profile is a composition
+    choice, and the server door enforces the same law."""
+
+    def __init__(self, settings: Settings | None = None, *, wire=None) -> None:
         self._settings = settings
+        self.wire = wire
         # B-165 installs the audit hook here (every call logged
         # by caller, operation, scope, result — never payload).
         self.audit_hook = None
@@ -114,6 +121,13 @@ class InternalClient:
             timestamp=utc_now_iso(),
             idempotency_key=idempotency_key,
         )
+        if self.wire is not None:
+            # Split profile: the server door dispatches, and
+            # its audit hook writes the line — this side's
+            # audit hook stays silent, because the act lives
+            # where it was dispatched, exactly once.
+            result = self.wire.call(envelope)
+            return result.data
         return self._dispatch(db, envelope)
 
     def execute_envelope(self, db: Session, envelope: InternalRequest) -> InternalResult:
@@ -126,12 +140,20 @@ class InternalClient:
         data — success or problem — because the wire cannot
         carry an exception. Scope and registration law are the
         same `_dispatch` the in-process door enforces; nothing
-        about crossing a process weakens them."""
+        about crossing a process weakens them.
+
+        Transaction law differs by door, honestly: in-process,
+        the caller's session is the caller's business (handlers
+        ride its transaction); at this door the session is
+        per-call and owned by the server, so one call is one
+        transaction — commit on success, roll back on refusal
+        or error."""
         from gpa.internal.envelope import InternalResult
 
         try:
             data = self._dispatch(db, envelope)
         except AppError as exc:
+            db.rollback()
             return InternalResult(
                 ok=False,
                 operation=envelope.operation,
@@ -142,6 +164,7 @@ class InternalClient:
                     "detail": exc.detail,
                 },
             )
+        db.commit()
         return InternalResult(ok=True, operation=envelope.operation, data=data)
 
     def _dispatch(self, db: Session, envelope: InternalRequest) -> dict:

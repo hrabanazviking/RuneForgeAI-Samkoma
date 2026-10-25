@@ -91,9 +91,9 @@ def request_extraction(
     # Stamp the job's own id into its payload (enqueue commits
     # first — the id only exists afterwards) so the candidates
     # the run creates can carry the job that made them (B-045).
-    payload = json.loads(job.payload_json or "{}")
+    payload = job_service.payload_of(job)
     payload["job_id"] = job.id
-    job.payload_json = json.dumps(payload)
+    job_service.store_payload(job, payload)
     db.commit()
     audit.record(
         db, actor=actor_label, action="extraction.requested",

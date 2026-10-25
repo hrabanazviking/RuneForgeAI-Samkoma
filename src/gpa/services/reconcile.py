@@ -34,6 +34,7 @@ from gpa.models.core import Job
 from gpa.models.integrations import ExternalEventLink
 from gpa.internal.client import call_internal
 from gpa.services import audit
+from gpa.errors import AppError
 from gpa.services import jobs as job_service
 
 RECONCILE_JOB_KIND = "reconcile"
@@ -60,8 +61,8 @@ def next_run_at(group: Group, *, after: datetime | None = None) -> datetime:
 
 def _job_group_id(job: Job) -> str | None:
     try:
-        return json.loads(job.payload_json or "{}").get("group_id")
-    except json.JSONDecodeError:
+        return job_service.payload_of(job).get("group_id")
+    except (json.JSONDecodeError, AppError):
         return None
 
 

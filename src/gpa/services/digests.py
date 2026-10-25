@@ -262,8 +262,8 @@ def _job_group_id(job: Job) -> str | None:
     """A digest job's group, from its payload (jobs name their
     group in the payload — the chassis' addressing rule)."""
     try:
-        return json.loads(job.payload_json or "{}").get("group_id")
-    except json.JSONDecodeError:
+        return job_service.payload_of(job).get("group_id")
+    except (json.JSONDecodeError, AppError):
         return None
 
 
