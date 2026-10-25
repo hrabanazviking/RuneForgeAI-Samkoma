@@ -125,6 +125,27 @@ class Settings(BaseSettings):
     # failing transports through the mailer registry instead.
     mail_transport: str = "file"
 
+    # SMTP provider driver (Phase 12, B-133): GPA_MAIL_TRANSPORT
+    # ="smtp". The provider is any SMTP-speaking service; the
+    # password is a SECRET, environment-only like every secret
+    # here. ``mail_from_address`` is the envelope/header From
+    # the group's mail wears — deliverability (SPF/DKIM/DMARC
+    # for its domain) is a feature, documented in DEPLOYMENT.md.
+    mail_smtp_host: str = ""
+    mail_smtp_port: int = 587
+    mail_smtp_username: str = ""
+    mail_smtp_password: str = ""
+    mail_smtp_use_tls: bool = True
+    mail_from_address: str = ""
+
+    # The provider webhook's shared secret (B-133): when set,
+    # /api/v1/webhooks/mail/{provider} demands the header
+    # ``x-gpa-mail-signature`` = HMAC-SHA256 hex of the raw body
+    # under this secret, and refuses unsigned word. Empty means
+    # the dev posture — the receiver records unsigned events —
+    # and DEPLOYMENT.md says so in plain words.
+    mail_webhook_secret: str = ""
+
     # The public origin invite links are built on (B-098):
     # "{public_base_url}/invite/<token>". Empty means links are
     # path-only ("/invite/<token>") — right for local dev, and
