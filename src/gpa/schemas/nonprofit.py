@@ -11,6 +11,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from gpa.schemas.groups import ReminderRule
 from gpa.schemas.planning import RoleSlotResponse, role_slot_view
 
 # ------------------------------------------------------------------
@@ -342,6 +343,44 @@ class MemberExportRow(BaseModel):
     role: str
     status: str
     subgroups: list[str]
+
+
+# ------------------------------------------------------------------
+# Group settings pack (B-111)
+# ------------------------------------------------------------------
+
+
+class GroupSettingsResponse(BaseModel):
+    """The settings pack as read (B-111): the review-queue
+    rules, reminder defaults, the digest's moment, the
+    template set, and the AI budget cap (null = no cap)."""
+
+    review_min_role: str
+    review_approvals_required: int
+    reminder_rules: list[ReminderRule]
+    digest_weekday: int | None
+    digest_time: str
+    digest_enabled: bool
+    template_set: str
+    ai_daily_budget_micros: int | None
+
+
+class GroupSettingsUpdateRequest(BaseModel):
+    """A settings-pack write. Every field is optional: a field
+    that is ABSENT is left as it was; a field that is present
+    governs — including null where null means something
+    (budget → no cap; digest weekday → the default)."""
+
+    review_min_role: str | None = Field(
+        default=None, pattern="^(member|organiser|admin|owner)$"
+    )
+    review_approvals_required: int | None = Field(default=None, ge=1, le=3)
+    reminder_rules: list[ReminderRule] | None = None
+    digest_weekday: int | None = Field(default=None, ge=0, le=6)
+    digest_time: str | None = Field(default=None, pattern=r"^(\d{2}:\d{2})?$")
+    digest_enabled: bool | None = None
+    template_set: str | None = Field(default=None, max_length=32)
+    ai_daily_budget_micros: int | None = Field(default=None, ge=0)
 
 
 # ------------------------------------------------------------------

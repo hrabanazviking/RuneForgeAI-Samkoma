@@ -26,6 +26,8 @@ from gpa.schemas.nonprofit import (
     AttendanceMarkResponse,
     AttendanceSummaryResponse,
     EventAttendanceResponse,
+    GroupSettingsResponse,
+    GroupSettingsUpdateRequest,
     MemberExportRow,
     MemberImportReportResponse,
     ResourceBookingCreateRequest,
@@ -51,6 +53,7 @@ from gpa.schemas.nonprofit import (
 from gpa.services import announcements as announcement_service
 from gpa.services import attendance as attendance_service
 from gpa.services import member_io as member_io_service
+from gpa.services import settings_pack as settings_pack_service
 from gpa.services import resources as resource_service
 from gpa.services import shifts as shift_service
 from gpa.services import subgroups as subgroup_service
@@ -689,3 +692,40 @@ def export_members(
         MemberExportRow(**row)
         for row in member_io_service.export_rows(db, context.group)
     ]
+
+
+settings_router = APIRouter(prefix="/api/v1/groups", tags=["settings"])
+
+
+@settings_router.get(
+    "/{group_id}/settings", response_model=GroupSettingsResponse
+)
+def read_settings(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """The group's settings pack (organiser+): review rules,
+    reminder defaults, digest moment, template set, AI budget."""
+    return GroupSettingsResponse(
+        **settings_pack_service.settings_view(context.group)
+    )
+
+
+@settings_router.put(
+    "/{group_id}/settings", response_model=GroupSettingsResponse
+)
+def update_settings(
+    body: GroupSettingsUpdateRequest,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Write the settings pack (admin+). Only the fields sent
+    are changed; each is validated whole, the change is
+    audited with its old and new values, and a digest change
+    re-anchors the digest chain before the answer is sent."""
+    view = settings_pack_service.update_settings(
+        db, actor_label=principal.label, group=context.group,
+        changes=body.model_dump(exclude_unset=True),
+    )
+    return GroupSettingsResponse(**view)

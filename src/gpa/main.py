@@ -160,4 +160,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(nonprofit.resources_router)
     app.include_router(nonprofit.attendance_router)
     app.include_router(nonprofit.members_io_router)
+    app.include_router(nonprofit.settings_router)
     return app
