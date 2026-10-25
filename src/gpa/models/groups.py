@@ -70,6 +70,16 @@ class Group(Base):
     # Which template set the group's shelf draws from (B-111) —
     # a closed vocabulary owned by services/settings_pack.py.
     template_set: Mapped[str] = mapped_column(String(32), default="starter")
+    # Phase 10 memory settings (B-114/B-119), validated by the
+    # settings pack like the dials above: how many pruning
+    # passes the engine may spend on one question (hard cap 3,
+    # enforced in the pack AND the engine), the per-run token
+    # budget it must stop inside, and which engine judges —
+    # "hosted" (the process's configured driver) or "local"
+    # (the group's own OpenAI-compatible endpoint, B-119).
+    prune_max_passes: Mapped[int] = mapped_column(Integer, default=2)
+    prune_token_budget: Mapped[int] = mapped_column(Integer, default=120_000)
+    prune_driver: Mapped[str] = mapped_column(String(16), default="hosted")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

@@ -19,6 +19,8 @@ Alembic and the test fixtures both rely on that. Domain files:
     nonprofit.py sub-groups + their memberships, announcements,
                  resources + bookings, attendance marks,
                  candidate approvals (Phase 9)
+    memory.py    summaries + prune runs — the group's past,
+                 answerable and accountable (Phase 10)
 """
 
 from gpa.models.ai import AiUsage
@@ -45,6 +47,7 @@ from gpa.models.notifications import (
     Notification,
     NotificationPreference,
 )
+from gpa.models.memory import PruneRun, Summary
 from gpa.models.nonprofit import (
     Announcement,
     AttendanceMark,
