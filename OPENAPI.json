@@ -22632,7 +22632,7 @@
     },
     "/health": {
       "get": {
-        "description": "Liveness, deepened: database, jobs, drivers, storage.",
+        "description": "Liveness for everyone; the deep checks for signed-in\ncallers (see the module docstring for why).",
         "operationId": "health_health_get",
         "responses": {
           "200": {
