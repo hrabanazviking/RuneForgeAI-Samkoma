@@ -18,6 +18,18 @@ from test_groups import invite_and_accept
 NY = "America/New_York"
 
 
+def promotion_jobs(db_session):
+    """The outbox jobs carrying a waitlist promotion. (Phase 8:
+    the ``notify`` queue carries every notification now —
+    reminders included — so promotions are the jobs whose
+    payload kind is ``rsvp.promoted``.)"""
+    return [
+        job
+        for job in db_session.query(Job).filter(Job.kind == "notify").all()
+        if json.loads(job.payload_json).get("kind") == "rsvp.promoted"
+    ]
+
+
 @pytest.fixture()
 def world(client):
     owner = register(client)
@@ -83,7 +95,7 @@ def test_waitlist_order_and_promotion_with_notification(client, app, world, db_s
 
     # The promotions produced notification jobs, addressed to
     # the promoted, and the chassis runs them to success.
-    jobs = db_session.query(Job).filter(Job.kind == "notify").all()
+    jobs = promotion_jobs(db_session)
     assert jobs, "promotion must enqueue a notification job"
     payloads = [json.loads(job.payload_json) for job in jobs]
     assert any(p["to"] == f"user:{ppl['cleo']['user_id']}" for p in payloads)
@@ -115,7 +127,7 @@ def test_waitlist_is_strictly_next_in_line(client, world, db_session):
     assert rows[f"user:{ppl['cleo']['user_id']}"]["waitlist_position"] == 1
     assert rows[f"user:{ppl['dan']['user_id']}"]["waitlisted"] is True
     assert rows[f"user:{ppl['dan']['user_id']}"]["waitlist_position"] == 2
-    assert db_session.query(Job).filter(Job.kind == "notify").count() == 0
+    assert promotion_jobs(db_session) == []  # nobody was promoted, nobody told
 
     # Ana drops her guest: a second seat frees, Cleo's party
     # fits, and she is promoted by SOMEONE ELSE's act — which is
@@ -126,7 +138,7 @@ def test_waitlist_is_strictly_next_in_line(client, world, db_session):
     rows = {row["principal_label"]: row for row in listing(client, world)["rsvps"]}
     assert rows[f"user:{ppl['cleo']['user_id']}"]["waitlisted"] is False
     assert rows[f"user:{ppl['dan']['user_id']}"]["waitlist_position"] == 1
-    jobs = db_session.query(Job).filter(Job.kind == "notify").all()
+    jobs = promotion_jobs(db_session)
     assert len(jobs) == 1
     payload = json.loads(jobs[0].payload_json)
     assert payload["to"] == f"user:{ppl['cleo']['user_id']}"
@@ -149,7 +161,7 @@ def test_raising_capacity_promotes_the_line(client, world, db_session):
     assert patched.status_code == 200, patched.text
     rows = {row["principal_label"]: row for row in listing(client, world)["rsvps"]}
     assert rows[f"user:{ppl['ben']['user_id']}"]["waitlisted"] is False
-    jobs = db_session.query(Job).filter(Job.kind == "notify").all()
+    jobs = promotion_jobs(db_session)
     assert len(jobs) == 1
 
 
