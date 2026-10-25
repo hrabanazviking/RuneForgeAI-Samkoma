@@ -20,6 +20,9 @@ Two shapes:
               FRONTEND_HANDOFF.md    # plain words first
               CHANGELOG.md           # per-slice list
               TEST_REPORT.md         # this ZIP's real test counts
+              RESULTS.md             # the generated numbers page
+                                     # (B-149; in the tree since
+                                     # then, top-level from ZIP-Final)
               SHA256SUMS.txt         # hash of every file in the zip
               release-manifest.json  # version, git hash, slice
                                      # range, AI driver modes,
@@ -48,7 +51,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EXCLUDED_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", "data", "releases", ".mypy_cache", ".ruff_cache", ".forge-lock"}
 EXCLUDED_SUFFIXES = {".pyc", ".db", ".db-wal", ".db-shm", ".sqlite", ".sqlite3", ".log", ".zip"}
 
-TOP_LEVEL_DOCS = ("OPENAPI.json", "FRONTEND_HANDOFF.md", "CHANGELOG.md", "TEST_REPORT.md")
+TOP_LEVEL_DOCS = ("OPENAPI.json", "FRONTEND_HANDOFF.md", "CHANGELOG.md", "TEST_REPORT.md", "RESULTS.md")
 
 
 def _included(path: Path) -> bool:
