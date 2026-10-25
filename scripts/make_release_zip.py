@@ -43,6 +43,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -70,6 +71,25 @@ def _tree_files() -> list[Path]:
     return sorted(p for p in ROOT.rglob("*") if p.is_file() and _included(p))
 
 
+def _zip_info(name: str, mode: int, mtime: float) -> zipfile.ZipInfo:
+    """A ZipInfo that carries the source file's Unix permissions.
+
+    writestr with a bare name writes archive-default 0644 for
+    every entry — which lands demo.sh / run.sh / test.sh
+    non-executable after unzip, so a cold reader's first command
+    fails with Permission denied. The B-151 freeze drill found
+    exactly that against the first ZIP-Final candidate (the
+    earlier train ZIPs share the flaw; no earlier drill had
+    unzipped one and tried to run the demo). Executable bits
+    are part of the artifact: carry them.
+    """
+    info = zipfile.ZipInfo(name, date_time=time.localtime(mtime)[:6])
+    info.create_system = 3  # Unix — external_attr holds the mode.
+    info.external_attr = (mode & 0xFFFF) << 16
+    info.compress_type = zipfile.ZIP_DEFLATED
+    return info
+
+
 def _write_sidecar(zip_path: Path) -> str:
     digest = hashlib.sha256(zip_path.read_bytes()).hexdigest()
     (zip_path.parent / f"{zip_path.name}.sha256").write_text(
@@ -91,8 +111,12 @@ def build_flat(name: str) -> None:
             rel = str(path.relative_to(ROOT))
             data = path.read_bytes()
             manifest["files"][rel] = hashlib.sha256(data).hexdigest()
-            zf.writestr(rel, data)
-        zf.writestr("manifest.json", json.dumps(manifest, indent=2, sort_keys=True))
+            stat = path.stat()
+            zf.writestr(_zip_info(rel, stat.st_mode, stat.st_mtime), data)
+        zf.writestr(
+            _zip_info("manifest.json", 0o100644, time.time()),
+            json.dumps(manifest, indent=2, sort_keys=True),
+        )
 
     digest = _write_sidecar(zip_path)
     print(f"Built {zip_path} ({zip_path.stat().st_size:,} bytes, {len(files)} files)")
@@ -126,11 +150,16 @@ def build_train(version: str, date: str, slice_end: str) -> None:
     zip_path = out_dir / f"gpa-backend-{version}-{date}.zip"
 
     entries: dict[str, bytes] = {}
+    entry_modes: dict[str, tuple[int, float]] = {}
     for path in _tree_files():
         rel = str(path.relative_to(ROOT))
         entries[f"gpa-backend/{rel}"] = path.read_bytes()
+        stat = path.stat()
+        entry_modes[f"gpa-backend/{rel}"] = (stat.st_mode, stat.st_mtime)
     for doc in TOP_LEVEL_DOCS:
         entries[doc] = (ROOT / doc).read_bytes()
+        stat = (ROOT / doc).stat()
+        entry_modes[doc] = (stat.st_mode, stat.st_mtime)
 
     manifest = {
         "version": version,
@@ -151,7 +180,8 @@ def build_train(version: str, date: str, slice_end: str) -> None:
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for name in sorted(entries):
-            zf.writestr(name, entries[name])
+            mode, mtime = entry_modes.get(name, (0o100644, time.time()))
+            zf.writestr(_zip_info(name, mode, mtime), entries[name])
 
     digest = _write_sidecar(zip_path)
     print(f"Built {zip_path} ({zip_path.stat().st_size:,} bytes, {len(entries)} files)")
