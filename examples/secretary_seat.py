@@ -3,8 +3,9 @@
 
 The scene: a group plans in its Samtal hall. A *secretary
 seat* — an AI participant with its own API key, its own
-role, and scopes ``read`` + ``draft`` — is asked to keep the
-review queue fed. This script is its whole job, in the open:
+role, and scopes ``read`` + ``draft`` + ``publish`` — is
+asked to keep the review queue fed. This script is its
+whole job, in the open:
 
 1. It reads the hall source's chunks with its key
    (``read`` scope; the seat sees what its seat role sees).

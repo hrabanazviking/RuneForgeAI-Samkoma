@@ -61,6 +61,24 @@ SCOPE_GUIDE: dict[str, str] = {
 }
 
 
+def _all_api_routes(app):
+    """Every APIRoute the app serves. This FastAPI version
+    keeps included routers lazy (``_IncludedRouter`` entries
+    in app.routes, holding the original router), so the walk
+    looks through them to the route objects the OpenAPI
+    builder itself reads — the same objects, so a tag placed
+    here is a tag in the exported contract."""
+    for entry in app.routes:
+        if isinstance(entry, APIRoute):
+            yield entry
+            continue
+        router = getattr(entry, "original_router", None)
+        if router is not None:
+            for route in router.routes:
+                if isinstance(route, APIRoute):
+                    yield route
+
+
 def tag_agent_operations(app) -> int:
     """Append the ``agent`` tag to the pack's operations on
     the app's routes. Returns how many operations were
@@ -69,9 +87,7 @@ def tag_agent_operations(app) -> int:
     the same document."""
     wanted = set(AGENT_OPERATIONS)
     tagged = 0
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
-            continue
+    for route in _all_api_routes(app):
         for method in route.methods or set():
             if (method, route.path) in wanted:
                 if AGENT_TAG not in route.tags:

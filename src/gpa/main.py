@@ -181,4 +181,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(memory.router)
     app.include_router(integrations.router)
     app.include_router(integrations.webhook_router)
+
+    # The agent pack (Phase 11, B-129): the seat's working
+    # surface carries the "agent" tag in the contract, so a
+    # frontend — or an agent framework — discovers it in the
+    # schema itself. Done here, after every router is in, so
+    # the exported OPENAPI.json and the live schema agree.
+    from gpa.services import agent_pack
+
+    agent_pack.tag_agent_operations(app)
     return app
