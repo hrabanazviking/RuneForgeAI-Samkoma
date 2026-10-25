@@ -278,6 +278,33 @@ def project_event(
     return EventResponse(**base)
 
 
+def occurrence_view(event: "Event", occ, *, flyer: FlyerView | None = None) -> OccurrenceResponse:
+    """One expanded occurrence → its wire shape (B-052/B-055).
+
+    Local times render in the EVENT's timezone with the offset
+    that was true on that date (EDT vs EST is the zone's answer,
+    computed per occurrence); UTC rides alongside with its Z."""
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo(event.timezone)
+    return OccurrenceResponse(
+        event_id=event.id,
+        title=event.title,
+        status=event.status,
+        occurrence_start=occ.start_local.replace(tzinfo=tz).isoformat(),
+        occurrence_end=occ.end_local.replace(tzinfo=tz).isoformat(),
+        starts_at=iso_utc(occ.starts_at),
+        ends_at=iso_utc(occ.ends_at),
+        timezone=event.timezone,
+        all_day=event.all_day,
+        place_name=event.place_name,
+        is_exception=occ.is_exception,
+        occurrence_cancelled=occ.cancelled,
+        needs_reannounce=event.needs_reannounce,
+        flyer=flyer,
+    )
+
+
 def change_row(change: "EventChange") -> EventChangeResponse:
     """One change-history row → its wire shape."""
     return EventChangeResponse(

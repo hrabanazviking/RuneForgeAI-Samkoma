@@ -1,6 +1,34 @@
 {
   "components": {
     "schemas": {
+      "AgendaResponse": {
+        "description": "One agenda page: occurrences + the next page's cursor.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OccurrenceResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AgendaResponse",
+        "type": "object"
+      },
       "ApiKeyCreateRequest": {
         "description": "Mint an API key with chosen scopes (B-014).",
         "properties": {
@@ -123,6 +151,18 @@
           "created_at"
         ],
         "title": "AuditEntryResponse",
+        "type": "object"
+      },
+      "CancelRequest": {
+        "description": "Cancellation carries the reason in the canceller's words.",
+        "properties": {
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "title": "CancelRequest",
         "type": "object"
       },
       "CandidateCreateRequest": {
@@ -576,6 +616,98 @@
         "title": "ChunkResponse",
         "type": "object"
       },
+      "ConflictFlag": {
+        "properties": {
+          "available_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Minutes"
+          },
+          "distance_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Km"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "needed_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needed Minutes"
+          },
+          "occurrence_start": {
+            "title": "Occurrence Start",
+            "type": "string"
+          },
+          "other_event_id": {
+            "title": "Other Event Id",
+            "type": "string"
+          },
+          "other_occurrence_start": {
+            "title": "Other Occurrence Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "event_id",
+          "occurrence_start",
+          "other_event_id",
+          "other_occurrence_start",
+          "message"
+        ],
+        "title": "ConflictFlag",
+        "type": "object"
+      },
+      "ConflictsResponse": {
+        "properties": {
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictFlag"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "resource_note": {
+            "default": "Resource booking arrives in a later phase; no resource conflicts are computed yet.",
+            "title": "Resource Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flags"
+        ],
+        "title": "ConflictsResponse",
+        "type": "object"
+      },
       "EmailChangeRequest": {
         "description": "Ask to move the account to a new email (B-020). The change\ncompletes only when the token sent to the NEW address is used.",
         "properties": {
@@ -623,6 +755,725 @@
           "from"
         ],
         "title": "EmailInRequest",
+        "type": "object"
+      },
+      "EventChangeResponse": {
+        "description": "One row of an event's change history (B-050).",
+        "properties": {
+          "changed_by": {
+            "title": "Changed By",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "new_value": {
+            "title": "New Value",
+            "type": "string"
+          },
+          "old_value": {
+            "title": "Old Value",
+            "type": "string"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "field",
+          "old_value",
+          "new_value",
+          "changed_by",
+          "created_at"
+        ],
+        "title": "EventChangeResponse",
+        "type": "object"
+      },
+      "EventCreateRequest": {
+        "description": "Direct organiser entry (B-049). Times are ISO-8601; the\nrouter converts them to stored UTC before the service runs.",
+        "properties": {
+          "access_notes": {
+            "default": "",
+            "title": "Access Notes",
+            "type": "string"
+          },
+          "all_day": {
+            "default": false,
+            "title": "All Day",
+            "type": "boolean"
+          },
+          "bring_list": {
+            "default": "",
+            "title": "Bring List",
+            "type": "string"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          },
+          "cost_text": {
+            "default": "",
+            "title": "Cost Text",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_type": {
+            "default": "",
+            "title": "Event Type",
+            "type": "string"
+          },
+          "host_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Id"
+          },
+          "host_label": {
+            "default": "",
+            "title": "Host Label",
+            "type": "string"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "place_address": {
+            "default": "",
+            "title": "Place Address",
+            "type": "string"
+          },
+          "place_name": {
+            "default": "",
+            "title": "Place Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "default": "published",
+            "title": "Status",
+            "type": "string"
+          },
+          "sub_group": {
+            "default": "",
+            "title": "Sub Group",
+            "type": "string"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "title": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "EventCreateRequest",
+        "type": "object"
+      },
+      "EventPatchRequest": {
+        "description": "An event edit (B-050). Every field optional; the router\npasses only the fields actually sent (exclude_unset) \u2014 an\nabsent field is untouched, an explicit value is a change.",
+        "properties": {
+          "access_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Notes"
+          },
+          "all_day": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "All Day"
+          },
+          "bring_list": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bring List"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          },
+          "cost_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Text"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "host_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Id"
+          },
+          "host_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Label"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "place_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Address"
+          },
+          "place_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Name"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "sub_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Group"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "EventPatchRequest",
+        "type": "object"
+      },
+      "EventResponse": {
+        "description": "One event at one projection level (B-059). Fields above a\nlevel's line are simply absent (None / default) below it.",
+        "properties": {
+          "access_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Notes"
+          },
+          "all_day": {
+            "default": false,
+            "title": "All Day",
+            "type": "boolean"
+          },
+          "bring_list": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bring List"
+          },
+          "cancelled_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled Reason"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "capacity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          },
+          "cost_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Text"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "string"
+          },
+          "etag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etag"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "flyer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlyerView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "host_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Label"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "needs_reannounce": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Reannounce"
+          },
+          "place_address": {
+            "default": "",
+            "title": "Place Address",
+            "type": "string"
+          },
+          "place_name": {
+            "default": "",
+            "title": "Place Name",
+            "type": "string"
+          },
+          "rsvp_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsvp Summary"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "sub_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sub Group"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "title",
+          "starts_at",
+          "ends_at",
+          "timezone",
+          "status"
+        ],
+        "title": "EventResponse",
+        "type": "object"
+      },
+      "ExceptionRequest": {
+        "description": "One per-occurrence override: this happening moved, or is\ncancelled where it stood. Times are LOCAL ISO in the event's\ntimezone (the wall clock the group thinks in).",
+        "properties": {
+          "cancelled": {
+            "default": false,
+            "title": "Cancelled",
+            "type": "boolean"
+          },
+          "moved_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moved To"
+          },
+          "original_start": {
+            "minLength": 1,
+            "title": "Original Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "original_start"
+        ],
+        "title": "ExceptionRequest",
         "type": "object"
       },
       "ExtractAcceptedResponse": {
@@ -673,6 +1524,145 @@
         "title": "ExtractRequest",
         "type": "object"
       },
+      "FacebookDraftResponse": {
+        "description": "The draft as the organiser receives it: Meta-shaped\npayload, a copy-ready text block, and the cover suggestion.",
+        "properties": {
+          "copy_text": {
+            "title": "Copy Text",
+            "type": "string"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "payload",
+          "copy_text"
+        ],
+        "title": "FacebookDraftResponse",
+        "type": "object"
+      },
+      "FeedIssueRequest": {
+        "description": "Issue a feed, optionally narrowed: statuses (published /\ncancelled), a place word, a sub-group. The filter is part of\nthe issued feed \u2014 a leaked URL leaks only its own scope.",
+        "properties": {
+          "filters": {
+            "additionalProperties": true,
+            "title": "Filters",
+            "type": "object"
+          }
+        },
+        "title": "FeedIssueRequest",
+        "type": "object"
+      },
+      "FeedIssueResponse": {
+        "description": "The issuing response \u2014 the ONE time the raw token and its\nready-to-paste URLs exist (B-053).",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "feed_url": {
+            "title": "Feed Url",
+            "type": "string"
+          },
+          "filters": {
+            "additionalProperties": true,
+            "title": "Filters",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "token_prefix": {
+            "title": "Token Prefix",
+            "type": "string"
+          },
+          "webcal_url": {
+            "title": "Webcal Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "token_prefix",
+          "created_at",
+          "token",
+          "feed_url",
+          "webcal_url"
+        ],
+        "title": "FeedIssueResponse",
+        "type": "object"
+      },
+      "FeedResponse": {
+        "description": "A feed as its group sees it: prefix only, never the token.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "filters": {
+            "additionalProperties": true,
+            "title": "Filters",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "token_prefix": {
+            "title": "Token Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "token_prefix",
+          "created_at"
+        ],
+        "title": "FeedResponse",
+        "type": "object"
+      },
       "FlyerResponse": {
         "description": "An image source's picture record (B-027/B-028).\n\n``alt_text_status`` is the visible-defect flag: it reads\n``awaiting_description`` \u2014 and ``alt_text`` is the literal\nplaceholder \u2014 until a real description of the image exists.",
         "properties": {
@@ -720,6 +1710,35 @@
           "alt_text_status"
         ],
         "title": "FlyerResponse",
+        "type": "object"
+      },
+      "FlyerView": {
+        "description": "A flyer's public face on an event: the picture and its\ndescription state. An undescribed flyer says so \u2014 the alt\ntext law (B-065) makes the defect visible, never silent.",
+        "properties": {
+          "alt_text": {
+            "default": "",
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "alt_text_status": {
+            "default": "",
+            "title": "Alt Text Status",
+            "type": "string"
+          },
+          "flyer_id": {
+            "title": "Flyer Id",
+            "type": "string"
+          },
+          "thumbnail_key": {
+            "default": "",
+            "title": "Thumbnail Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "flyer_id"
+        ],
+        "title": "FlyerView",
         "type": "object"
       },
       "GroupCreateRequest": {
@@ -1217,6 +2236,149 @@
         "title": "MetaResponse",
         "type": "object"
       },
+      "MonthDay": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "in_month": {
+            "title": "In Month",
+            "type": "boolean"
+          },
+          "occurrences": {
+            "items": {
+              "$ref": "#/components/schemas/OccurrenceResponse"
+            },
+            "title": "Occurrences",
+            "type": "array"
+          }
+        },
+        "required": [
+          "date",
+          "in_month"
+        ],
+        "title": "MonthDay",
+        "type": "object"
+      },
+      "MonthResponse": {
+        "properties": {
+          "month": {
+            "title": "Month",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "weeks": {
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/MonthDay"
+              },
+              "type": "array"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "month",
+          "timezone",
+          "weeks"
+        ],
+        "title": "MonthResponse",
+        "type": "object"
+      },
+      "OccurrenceResponse": {
+        "description": "One concrete happening (B-052/B-055): the event's identity\nfields plus THIS occurrence's times \u2014 rendered in the event's\ntimezone with true offsets, UTC alongside. A frontend never\nexpands a rule itself.",
+        "properties": {
+          "all_day": {
+            "default": false,
+            "title": "All Day",
+            "type": "boolean"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "flyer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlyerView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_exception": {
+            "default": false,
+            "title": "Is Exception",
+            "type": "boolean"
+          },
+          "needs_reannounce": {
+            "default": false,
+            "title": "Needs Reannounce",
+            "type": "boolean"
+          },
+          "occurrence_cancelled": {
+            "default": false,
+            "title": "Occurrence Cancelled",
+            "type": "boolean"
+          },
+          "occurrence_end": {
+            "title": "Occurrence End",
+            "type": "string"
+          },
+          "occurrence_start": {
+            "title": "Occurrence Start",
+            "type": "string"
+          },
+          "place_name": {
+            "default": "",
+            "title": "Place Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "title",
+          "status",
+          "occurrence_start",
+          "occurrence_end",
+          "starts_at",
+          "ends_at",
+          "timezone"
+        ],
+        "title": "OccurrenceResponse",
+        "type": "object"
+      },
       "PasswordChangeRequest": {
         "description": "Set a new password, proving the current one (B-020).",
         "properties": {
@@ -1410,6 +2572,63 @@
           "spent_today_micros"
         ],
         "title": "QueueStatusResponse",
+        "type": "object"
+      },
+      "RecurrenceRequest": {
+        "description": "Set/replace a series rule (B-052). ``exceptions`` replaces\nthe whole exception list; omit it to keep the existing ones.",
+        "properties": {
+          "exceptions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exceptions"
+          },
+          "rrule": {
+            "minLength": 1,
+            "title": "Rrule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rrule"
+        ],
+        "title": "RecurrenceRequest",
+        "type": "object"
+      },
+      "RecurrenceResponse": {
+        "description": "A series rule as stored, with its exceptions (B-052).",
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "exceptions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Exceptions",
+            "type": "array"
+          },
+          "rrule": {
+            "title": "Rrule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "rrule"
+        ],
+        "title": "RecurrenceResponse",
         "type": "object"
       },
       "RefreshRequest": {
@@ -2398,6 +3617,47 @@
         ]
       }
     },
+    "/api/v1/calendar/feed/{token}.ics": {
+      "get": {
+        "description": "The feed itself. No login: the token IS the credential,\nexactly like every calendar subscription URL a person pastes\ninto Google/Apple/Outlook. Unknown and revoked tokens get\nthe same 404.",
+        "operationId": "fetch_feed_api_v1_calendar_feed__token__ics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fetch Feed",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/api/v1/email-in/{token}": {
       "post": {
         "description": "The webhook-shaped receiver: one delivered email \u2192 a source.\n\nThe token in the path is the whole credential. A forged\ntoken is refused (401) and logged \u2014 see services/emailin.py.\n(Provider signature verification joins in Phase 12, where the\nprovider itself is chosen.)",
@@ -2587,6 +3847,173 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/agenda": {
+      "get": {
+        "description": "The agenda (B-055): occurrence-expanded, searchable,\nfilterable, cursor-paginated \u2014 the frontend does zero date\nmaths of its own, here and everywhere in this file.",
+        "operationId": "agenda_api_v1_groups__group_id__agenda_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "place",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Place"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sub_group",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sub Group"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Agenda",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/audit": {
       "get": {
         "description": "The group's audit trail, newest first (admin+).",
@@ -2631,6 +4058,156 @@
         "summary": "Read Audit",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/calendar/feeds": {
+      "get": {
+        "description": "The group's feeds, prefixes only (B-053).",
+        "operationId": "list_feeds_api_v1_groups__group_id__calendar_feeds_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeedResponse"
+                  },
+                  "title": "Response List Feeds Api V1 Groups  Group Id  Calendar Feeds Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Feeds",
+        "tags": [
+          "calendar"
+        ]
+      },
+      "post": {
+        "description": "Issue the group's secret calendar feed (B-053): the token\nis shown once, in this response, and stored only hashed.",
+        "operationId": "issue_feed_api_v1_groups__group_id__calendar_feeds_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedIssueRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedIssueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Issue Feed",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/calendar/feeds/{feed_id}/revoke": {
+      "post": {
+        "description": "Revoke a feed \u2014 instant and total (B-053).",
+        "operationId": "revoke_feed_api_v1_groups__group_id__calendar_feeds__feed_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "feed_id",
+            "required": true,
+            "schema": {
+              "title": "Feed Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Feed",
+        "tags": [
+          "calendar"
         ]
       }
     },
@@ -3103,6 +4680,952 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/conflicts": {
+      "get": {
+        "description": "Conflict flags over a window (B-057): double-booked\nhosts and rooms, travel-impossible hops. Flags, never\nblocks \u2014 reading them changes nothing.",
+        "operationId": "conflicts_api_v1_groups__group_id__conflicts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Conflicts",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events": {
+      "get": {
+        "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers.",
+        "operationId": "list_events_api_v1_groups__group_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EventResponse"
+                  },
+                  "title": "Response List Events Api V1 Groups  Group Id  Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Events",
+        "tags": [
+          "events"
+        ]
+      },
+      "post": {
+        "description": "Direct organiser entry (B-049): the entry records a manual\nsource, and the event is born in the asked-for state (draft\nor published \u2014 drafts reach no feed).",
+        "operationId": "create_event_api_v1_groups__group_id__events_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}": {
+      "get": {
+        "description": "One event. A draft asked for by a non-organiser is a 404 \u2014\nthe bright line (B-049) is existence-level, not field-level.",
+        "operationId": "get_event_api_v1_groups__group_id__events__event_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Event",
+        "tags": [
+          "events"
+        ]
+      },
+      "patch": {
+        "description": "Edit an event (B-050, D-15): If-Match carries the version\nread; every changed field lands in the change history; the\nresponse carries the new ETag.",
+        "operationId": "update_event_api_v1_groups__group_id__events__event_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/cancel": {
+      "post": {
+        "description": "Cancel with a reason (B-051): the event stays, marked\ncancelled everywhere it was ever shown.",
+        "operationId": "cancel_event_api_v1_groups__group_id__events__event_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/changes": {
+      "get": {
+        "description": "The event's change feed \u2014 complete, in order (B-050).",
+        "operationId": "list_changes_api_v1_groups__group_id__events__event_id__changes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EventChangeResponse"
+                  },
+                  "title": "Response List Changes Api V1 Groups  Group Id  Events  Event Id  Changes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Changes",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/clone": {
+      "post": {
+        "description": "Clone last time's event (B-051): structure copies, RSVPs\nand discussion never do; the clone is born a draft.",
+        "operationId": "clone_event_api_v1_groups__group_id__events__event_id__clone_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clone Event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/facebook-draft": {
+      "get": {
+        "description": "Build the Facebook Event DRAFT for a published event\n(B-058). Nothing is created on Facebook \u2014 creating the real\nevent is the Phase 12 integration with a human pressing the\nbutton, because posting as a person/page is an outward act.",
+        "operationId": "facebook_draft_api_v1_groups__group_id__events__event_id__facebook_draft_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacebookDraftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facebook Draft",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/ics": {
+      "get": {
+        "description": "One event as a downloadable .ics (B-053). Drafts refuse \u2014\na file download is a publishing-out road, and the bright\nline holds for every role here.",
+        "operationId": "download_event_ics_api_v1_groups__group_id__events__event_id__ics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Event Ics",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/occurrences": {
+      "get": {
+        "description": "This event's occurrences in a window (B-052): the API\nreturns occurrences, never the rule, so the frontend does\nzero date maths. ``from``/``to`` are ISO datetimes; the\ndefault window is the event's start through +92 days.",
+        "operationId": "list_occurrences_api_v1_groups__group_id__events__event_id__occurrences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OccurrenceResponse"
+                  },
+                  "title": "Response List Occurrences Api V1 Groups  Group Id  Events  Event Id  Occurrences Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Occurrences",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/publish": {
+      "post": {
+        "description": "Draft \u2192 published (B-049's bright line, crossed on purpose).",
+        "operationId": "publish_event_api_v1_groups__group_id__events__event_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/recurrence": {
+      "delete": {
+        "description": "Remove the rule: the event becomes a one-off (B-052).",
+        "operationId": "delete_recurrence_api_v1_groups__group_id__events__event_id__recurrence_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Recurrence",
+        "tags": [
+          "events"
+        ]
+      },
+      "get": {
+        "description": "The series rule + exceptions for one event (404 when the\nevent does not repeat).",
+        "operationId": "get_recurrence_api_v1_groups__group_id__events__event_id__recurrence_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurrenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Recurrence",
+        "tags": [
+          "events"
+        ]
+      },
+      "put": {
+        "description": "Set or replace the series rule (B-052). The rule is parsed\nbefore it is stored \u2014 an unexpandable rule is refused here,\nin plain words, never discovered later by a reader.",
+        "operationId": "set_recurrence_api_v1_groups__group_id__events__event_id__recurrence_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurrenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurrenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Recurrence",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/recurrence/exceptions": {
+      "post": {
+        "description": "Move or cancel ONE occurrence (B-052): the rule stands;\nthis happening is the exception.",
+        "operationId": "add_exception_api_v1_groups__group_id__events__event_id__recurrence_exceptions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExceptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurrenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Exception",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/inbound-address": {
       "post": {
         "description": "Open this group's email-in channel (admin+).\n\nThe response carries the full token and the address ONCE;\nonly a hash is kept. Mail to the address becomes a source.",
@@ -3465,6 +5988,71 @@
         "summary": "Change Role",
         "tags": [
           "groups"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/month": {
+      "get": {
+        "description": "The month grid (B-055): whole weeks, days marked\nin/out of month, occurrences already placed.",
+        "operationId": "month_api_v1_groups__group_id__month_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "schema": {
+              "maximum": 2100,
+              "minimum": 1970,
+              "title": "Year",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "maximum": 12,
+              "minimum": 1,
+              "title": "Month",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Month",
+        "tags": [
+          "calendar"
         ]
       }
     },
@@ -4323,6 +6911,69 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/tonight": {
+      "get": {
+        "description": "Saturday night (B-056): this evening's events in the\ngroup's own clock \u2014 pinned places first, flyer events with\ntheir pictures and alt text. ``date`` (a local date) pins\nthe evening for planning ahead and for tests.",
+        "operationId": "tonight_api_v1_groups__group_id__tonight_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OccurrenceResponse"
+                  },
+                  "title": "Response Tonight Api V1 Groups  Group Id  Tonight Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tonight",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/api/v1/jobs/{job_id}": {
       "get": {
         "description": "One job's state: queued, running, done, or dead-lettered.",
@@ -4385,6 +7036,53 @@
         "summary": "Meta",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/api/v1/public/groups/{slug}/events": {
+      "get": {
+        "description": "A public-listed group's events, PUBLIC projection only:\nno host, no cost, no access notes, no discussion \u2014 those\nfields do not exist in this response (B-059). A group that\nis not public-listed is a 404 here, exactly as if it did\nnot exist.",
+        "operationId": "public_events_api_v1_public_groups__slug__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EventResponse"
+                  },
+                  "title": "Response Public Events Api V1 Public Groups  Slug  Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Events",
+        "tags": [
+          "calendar"
         ]
       }
     },

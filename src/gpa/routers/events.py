@@ -9,7 +9,8 @@ routers/calendar.py; the .ics doors in the same file keep this
 one about the event itself.
 """
 
-from fastapi import APIRouter, Depends, Header, Response
+from fastapi import APIRouter, Depends, Header, Query, Response
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
@@ -22,6 +23,7 @@ from gpa.schemas.events import (
     EventPatchRequest,
     EventResponse,
     ExceptionRequest,
+    OccurrenceResponse,
     RecurrenceRequest,
     RecurrenceResponse,
     change_row,
@@ -90,7 +92,16 @@ def get_event(
         db, context.group, event_id, context.role
     )
     response.headers["ETag"] = event_service.etag_of(event)
-    return project_event(event, _level_for(context))
+    level = _level_for(context)
+    links = None
+    if level == "organiser":
+        from gpa.services import ical as ical_service
+
+        links = ical_service.event_links(event)
+        links["ics_download"] = (
+            f"/api/v1/groups/{context.group.id}/events/{event.id}/ics"
+        )
+    return project_event(event, level, links=links)
 
 
 @router.patch("/{group_id}/events/{event_id}", response_model=EventResponse)
@@ -184,6 +195,91 @@ def clone_event(
     )
     response.headers["ETag"] = event_service.etag_of(event)
     return project_event(event, "organiser")
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/occurrences",
+    response_model=list[OccurrenceResponse],
+)
+def list_occurrences(
+    event_id: str,
+    from_: str | None = Query(default=None, alias="from"),
+    to: str | None = Query(default=None),
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """This event's occurrences in a window (B-052): the API
+    returns occurrences, never the rule, so the frontend does
+    zero date maths. ``from``/``to`` are ISO datetimes; the
+    default window is the event's start through +92 days."""
+    from datetime import datetime, timedelta
+
+    from gpa.errors import AppError
+    from gpa.schemas.events import occurrence_view
+
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role
+    )
+    try:
+        window_start = (
+            datetime.fromisoformat(from_.replace("Z", "+00:00"))
+            if from_ else None
+        )
+        window_end = (
+            datetime.fromisoformat(to.replace("Z", "+00:00")) if to else None
+        )
+    except ValueError:
+        raise AppError("validation_error", detail="from/to must be ISO datetimes.")
+    from gpa.schemas.events import to_utc_naive
+
+    start = to_utc_naive(window_start) if window_start else event.starts_at - timedelta(days=1)
+    end = to_utc_naive(window_end) if window_end else event.starts_at + timedelta(days=92)
+    if end <= start:
+        raise AppError("validation_error", detail="The window must end after it starts.")
+    if end - start > timedelta(days=731):
+        raise AppError("validation_error", detail="Occurrence windows are at most two years.")
+    recurrence = recurrence_service.get_recurrence(db, event_id)
+    occurrences = recurrence_service.expand(
+        starts_at_utc=event.starts_at, ends_at_utc=event.ends_at,
+        tz_name=event.timezone,
+        rrule_text=recurrence.rrule if recurrence else None,
+        recurrence=recurrence,
+        window_start_utc=start, window_end_utc=end,
+    )
+    return [occurrence_view(event, occ) for occ in occurrences]
+
+
+# ------------------------------------------------------------------
+# Facebook Event drafts (B-058) — drafts only, never a post
+# ------------------------------------------------------------------
+
+
+class FacebookDraftResponse(BaseModel):
+    """The draft as the organiser receives it: Meta-shaped
+    payload, a copy-ready text block, and the cover suggestion."""
+
+    payload: dict
+    copy_text: str
+    cover: dict | None = None
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/facebook-draft",
+    response_model=FacebookDraftResponse,
+)
+def facebook_draft(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Build the Facebook Event DRAFT for a published event
+    (B-058). Nothing is created on Facebook — creating the real
+    event is the Phase 12 integration with a human pressing the
+    button, because posting as a person/page is an outward act."""
+    from gpa.services import facebook as facebook_service
+
+    event = event_service.get_event(db, context.group, event_id)
+    return facebook_service.build_draft(db, event)
 
 
 # ------------------------------------------------------------------

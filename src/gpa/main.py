@@ -22,7 +22,17 @@ from gpa.config import Settings, get_settings
 from gpa.db import Database
 from gpa.errors import install_error_handlers
 from gpa.ratelimit import TokenBucketLimiter
-from gpa.routers import auth, candidates, events, groups, jobs, meta, sources, users
+from gpa.routers import (
+    auth,
+    calendar,
+    candidates,
+    events,
+    groups,
+    jobs,
+    meta,
+    sources,
+    users,
+)
 from gpa.storage.local import LocalStorage
 
 
@@ -104,6 +114,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(groups.router)
     app.include_router(candidates.router)
     app.include_router(events.router)
+    app.include_router(calendar.router)
+    app.include_router(calendar.public_router)
     app.include_router(sources.router)
     app.include_router(sources.email_router)
     app.include_router(jobs.router)
