@@ -117,6 +117,44 @@ def get_flyer_for_source(db: Session, source_id: str) -> Flyer | None:
     return db.query(Flyer).filter(Flyer.source_id == source_id).one_or_none()
 
 
+# --- Perceptual hash (Phase 5, B-071) --------------------------------------
+#
+# An average hash, written here from the idea itself (D-46): shrink
+# the picture to 8x8 greys, take the mean, and keep one bit per
+# pixel — brighter than the mean or not. Two photographs of the
+# same poster differ in bytes, lighting, and small shifts, but
+# their 64 bits land close; two different posters land far apart.
+# The hash is a *suggestion engine* only: nearness proposes a
+# duplicate to a human, it never merges anything by itself.
+
+AHASH_SIZE = 8
+
+
+def perceptual_hash(image: Image.Image) -> str:
+    """The image's 64-bit average hash, as 16 hex characters."""
+    small = image.convert("L").resize(
+        (AHASH_SIZE, AHASH_SIZE), Image.Resampling.LANCZOS
+    )
+    pixels = list(small.getdata())
+    mean = sum(pixels) / len(pixels)
+    value = 0
+    for pixel in pixels:
+        value = (value << 1) | (1 if pixel >= mean else 0)
+    return f"{value:016x}"
+
+
+def hash_distance(a: str, b: str) -> int | None:
+    """Bits differing between two hashes (the Hamming distance),
+    or None when either side is unhashed — an unknown hash is not
+    a near hash, and must never read as a match."""
+    if not a or not b or len(a) != 16 or len(b) != 16:
+        return None
+    try:
+        return bin(int(a, 16) ^ int(b, 16)).count("1")
+    except ValueError:
+        return None
+
+
 def ingest_image(
     db: Session,
     *,
@@ -193,6 +231,10 @@ def ingest_image(
     flyer = Flyer(
         group_id=group.id, source_id=source.id, file_asset_id=asset.id,
         thumbnail_key=thumbnail_key, width=width, height=height,
+        # The duplicate detector's raw material (B-071), computed
+        # from the normalised image so re-photographed posters
+        # hash near their first upload.
+        phash=perceptual_hash(image),
     )
     db.add(flyer)
     db.commit()

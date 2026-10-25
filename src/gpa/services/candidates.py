@@ -104,6 +104,12 @@ def provenance_of(db: Session, candidate: Candidate) -> list[dict]:
                 "chunk_id": row.chunk_id,
                 "chunk_position": None,
                 "quote": row.quote,
+                # A vision row's evidence is its region (B-063):
+                # the box rides along so the queue can highlight
+                # the rectangle the field was read from.
+                "region": (
+                    json.loads(row.region_json) if row.region_json else None
+                ),
                 "supported": True,
                 "sent_at": None,
             }
@@ -122,6 +128,8 @@ def provenance_of(db: Session, candidate: Candidate) -> list[dict]:
             by_field[name]["quote"] = entry.get("quote", by_field[name]["quote"])
             by_field[name]["chunk_position"] = entry.get("chunk_position")
             by_field[name]["sent_at"] = entry.get("sent_at")
+            if by_field[name].get("region") is None:
+                by_field[name]["region"] = entry.get("region")
         elif name not in by_field:
             out.append(
                 {
@@ -129,6 +137,10 @@ def provenance_of(db: Session, candidate: Candidate) -> list[dict]:
                     "chunk_id": None,
                     "chunk_position": entry.get("chunk_position"),
                     "quote": entry.get("quote", ""),
+                    # A vision field without a row (its region
+                    # failed validation) still shows the box the
+                    # model claimed, labelled unsupported (B-063).
+                    "region": entry.get("region"),
                     "supported": supported,
                     "sent_at": entry.get("sent_at"),
                 }

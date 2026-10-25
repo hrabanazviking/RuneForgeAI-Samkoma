@@ -19,12 +19,16 @@ if TYPE_CHECKING:  # annotations only
 class ProvenanceEntry(BaseModel):
     """One field's evidence: the quote, its chunk, and whether the
     pipeline verified it (an unsupported field is shown, never
-    hidden — that is the queue's whole point)."""
+    hidden — that is the queue's whole point). For a picture's
+    fields the evidence is a REGION instead (B-063): the box
+    [x, y, w, h] the field was read from, so the queue can
+    highlight the rectangle on the poster."""
 
     field: str
     chunk_id: str | None = None
     chunk_position: int | None = None
     quote: str = ""
+    region: list[float] | None = None
     supported: bool = False
     sent_at: str | None = None
 

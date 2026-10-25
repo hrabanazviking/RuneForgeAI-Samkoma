@@ -303,6 +303,16 @@ def mint_from_candidate(
                 event_id=event.id, source_id=candidate.source_id, field="", quote=""
             )
         )
+    # A flyer-born event carries its poster (Phase 5, B-063):
+    # when the candidate's source is a flyer, the event's flyer
+    # link is set HERE, at mint — Phase 4's gate set it by hand as
+    # an honest stand-in; the vision pipeline makes it real.
+    if candidate.source_id:
+        from gpa.services import images as image_service
+
+        flyer = image_service.get_flyer_for_source(db, candidate.source_id)
+        if flyer is not None:
+            event.flyer_id = flyer.id
     candidate.resulting_entity_type = "event"
     candidate.resulting_entity_id = event.id
     audit.record(
@@ -595,3 +605,138 @@ def clone_event(
     )
     db.commit()
     return clone
+
+
+# ------------------------------------------------------------------
+# Generated event image (Phase 5, B-067)
+# ------------------------------------------------------------------
+
+
+def generate_event_image(
+    db: Session,
+    *,
+    storage,
+    actor_label: str,
+    group: Group,
+    event_id: str,
+    description: str = "",
+):
+    """Generate an image for an event that has none (B-067).
+
+    The picture is made through the AI adapter (ai/client.py's
+    ``generate_image`` — a driver boundary; the live driver is
+    not wired to an image endpoint yet and refuses in plain
+    words, which this service passes on as a 422 rather than
+    dressing up). What keeps the feature honest is the record:
+    the image's Flyer row carries ``generated=True`` as a COLUMN,
+    so every projection shows the flag forever — a generated
+    picture is never passed off as a photograph. Its provenance
+    is a manual source naming the requesting organiser, exactly
+    like direct entry (B-049): the act is recorded, by name.
+
+    ``description`` is the organiser's own words for the picture
+    (what it should show). When they are a genuine description
+    they double as the image's alt text — a human description is
+    complete the moment it is written (B-065); without them the
+    flyer starts, honestly, as awaiting_description.
+    """
+    import hashlib
+    import io
+
+    from PIL import Image
+
+    from gpa.ai import client as ai_client
+    from gpa.ai.client import ModelError
+    from gpa.models.core import FileAsset
+    from gpa.models.sources import Flyer
+    from gpa.services import images as image_service
+    from gpa.services import sources as source_service
+    from gpa.services import usage as usage_service
+    from gpa.services.vision import _is_genuine_alt
+
+    event = get_event(db, group, event_id)
+    if event.flyer_id:
+        raise AppError(
+            "conflict",
+            detail="That event already has an image — a generated one "
+            "is only for events without a picture.",
+        )
+    when = event.starts_at.strftime("%A %d %B %Y")
+    prompt = (
+        f"A warm, printable poster illustration for a community event "
+        f"called '{event.title}'"
+        + (f" at {event.place_name}" if event.place_name else "")
+        + f", on {when}."
+        + (f" The organiser describes the picture they want: {description}"
+           if description else "")
+    )
+    client = ai_client.get_client()
+    try:
+        result = client.generate_image(prompt=prompt)
+    except ModelError as exc:
+        raise AppError("validation_error", detail=str(exc)) from exc
+    data = result.data or {}
+    image_bytes = data.get("image_bytes")
+    if not image_bytes:
+        raise AppError(
+            "validation_error",
+            detail="The image driver returned no picture — nothing was stored.",
+        )
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, source_id=None,
+        operation="vision:generate_image", prompt_name="generate_image",
+        prompt_version=None,
+    )
+    storage_key = storage.put_bytes(image_bytes, "png")
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        image.load()
+        width, height = image.size
+    except Exception:
+        raise AppError(
+            "validation_error",
+            detail="The image driver returned bytes that are not a picture.",
+        ) from None
+    thumb = image.copy()
+    thumb.thumbnail((image_service.THUMBNAIL_DIMENSION, image_service.THUMBNAIL_DIMENSION))
+    thumb_buffer = io.BytesIO()
+    thumb.convert("RGB").save(thumb_buffer, "JPEG", quality=80)
+    thumbnail_key = storage.put_bytes(thumb_buffer.getvalue(), "jpg")
+    asset = FileAsset(
+        group_id=group.id, storage_key=storage_key,
+        filename=f"generated-{event.id[:8]}.png", mime="image/png",
+        size=len(image_bytes), sha256=hashlib.sha256(image_bytes).hexdigest(),
+    )
+    db.add(asset)
+    db.flush()
+    source = source_service.create_source(
+        db, actor_label=actor_label, group=group, kind="manual",
+        title=f"Generated image for {event.title}"[:240],
+        granted_scope="generated image for an event, requested by an organiser",
+        chunks=[], storage_key=storage_key, file_asset_id=asset.id,
+    )
+    genuine = _is_genuine_alt(description)
+    flyer = Flyer(
+        group_id=group.id, source_id=source.id, file_asset_id=asset.id,
+        thumbnail_key=thumbnail_key, width=width, height=height,
+        phash=image_service.perceptual_hash(image),
+        generated=True,
+        alt_text=(" ".join(description.split())[:500] if genuine
+                  else "awaiting description"),
+        alt_text_status="complete" if genuine else "awaiting_description",
+    )
+    db.add(flyer)
+    db.flush()
+    event.flyer_id = flyer.id
+    record_change(
+        db, event=event, field="flyer_id", old_value="",
+        new_value=flyer.id, actor_label=actor_label,
+        reason="generated image (B-067)",
+    )
+    audit.record(
+        db, actor=actor_label, action="event.image_generated",
+        group_id=group.id, entity_type="event", entity_id=event.id,
+        detail={"flyer_id": flyer.id, "generated": True},
+    )
+    db.commit()
+    return flyer

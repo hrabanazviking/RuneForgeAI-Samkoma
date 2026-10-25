@@ -132,12 +132,16 @@ class ExceptionRequest(BaseModel):
 class FlyerView(BaseModel):
     """A flyer's public face on an event: the picture and its
     description state. An undescribed flyer says so — the alt
-    text law (B-065) makes the defect visible, never silent."""
+    text law (B-065) makes the defect visible, never silent. A
+    generated image says so too (B-067): ``generated`` rides
+    every projection because it is a column on the flyer, not a
+    label a projection could forget."""
 
     flyer_id: str
     thumbnail_key: str = ""
     alt_text: str = ""
     alt_text_status: str = ""
+    generated: bool = False
 
 
 class EventResponse(BaseModel):

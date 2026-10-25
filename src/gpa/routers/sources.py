@@ -69,6 +69,9 @@ def _detail_response(db: Session, source) -> SourceDetailResponse:
             alt_text=flyer_row.alt_text,
             alt_text_status=flyer_row.alt_text_status,
             transcript=flyer_row.transcript,
+            parent_flyer_id=flyer_row.parent_flyer_id,
+            region_json=flyer_row.region_json,
+            generated=flyer_row.generated,
         )
         if flyer_row is not None
         else None

@@ -17,12 +17,15 @@ from gpa.services import jobs as job_service
 from gpa.services import transcribe as _transcribe  # noqa: F401 — registers its handler on import
 from gpa.services import extraction as _extraction  # noqa: F401 — registers its handler on import
 from gpa.services import rsvps as _rsvps  # noqa: F401 — registers the notify handler on import
+from gpa.services import vision as _vision  # noqa: F401 — registers the vision handler on import
+from gpa.storage import LocalStorage, set_storage
 
 
 def main() -> None:
     """Poll the queue forever, processing jobs as they come due."""
     settings = get_settings()
     ai_client.set_client(ai_client.build_client(settings))
+    set_storage(LocalStorage(settings.storage_dir))
     db = Database(settings.database_url)
     db.create_all()
     worker_id = f"worker-{uuid.uuid4().hex[:8]}"

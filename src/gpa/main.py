@@ -28,6 +28,7 @@ from gpa.routers import (
     candidates,
     discussion,
     events,
+    flyers,
     groups,
     jobs,
     meta,
@@ -88,6 +89,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     ai_client.set_client(ai_client.build_client(settings))
     app.state.db = Database(settings.database_url)
     app.state.storage = LocalStorage(settings.storage_dir)
+    # The same backend, shared via the storage registry so job
+    # handlers reach it too (Phase 5's vision/transcription).
+    from gpa.storage import set_storage
+
+    set_storage(app.state.storage)
     app.state.auth_limiter = TokenBucketLimiter(settings.auth_rate_per_minute)
     if settings.auto_create_tables:
         app.state.db.create_all()
@@ -120,6 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(calendar.public_router)
     app.include_router(discussion.router)
     app.include_router(rsvps.router)
+    app.include_router(flyers.router)
     app.include_router(sources.router)
     app.include_router(sources.email_router)
     app.include_router(jobs.router)

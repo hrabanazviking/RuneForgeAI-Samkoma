@@ -72,11 +72,16 @@ def list_events(
 ):
     """The group's events, soonest first, at the caller's
     projection level. Drafts appear only for organisers."""
+    from gpa.services import calendar_views
+
     rows = event_service.list_events(
         db, context.group, role=context.role, status=status
     )
     level = _level_for(context)
-    return [project_event(event, level) for event in rows]
+    return [
+        project_event(event, level, flyer=calendar_views.flyer_view(db, event))
+        for event in rows
+    ]
 
 
 @router.get("/{group_id}/events/{event_id}", response_model=EventResponse)
@@ -101,7 +106,11 @@ def get_event(
         links["ics_download"] = (
             f"/api/v1/groups/{context.group.id}/events/{event.id}/ics"
         )
-    return project_event(event, level, links=links)
+    from gpa.services import calendar_views
+
+    return project_event(
+        event, level, links=links, flyer=calendar_views.flyer_view(db, event)
+    )
 
 
 @router.patch("/{group_id}/events/{event_id}", response_model=EventResponse)
@@ -204,6 +213,46 @@ def clone_event(
     )
     response.headers["ETag"] = event_service.etag_of(event)
     return project_event(event, "organiser")
+
+
+class GenerateImageRequest(BaseModel):
+    """Ask for a generated event image (B-067). ``description``
+    is the organiser's own words for the picture — they steer
+    the generation and, when they are a genuine description,
+    become its alt text (B-065's human road)."""
+
+    description: str = ""
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/generate-image",
+    response_model=EventResponse, status_code=201,
+)
+def generate_image(
+    event_id: str,
+    body: GenerateImageRequest,
+    request: Request,
+    response: Response,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Generate an image for an event that has none (B-067):
+    stored with ``generated: true`` on its flyer record, so the
+    flag survives every projection — never passed off as a
+    photo. An event with a picture already is a 409."""
+    from gpa.services import calendar_views
+
+    flyer = event_service.generate_event_image(
+        db, storage=request.app.state.storage,
+        actor_label=principal.label, group=context.group,
+        event_id=event_id, description=body.description,
+    )
+    event = event_service.get_event(db, context.group, event_id)
+    response.headers["ETag"] = event_service.etag_of(event)
+    return project_event(
+        event, "organiser", flyer=calendar_views.flyer_view(db, event)
+    )
 
 
 @router.get(

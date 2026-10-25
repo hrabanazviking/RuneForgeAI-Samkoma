@@ -333,4 +333,12 @@ def public_events(slug: str, db: Session = Depends(get_db)):
     if group is None or group.visibility != "public-listed":
         raise AppError("not_found", detail="That group could not be found.")
     rows = event_service.list_events(db, group, role="member")
-    return [project_event(event, "public") for event in rows]
+    # The flyer face rides the public projection too (Phase 5):
+    # the picture and its alt-text state are public facts, and a
+    # generated image's flag must survive even here (B-067).
+    from gpa.services import calendar_views
+
+    return [
+        project_event(event, "public", flyer=calendar_views.flyer_view(db, event))
+        for event in rows
+    ]

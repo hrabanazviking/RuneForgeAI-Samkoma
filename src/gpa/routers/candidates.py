@@ -29,9 +29,11 @@ from gpa.schemas.candidates import (
     candidate_row,
 )
 from gpa.schemas.groups import CandidateResponse
+from gpa.schemas.sources import VisionReadAcceptedResponse
 from gpa.services import candidates as candidate_service
 from gpa.services import extraction as extraction_service
 from gpa.services import usage as usage_service
+from gpa.services import vision as vision_service
 
 router = APIRouter(prefix="/api/v1/groups", tags=["candidates"])
 
@@ -176,3 +178,28 @@ def request_extraction(
     return ExtractAcceptedResponse(
         job_id=job.id, source_id=source_id, kinds=body.kinds or extraction_service.ALL_KINDS
     )
+
+
+@router.post(
+    "/{group_id}/sources/{source_id}/read",
+    response_model=VisionReadAcceptedResponse,
+    status_code=202,
+)
+def request_vision_read(
+    source_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Ask for a vision reading of one flyer/board source
+    (Phase 5, B-063/B-064/B-069): a durable job is queued
+    (202 + its id). A board is segmented and each poster read;
+    the drafts land in this queue when the worker runs it, and
+    the job's progress says how far through the posters it is."""
+    job = vision_service.request_vision_read(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        source_id=source_id,
+    )
+    return VisionReadAcceptedResponse(job_id=job.id, source_id=source_id)

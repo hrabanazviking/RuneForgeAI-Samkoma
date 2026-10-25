@@ -39,7 +39,9 @@ class FlyerResponse(BaseModel):
 
     ``alt_text_status`` is the visible-defect flag: it reads
     ``awaiting_description`` — and ``alt_text`` is the literal
-    placeholder — until a real description of the image exists.
+    placeholder — until a real description of the image exists
+    (Phase 5: the vision pass's drafted description, or a
+    person's own words via the flyer PATCH).
     """
 
     id: str
@@ -50,6 +52,13 @@ class FlyerResponse(BaseModel):
     alt_text: str
     alt_text_status: str
     transcript: str = ""
+    # Board children (Phase 5, B-064): the board flyer this
+    # poster was cut from, and the box it was cut from (JSON
+    # text, exactly as stored); both empty for a lone flyer.
+    parent_flyer_id: str | None = None
+    region_json: str | None = None
+    # An AI-generated image says so, forever (B-067).
+    generated: bool = False
 
 
 class SourceCreateRequest(BaseModel):
@@ -156,3 +165,12 @@ class VoiceIngestResponse(SourceDetailResponse):
 
     transcription_job_id: str
     transcription_status: str
+
+
+class VisionReadAcceptedResponse(BaseModel):
+    """202: the reading is a job (Phase 5, B-069); poll the job
+    or watch the stream — the same acceptance shape as an
+    extraction request (B-045)."""
+
+    job_id: str
+    source_id: str

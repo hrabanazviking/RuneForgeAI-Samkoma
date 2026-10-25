@@ -63,6 +63,7 @@ def flyer_view(db: Session, event: Event) -> FlyerView | None:
         thumbnail_key=flyer.thumbnail_key,
         alt_text=flyer.alt_text,
         alt_text_status=flyer.alt_text_status,
+        generated=flyer.generated,
     )
 
 
