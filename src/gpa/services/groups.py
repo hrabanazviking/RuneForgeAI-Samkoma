@@ -86,6 +86,25 @@ def update_group(db: Session, *, actor_label: str, group: Group, changes: dict) 
     """Apply provided, validated changes to a group's settings."""
     if "visibility" in changes and changes["visibility"] not in VISIBILITIES:
         raise AppError("validation_error", detail="Visibility must be private, invite, or public-listed.")
+    changes = dict(changes)
+    # Phase 8: reminder_rules arrives as rule objects and rests
+    # as JSON on the group (B-096); the schema already closed
+    # the vocabulary, so this only serialises.
+    if "reminder_rules" in changes:
+        import json
+
+        rules = changes.pop("reminder_rules")
+        group.reminder_rules_json = json.dumps(
+            [
+                {"kind": rule["kind"], **({"days": rule["days"]} if rule.get("days") else {})}
+                if isinstance(rule, dict) else rule
+                for rule in rules
+            ]
+        )
+    if "digest_time" in changes:
+        from gpa.services.notifications import _parse_hhmm
+
+        _parse_hhmm(changes["digest_time"], "digest_time")
     for field, value in changes.items():
         setattr(group, field, value)
     audit.record(
@@ -93,6 +112,15 @@ def update_group(db: Session, *, actor_label: str, group: Group, changes: dict) 
         group_id=group.id, entity_type="group", entity_id=group.id,
         detail={"fields": sorted(changes)},
     )
+    # Saving digest settings re-anchors the digest chain
+    # (B-099): the next run lands at the new moment, and a
+    # disabled digest's queued run is cancelled.
+    if {"digest_weekday", "digest_time", "digest_enabled"} & set(changes) or (
+        "digest_enabled" in changes
+    ):
+        from gpa.services import digests as digest_service
+
+        digest_service.ensure_scheduled(db, group=group)
     db.commit()
     return group
 
@@ -366,9 +394,16 @@ def approve_candidate(
     # and approval for them stays a recorded decision only.
     from gpa.services import events as event_service
 
-    event_service.mint_from_candidate(
+    minted_event = event_service.mint_from_candidate(
         db, group=group, candidate=candidate, actor_label=actor_label
     )
+    if minted_event is not None:
+        # Born published, so its reminders materialise in this
+        # same transaction (B-096) — for the host; answers that
+        # arrive later add their own through the RSVP road.
+        from gpa.services import reminders as reminder_service
+
+        reminder_service.schedule_reminders(db, group=group, event=minted_event)
     # Phase 7 (B-083/B-085/B-086): approval of a task, decision,
     # or question candidate MINTS its planning entity in the
     # same transaction, the way events mint — the planning
@@ -394,9 +429,15 @@ def approve_candidate(
     if candidate.kind == "event_change":
         from gpa.services import merging as merging_service
 
-        merging_service.apply_change_candidate(
+        changed_event = merging_service.apply_change_candidate(
             db, group=group, candidate=candidate, actor_label=actor_label
         )
+        # The applied change reschedules the event's reminders
+        # in this transaction too (B-096) — a moved event's old
+        # reminder jobs never survive its approval.
+        from gpa.services import reminders as reminder_service
+
+        reminder_service.schedule_reminders(db, group=group, event=changed_event)
     audit.record(
         db, actor=actor_label, action="candidate.approved",
         group_id=group.id, entity_type="candidate", entity_id=candidate.id,

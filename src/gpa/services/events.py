@@ -557,6 +557,15 @@ def update_event(
             group_id=group.id, entity_type="event", entity_id=event.id,
             detail={"fields": changed_fields},
         )
+        # A published event that changed reschedules its
+        # reminders IN THIS TRANSACTION (B-096): the old queued
+        # reminders are superseded, their jobs deleted, and the
+        # new rows carry the new facts — no orphan reminder for
+        # the old time can survive the commit.
+        if event.status == "published":
+            from gpa.services import reminders
+
+            reminders.schedule_reminders(db, group=group, event=event)
     db.commit()
     return event
 
@@ -593,6 +602,11 @@ def publish_event(
         db, actor=actor_label, action="event.published",
         group_id=group.id, entity_type="event", entity_id=event.id,
     )
+    # Materialise the reminders (B-096) in the SAME transaction:
+    # a publish and its reminder jobs exist together or not at all.
+    from gpa.services import reminders
+
+    reminders.schedule_reminders(db, group=group, event=event)
     db.commit()
     return event
 
@@ -615,6 +629,17 @@ def apply_cancellation(
     event.cancelled_at = now_utc()
     event.needs_reannounce = True
     event.version += 1
+    # A cancelled event's reminders die with it (B-096): the
+    # reschedule pass supersedes every outstanding reminder row
+    # and deletes its queued job — nobody is reminded to come to
+    # a thing that is not happening. (Telling people is the
+    # caller's work: cancel_event alerts at once; a change
+    # candidate's cancellation is told by its announcement.)
+    group = db.get(Group, event.group_id)
+    if group is not None:
+        from gpa.services import reminders
+
+        reminders.schedule_reminders(db, group=group, event=event)
 
 
 def cancel_event(
@@ -625,12 +650,34 @@ def cancel_event(
     Cancellation is a state, never a disappearance: the row, its
     change history, and its feed presence all stay — every
     surface that showed the event live now shows it *cancelled*.
-    The notifying state is set here (needs_reannounce + the
-    change row reminders read); events send nothing themselves."""
+    Since Phase 8 the cancelling organiser's act also TELLS the
+    RSVP'd people at once, through the outbox: an urgent change
+    alert (urgent because a person cancelled it, never because
+    the system guessed) that quiet hours cannot hold."""
     event = get_event(db, group, event_id)
     if event.status == "cancelled":
         raise AppError("conflict", detail="That event is already cancelled.")
+    was_published = event.status == "published"
     apply_cancellation(db, event=event, actor_label=actor_label, reason=reason)
+    if was_published:
+        from gpa.services import notifications as notify_service
+
+        for recipient in notify_service.event_recipients(db, event.id):
+            notify_service.create_notification(
+                db,
+                group=group,
+                recipient_user=recipient["user"],
+                recipient_label=recipient["label"],
+                recipient_email=recipient["email"],
+                kind="change.cancellation",
+                subject=f"Cancelled: {event.title}",
+                body_text=(
+                    f"'{event.title}' has been cancelled. "
+                    "There is nothing to come to — sorry for the change of plans."
+                ),
+                event_id=event.id,
+                urgent=True,
+            )
     audit.record(
         db, actor=actor_label, action="event.cancelled",
         group_id=group.id, entity_type="event", entity_id=event.id,
