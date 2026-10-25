@@ -20,6 +20,7 @@ from gpa.services import extraction as _extraction  # noqa: F401 — registers i
 from gpa.services import notifications as _notifications  # noqa: F401 — registers the notify handler on import (Phase 8 outbox; it superseded the rsvps stub)
 from gpa.services import digests as _digests  # noqa: F401 — registers the digest_run handler on import
 from gpa.services import vision as _vision  # noqa: F401 — registers the vision handler on import
+from gpa.services import outbound as _outbound  # noqa: F401 — registers the webhook_deliver handler on import (Phase 11)
 from gpa.storage import LocalStorage, set_storage
 
 
@@ -28,6 +29,7 @@ def main() -> None:
     settings = get_settings()
     ai_client.set_client(ai_client.build_client(settings))
     mailer.set_transport(mailer.build_transport(settings))
+    _outbound.set_settings(settings)
     set_storage(LocalStorage(settings.storage_dir))
     db = Database(settings.database_url)
     db.create_all()

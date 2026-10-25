@@ -28,6 +28,9 @@ from gpa.schemas.integrations import (
     IntegrationResponse,
     IntegrationUpdateRequest,
     LiveSyncResponse,
+    OutboundDeliveryResponse,
+    OutboundWebhookCreateRequest,
+    OutboundWebhookResponse,
     SamtalCalendarSyncResponse,
     SpeakerMember,
     SpeakerResponse,
@@ -431,6 +434,113 @@ def check_integration_health(
         integration_id=integration_id,
     )
     return _integration_response(request, db, row)
+
+
+# --- Outbound webhooks + deliveries (B-128) ------------------------------
+# Registration is an admin act (it points the group's
+# announcements at an outside address); the delivery record
+# is an organiser read — it is the answer to "did they hear?".
+
+
+def _outbound_response(webhook, *, secret=None) -> OutboundWebhookResponse:
+    import json as _json
+
+    try:
+        events = _json.loads(webhook.events_json or "[]")
+    except _json.JSONDecodeError:
+        events = []
+    return OutboundWebhookResponse(
+        id=webhook.id, group_id=webhook.group_id, url=webhook.url,
+        events=events, active=webhook.active,
+        created_at=webhook.created_at.isoformat(),
+        signing_secret=secret,
+    )
+
+
+@router.post(
+    "/{group_id}/outbound-webhooks",
+    response_model=OutboundWebhookResponse,
+    status_code=201,
+)
+def create_outbound_webhook(
+    body: OutboundWebhookCreateRequest,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Register one outbound endpoint (admin+). The response
+    carries the signing secret ONCE; deliveries are signed
+    with it and only its sealed form is kept."""
+    from gpa.services import outbound as outbound_service
+
+    webhook, secret = outbound_service.create_webhook(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        url=body.url, events=body.events,
+    )
+    return _outbound_response(webhook, secret=secret)
+
+
+@router.get(
+    "/{group_id}/outbound-webhooks",
+    response_model=list[OutboundWebhookResponse],
+)
+def list_outbound_webhooks(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """A group's outbound endpoints (organiser+)."""
+    from gpa.services import outbound as outbound_service
+
+    return [
+        _outbound_response(webhook)
+        for webhook in outbound_service.list_webhooks(db, context.group)
+    ]
+
+
+@router.delete("/{group_id}/outbound-webhooks/{webhook_id}", status_code=204)
+def delete_outbound_webhook(
+    webhook_id: str,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Remove one endpoint (admin+); its pending deliveries
+    go with it — a removed door announces nothing more."""
+    from gpa.services import outbound as outbound_service
+
+    outbound_service.delete_webhook(
+        db, actor_label=principal.label, group=context.group,
+        webhook_id=webhook_id,
+    )
+    return None
+
+
+@router.get(
+    "/{group_id}/outbound-webhooks/{webhook_id}/deliveries",
+    response_model=list[OutboundDeliveryResponse],
+)
+def list_outbound_deliveries(
+    webhook_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """One endpoint's deliveries, newest first (organiser+):
+    status, attempts, the receiver's HTTP answer, and the
+    last error in plain words."""
+    from gpa.services import outbound as outbound_service
+
+    return [
+        OutboundDeliveryResponse(
+            id=d.id, webhook_id=d.webhook_id, group_id=d.group_id,
+            event_kind=d.event_kind, status=d.status, attempts=d.attempts,
+            last_error=d.last_error, response_status=d.response_status,
+            created_at=d.created_at.isoformat(),
+            delivered_at=d.delivered_at.isoformat() if d.delivered_at else None,
+        )
+        for d in outbound_service.list_deliveries(db, context.group, webhook_id)
+    ]
 
 
 @webhook_router.post(

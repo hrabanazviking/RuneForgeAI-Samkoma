@@ -358,10 +358,19 @@ def create_candidate(
     draft rights; scope enforcement happens at the door in deps)."""
     candidate = Candidate(group_id=group.id, kind=kind, title=title, created_by=actor_label)
     db.add(candidate)
+    db.flush()  # the id exists before the announcement names it
     audit.record(
         db, actor=actor_label, action="candidate.created",
         group_id=group.id, entity_type="candidate", entity_id=candidate.id,
         detail={"kind": kind, "title": title},
+    )
+    # A new pending candidate is announced outward in the same
+    # transaction (Phase 11, B-128): candidate.pending.
+    from gpa.services import outbound as outbound_service
+
+    outbound_service.emit(
+        db, group=group, kind="candidate.pending",
+        data={"candidate_id": candidate.id, "kind": kind, "title": title},
     )
     db.commit()
     return candidate
@@ -491,6 +500,14 @@ def approve_candidate(
         from gpa.services import reminders as reminder_service
 
         reminder_service.schedule_reminders(db, group=group, event=minted_event)
+        # And its birth is announced outward in the same
+        # transaction (Phase 11, B-128): event.published.
+        from gpa.services import outbound as outbound_service
+
+        outbound_service.emit(
+            db, group=group, kind="event.published",
+            data=outbound_service.event_data(minted_event),
+        )
     # Phase 7 (B-083/B-085/B-086): approval of a task, decision,
     # or question candidate MINTS its planning entity in the
     # same transaction, the way events mint — the planning

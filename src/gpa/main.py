@@ -112,6 +112,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from gpa.services import mailer
 
     mailer.set_transport(mailer.build_transport(settings))
+    # The outbound webhook deliverer (Phase 11, B-128): its
+    # job handler receives only db + payload, so the process
+    # settings it unseals with are wired in here.
+    from gpa.services import outbound
+
+    outbound.set_settings(settings)
     app.state.db = Database(settings.database_url)
     app.state.storage = LocalStorage(settings.storage_dir)
     # The same backend, shared via the storage registry so job
