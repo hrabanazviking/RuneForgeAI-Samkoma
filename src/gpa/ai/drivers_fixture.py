@@ -98,6 +98,19 @@ class FixtureDriver:
         self._recordings[key] = {"text": text, "usage": usage or {}}
         return key
 
+    def add_image_generation(self, prompt: str, image_bytes: bytes, *, usage: dict | None = None) -> str:
+        """Record a generated image for one prompt (B-067). The
+        bytes ride base64 in the recording so a fixture file can
+        carry them too."""
+        import base64
+
+        key = prompt_key(prompt)
+        self._recordings[key] = {
+            "image_b64": base64.b64encode(image_bytes).decode("ascii"),
+            "usage": usage or {},
+        }
+        return key
+
     # --- The protocol ---------------------------------------------
 
     def _replay(self, key: str, *, prompt: str, tier: str, want_data: bool) -> ModelResult:
@@ -142,4 +155,28 @@ class FixtureDriver:
     def transcribe(self, *, audio_bytes: bytes, mime: str = "audio/wav", tier: str = "spark") -> ModelResult:
         return self._replay(
             prompt_key("", media=audio_bytes), prompt="", tier=tier, want_data=False
+        )
+
+    def generate_image(self, *, prompt: str, tier: str = "wonder") -> ModelResult:
+        import base64
+
+        key = prompt_key(prompt)
+        payload = self._recordings.get(key)
+        if payload is None or "image_b64" not in payload:
+            raise FixtureMissError(
+                f"No fixture recording for generated-image prompt hash {key}. "
+                "Record one (FixtureDriver.add_image_generation) or choose another driver."
+            )
+        usage = payload.get("usage") or {}
+        return ModelResult(
+            text="",
+            data={
+                "image_bytes": base64.b64decode(payload["image_b64"]),
+                "format": "png",
+            },
+            model_id=f"{self._models.get(tier, self._models['spark'])} (fixture)",
+            tier=tier,
+            input_tokens=int(usage.get("input_tokens", estimate_tokens(prompt))),
+            output_tokens=int(usage.get("output_tokens", 0)),
+            cost_micros=int(usage.get("cost_micros", 0)),
         )

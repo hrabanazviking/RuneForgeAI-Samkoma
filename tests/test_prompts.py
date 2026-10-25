@@ -20,18 +20,29 @@ EXPECTED_PROMPTS = {
     "extraction_decisions",
     "extraction_questions",
     "flyer_reading",
+    "board_segmentation",
     "summary",
     "briefing",
     "reminder_wording",
     "ask_memory",
 }
 
+# Current versions, per prompt. Superseded by Phase 5 (B-063):
+# this test once asserted every prompt sits at version 1 — true
+# when the library was born, but a version that can never move
+# is not a version. Phase 5 bumped flyer_reading to 2 (its item
+# grew transcript / alt_text / links, B-065/B-066) and added
+# board_segmentation at 1 (B-064). The law that matters is kept
+# at full strength below: a version change without the manifest
+# ceremony still fails.
+EXPECTED_VERSIONS = {"flyer_reading": 2}
+
 
 def test_every_named_prompt_loads_with_version_and_schema():
     for name in sorted(EXPECTED_PROMPTS):
         template = load_prompt(name)
         assert template.name == name
-        assert template.version == 1
+        assert template.version == EXPECTED_VERSIONS.get(name, 1)
         assert template.schema is not None, f"{name} must carry its output schema"
         assert template.body.strip(), f"{name} must not be empty"
 

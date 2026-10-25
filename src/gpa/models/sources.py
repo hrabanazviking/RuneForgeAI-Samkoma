@@ -33,7 +33,7 @@ Three tables:
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from gpa.db import Base
@@ -137,13 +137,20 @@ class SourceChunk(Base):
 
 
 class Provenance(Base):
-    """One candidate field's supporting quote (B-023; grown in B-040).
+    """One candidate field's supporting evidence (B-023; grown in
+    B-040 and B-063).
 
     The row says: this field of this candidate is supported by this
-    exact quote from this exact chunk. Deleting the source deletes
-    its chunks and therefore these rows (service-enforced, with the
-    chunk foreign key cascading as backstop) — the candidate row
-    itself is never touched by a source deletion.
+    exact chunk. For text, the support is a *quote* — the exact
+    words. For a picture (Phase 5), the support is a *place*:
+    ``region_json`` carries the bounding box ``[x, y, w, h]`` (as
+    fractions of the image) the field was read from, the chunk is
+    the flyer's transcript chunk, and the quote stays empty —
+    provenance for vision is a rectangle a reviewer can tap, not
+    words nobody printed. Deleting the source deletes its chunks
+    and therefore these rows (service-enforced, with the chunk
+    foreign key cascading as backstop) — the candidate row itself
+    is never touched by a source deletion.
     """
 
     __tablename__ = "provenance"
@@ -157,6 +164,9 @@ class Provenance(Base):
     )
     field: Mapped[str] = mapped_column(String(64), default="")
     quote: Mapped[str] = mapped_column(Text, default="")
+    # The region box for vision provenance (B-063), JSON text
+    # "[x, y, w, h]"; NULL for every text-provenance row.
+    region_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 
@@ -196,10 +206,25 @@ class Flyer(Base):
     # What the picture says, once the vision pass reads it (Phase 5).
     transcript: Mapped[str] = mapped_column(Text, default="")
     alt_text: Mapped[str] = mapped_column(String(500), default="awaiting description")
-    # awaiting_description | described — the visible-defect flag.
+    # awaiting_description | complete — the visible-defect flag.
+    # "complete" is earned only by a genuine description (the
+    # vision pass's drafted one, or a person's own words, B-065);
+    # anything less keeps the defect visible.
     alt_text_status: Mapped[str] = mapped_column(
         String(24), default="awaiting_description"
     )
+    # The poster's perceptual hash (Phase 5, B-071): a 64-bit
+    # average hash as 16 hex chars, computed at ingest from the
+    # normalised image. Two photographs of the same poster hash
+    # near-identically even when the bytes differ — that nearness
+    # is what the duplicate detector measures. Empty = not hashed
+    # (rows that predate Phase 5), which never matches anything.
+    phash: Mapped[str] = mapped_column(String(16), default="")
+    # An AI-generated image says so, forever (Phase 5, B-067):
+    # generated pictures are never passed off as photographs, in
+    # any projection, because the fact is a column — not a label
+    # a caller could forget to copy.
+    generated: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

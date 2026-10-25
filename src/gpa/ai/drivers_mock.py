@@ -96,3 +96,27 @@ class MockDriver:
             prompt="", tier=tier,
             text="Mock transcript: the mock driver does not listen to audio.",
         )
+
+    def generate_image(self, *, prompt: str, tier: str = "wonder") -> ModelResult:
+        # The mock paints a plainly-labelled placeholder card with
+        # Pillow (a locked dependency, not a model): the picture
+        # says it is a mock, so the generated-image machinery is
+        # exercised end to end without pretending an artist was
+        # involved. The bytes are deterministic per prompt.
+        import hashlib
+        import io
+
+        from PIL import Image, ImageDraw
+
+        hue = int(hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:6], 16)
+        colour = (hue >> 16 & 0x7F, hue >> 8 & 0x7F, hue & 0x7F)
+        image = Image.new("RGB", (640, 400), color=colour)
+        draw = ImageDraw.Draw(image)
+        draw.text((24, 24), "MOCK GENERATED IMAGE", fill=(255, 255, 255))
+        draw.text((24, 48), "(the mock driver does not paint)", fill=(255, 255, 255))
+        buffer = io.BytesIO()
+        image.save(buffer, "PNG")
+        return self._result(
+            prompt=prompt, tier=tier, text="",
+            data={"image_bytes": buffer.getvalue(), "format": "png"},
+        )

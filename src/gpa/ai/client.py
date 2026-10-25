@@ -98,6 +98,13 @@ class MetaModelClient(Protocol):
         """Speech to text: ``result.text`` is the transcript."""
         ...
 
+    def generate_image(self, *, prompt: str, tier: str = TIER_WONDER) -> ModelResult:
+        """Image generation (B-067): ``result.data`` is
+        ``{"image_bytes": <bytes>, "format": "png"}``. A generated
+        image is labelled generated at every layer above this one
+        — the adapter only owes the bytes and the honesty."""
+        ...
+
 
 def estimate_tokens(text: str) -> int:
     """A rough token estimate (≈4 chars/token), used where a driver

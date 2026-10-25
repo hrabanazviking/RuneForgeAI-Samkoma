@@ -242,6 +242,20 @@ class LiveDriver:
             f"Transcription failed after {self._max_attempts} attempts ({last_error})."
         )
 
+    def generate_image(self, *, prompt: str, tier: str = "wonder") -> ModelResult:
+        # Honest boundary (B-067): no image-generation endpoint is
+        # wired for the live driver in this codebase, and inventing
+        # a wire shape for one would be a fabrication. The method
+        # exists so the protocol is whole; it refuses in plain
+        # words until a real endpoint is configured and this body
+        # is written against it. Mock and fixture drivers carry
+        # the feature in tests and the offline demo.
+        raise ModelError(
+            "Image generation is not wired to a live endpoint yet — "
+            "no GPA setting names one. Use the mock or fixture driver, "
+            "or configure the endpoint when the Meta image API is chosen."
+        )
+
 
 def _parse_json_content(content: str):
     """Parse a model body's JSON, tolerating code fences only.

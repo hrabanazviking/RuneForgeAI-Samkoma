@@ -104,6 +104,16 @@ class Settings(BaseSettings):
     ai_price_spark_micros_per_1k: int = 0
     ai_price_wonder_micros_per_1k: int = 0
 
+    # Board segmentation (Phase 5, B-064, decision D-19): SAM is
+    # used ONLY to cut a board photo into poster regions. Its base
+    # URL names a SAM-shaped HTTP endpoint; empty (the default)
+    # means "no SAM configured" and the decided fallback runs —
+    # the vision model is asked for the poster boxes instead, and
+    # the same region pipeline proceeds. The key, like every
+    # secret here, comes from the environment only.
+    sam_api_base: str = ""
+    sam_api_key: str = ""
+
     @field_validator("secret_key")
     @classmethod
     def _secret_must_be_real_in_prod(cls, value: str, info) -> str:

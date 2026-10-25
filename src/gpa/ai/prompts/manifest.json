@@ -4,6 +4,10 @@
       "sha256": "13b4bd2a60f8de5fbb9912ee718021eed6ccf59b2a0a489abbea56e35e4d393b",
       "version": 1
     },
+    "board_segmentation": {
+      "sha256": "686cced6f005552f588d483a8d41c7493d63bd2d854e1c07382e3aa2f93b2e6a",
+      "version": 1
+    },
     "briefing": {
       "sha256": "2a5b938f7bfa7488ec675a2409d00da7a51adc72524bbc807c9bfab5c75751f4",
       "version": 1
@@ -25,8 +29,8 @@
       "version": 1
     },
     "flyer_reading": {
-      "sha256": "b089c92f232fdae58e110ca8a4e2043c8823c4a7890ff5e36d3895d33b466976",
-      "version": 1
+      "sha256": "d923dd78a8b33737f2e0f9667c36852b026b34a289365c33283b13da63abcc5f",
+      "version": 2
     },
     "reminder_wording": {
       "sha256": "199991bd9dcb4752de7726d2df748bce4d8845867031b9f121400d76c0866111",
