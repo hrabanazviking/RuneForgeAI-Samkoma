@@ -33,6 +33,7 @@ from gpa.routers import (
     groups,
     invites,
     jobs,
+    memory,
     meta,
     nonprofit,
     notifications,
@@ -170,4 +171,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(nonprofit.attendance_router)
     app.include_router(nonprofit.members_io_router)
     app.include_router(nonprofit.settings_router)
+    app.include_router(memory.router)
     return app

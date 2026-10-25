@@ -246,3 +246,254 @@ def run_prune(
     )
     db.commit()
     return row, outcome, corpus
+
+
+# --- Ask (B-115) ---------------------------------------------------
+
+# The refusal's first words, verbatim — the frontend and the
+# tests both lean on them, and the prompt (ask_memory.md) uses
+# the same sentence, so the model's honest answer and the
+# server's enforced one read identically.
+UNVERIFIED_LEAD = "I couldn't verify this"
+
+
+def _draft_answer(db, group, client, *, question, kept):
+    """Draft an answer FROM THE SURVIVORS ONLY, via the
+    ask_memory prompt. Returns (answer_text, [quotes],
+    cost_micros) — the run record owes the whole ask's cost,
+    drafts included, not just the pruning's.
+
+    The shape is checked like every pipeline's (one repair
+    retry, then ModelError): an answer that does not parse is
+    not an answer anyone should act on."""
+    from gpa.ai import promptlib
+    from gpa.ai.client import ModelError
+
+    template = promptlib.load_prompt("ask_memory")
+    schema = template.schema or {}
+    prompt = template.render(
+        QUESTION=question, CHUNKS=pruning.render_chunks(kept)
+    )
+    cost = 0
+    result = client.complete_json(prompt=prompt, schema=schema, tier="wonder")
+    cost += result.cost_micros
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, operation="ask:ask_memory",
+        prompt_name="ask_memory", prompt_version=template.version,
+    )
+    error = _ask_shape_error(result.data)
+    if error is not None:
+        repair = (
+            prompt
+            + f"\n\nYour previous answer was not valid: {error}. "
+            "Return ONLY valid JSON in the required shape."
+        )
+        result = client.complete_json(prompt=repair, schema=schema, tier="wonder")
+        cost += result.cost_micros
+        usage_service.record_usage(
+            db, result=result, group_id=group.id, operation="ask:ask_memory",
+            prompt_name="ask_memory", prompt_version=template.version,
+        )
+        error = _ask_shape_error(result.data)
+        if error is not None:
+            raise ModelError(
+                f"Ask produced malformed output twice ({error}); "
+                "refusing to answer from it."
+            )
+    quotes = [
+        str(c.get("quote", ""))
+        for c in result.data.get("citations", [])
+        if isinstance(c, dict)
+    ]
+    return str(result.data.get("answer", "")), quotes, cost
+
+
+def _ask_shape_error(data: object) -> str | None:
+    if not isinstance(data, dict) or not isinstance(data.get("answer"), str):
+        return "the answer must be an object with an 'answer' string"
+    citations = data.get("citations", [])
+    if not isinstance(citations, list):
+        return "'citations' must be a list"
+    for index, citation in enumerate(citations):
+        if not isinstance(citation, dict) or not isinstance(
+            citation.get("quote"), str
+        ):
+            return f"citation {index} must be an object with a 'quote' string"
+    return None
+
+
+def _verify(quotes: list[str], kept) -> list[dict] | None:
+    """Verify every cited quote against the kept chunks
+    (B-040's rule, via ai/pruning.find_quote). Returns the
+    citation list for the wire — quote + the chunk it provably
+    came from — or None when ANY quote fails, or there are no
+    citations at all: an uncited answer is an unverifiable one
+    by construction."""
+    if not quotes:
+        return None
+    citations: list[dict] = []
+    for quote in quotes:
+        match = pruning.find_quote(quote, kept)
+        if match is None:
+            return None
+        citations.append(
+            {"quote": quote, "chunk_id": match.chunk_id, "position": match.position}
+        )
+    return citations
+
+
+def ask_question(
+    db: Session,
+    settings: Settings | None = None,
+    *,
+    actor_label: str,
+    group: Group,
+    question: str,
+    client=None,
+) -> dict:
+    """Ask the group's approved history a question (B-115).
+
+    prune → draft from the survivors → verify every citation →
+    (if the draft has gaps and passes remain) prune again
+    against the gaps and re-draft → answer WITH citations, or
+    the honest refusal. Either way the run and the answer are
+    stored (PruneRun + Summary kind ``ask``) and committed
+    before this returns — commit-before-answer.
+    """
+    settings = settings or get_settings()
+    client = client if client is not None else resolve_client(settings, group)
+    corpus = approved_corpus(db, group)
+    record = _record_usage(db, group)
+    budget = group.prune_token_budget
+
+    outcome = pruning.prune_once(
+        client, question=question, chunks=corpus,
+        token_budget=budget, record_usage=record,
+    )
+    kept, dropped = outcome.kept, outcome.dropped
+    passes = outcome.passes
+    total_cost = outcome.cost_micros
+    model_id = outcome.model_id
+
+    answer_text = ""
+    quotes: list[str] = []
+    citations: list[dict] | None = None
+    if kept:
+        answer_text, quotes, draft_cost = _draft_answer(
+            db, group, client, question=question, kept=kept
+        )
+        total_cost += draft_cost
+        citations = _verify(quotes, kept)
+
+    # The gap pass (Doc 07 §7.2): the draft could not verify —
+    # its failed claims ARE the gaps. Re-prune the dropped set
+    # against them, re-draft from the enlarged survivors, and
+    # verify once more. Pass and budget caps bind here exactly
+    # as they bind the bare engine (B-114).
+    if citations is None and kept and passes < group.prune_max_passes and dropped:
+        gaps = (
+            "The draft answer could not be verified. Draft: "
+            + (answer_text or "(no draft)")
+            + " — its claims lack surviving evidence."
+        )
+        left = budget - outcome.input_tokens if budget is not None else None
+        rescue = pruning.reconsider_dropped(
+            client, question=question, kept=kept, dropped=dropped,
+            gaps=gaps, token_budget=left, record_usage=record,
+        )
+        passes += rescue.passes
+        total_cost += rescue.cost_micros
+        model_id = rescue.model_id or model_id
+        if len(rescue.kept) > len(kept):
+            kept, dropped = rescue.kept, rescue.dropped
+            answer_text, quotes, draft_cost = _draft_answer(
+                db, group, client, question=question, kept=kept
+            )
+            total_cost += draft_cost
+            citations = _verify(quotes, kept)
+
+    verified = citations is not None
+    if verified:
+        body = answer_text
+        wire_citations = citations
+    else:
+        # The honest refusal (B-115's acceptance behaviour):
+        # say what could not be verified, then show what WAS
+        # found, labelled unverified — never dressed as fact.
+        if kept and answer_text:
+            body = (
+                f"{UNVERIFIED_LEAD} — the group's history does not "
+                "settle this with evidence I can cite.\n\n"
+                f"What was found, unverified: {answer_text}"
+            )
+            wire_citations = [
+                {"quote": q, "chunk_id": None, "position": None} for q in quotes
+            ]
+        elif kept:
+            body = (
+                f"{UNVERIFIED_LEAD} — nothing the survivors say "
+                "settles this question."
+            )
+            wire_citations = []
+        else:
+            body = (
+                f"{UNVERIFIED_LEAD} — nothing in the group's "
+                "approved history speaks to it."
+            )
+            wire_citations = []
+
+    final = pruning.PruneOutcome(
+        kept=kept, dropped=dropped, passes=passes,
+        model_id=model_id, cost_micros=total_cost,
+        input_tokens=outcome.input_tokens,
+        budget_stopped=outcome.budget_stopped,
+    )
+    run = write_prune_run(
+        db, actor_label=actor_label, group=group, question=question,
+        purpose="ask", corpus=corpus, outcome=final,
+    )
+    summary = Summary(
+        group_id=group.id,
+        kind="ask",
+        title=question[:240],
+        body=body,
+        status="final",
+        verified=verified,
+        question=question,
+        citations_json=json.dumps(wire_citations),
+        range_json=json.dumps(
+            {
+                "chunk_ids": [c.chunk_id for c in kept],
+                "prune_run_id": run.id,
+            }
+        ),
+        created_by=actor_label,
+    )
+    db.add(summary)
+    db.flush()
+    audit.record(
+        db, actor=actor_label, action="memory.ask",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={
+            "prune_run_id": run.id, "verified": verified,
+            "kept": len(kept), "passes": passes,
+        },
+    )
+    db.commit()
+    return {
+        "answer": body,
+        "verified": verified,
+        "citations": wire_citations,
+        "summary_id": summary.id,
+        "prune_run_id": run.id,
+    }
+
+
+def list_summaries(
+    db: Session, group: Group, *, kind: str | None = None
+) -> list[Summary]:
+    """The group's summaries, newest first, optionally one kind."""
+    query = db.query(Summary).filter(Summary.group_id == group.id)
+    if kind is not None:
+        query = query.filter(Summary.kind == kind)
+    return query.order_by(Summary.created_at.desc(), Summary.id.desc()).all()
