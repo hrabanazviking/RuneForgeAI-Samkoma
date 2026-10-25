@@ -1,4 +1,4 @@
-# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–4
+# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–6
 
 *Regenerated at each release. Read this first.*
 
@@ -335,6 +335,81 @@ delivery (Phase 11), the Facebook posting integration
   source (`ready`/`done`) whose chunks carry speaker labels
   where the note offered them, and it can be extracted like any
   chat paste.
+
+## De-duplication, changes, and truth-keeping (Phase 6)
+
+- **"Likely the same event" (B-075/B-076).** A candidate's
+  detail (`GET /groups/{id}/candidates/{cid}`) now carries
+  `matches`: the group's existing events scored against the
+  draft (title / time / place / host components, a `score`,
+  and `likely` at ≥ 0.6). Render the best match as a
+  side-by-side "likely the same event" panel with a merge
+  action: `POST /groups/{id}/candidates/{cid}/merge-event`
+  with `{event_id}` (organiser+). The response says exactly
+  what happened per field — `applied_fields` (the candidate's
+  better-sourced or fuller value won), `filled_fields` (the
+  event had nothing), `agreed_fields`, `kept_fields` (the
+  event's value stood), and `contradiction_ids`. The machine
+  proposes; only a person merges. Below the threshold there is
+  no panel and approval mints a new event as before.
+- **"Where did this come from?" (B-076).** Every surviving
+  field of a merged (or minted) event keeps its evidence:
+  `GET /groups/{id}/events/{eid}/sources` lists
+  `{field, source_id, chunk_id, quote}` rows. Link field
+  labels to it.
+- **Contradictions (B-079).** When two sources disagree and
+  neither wins, the event carries the dispute instead of
+  hiding it: organiser event detail includes `contradictions`
+  (also `GET /groups/{id}/events/{eid}/contradictions`,
+  `?include_resolved=true` for history). Each carries
+  `values: [{value, source_ids, current}]` — render them as a
+  visible "sources disagree" flag with the choices; resolve
+  with `POST .../contradictions/{cid}/resolve` `{value, note}`
+  (the value must be one the sources said). A later source can
+  also settle a dispute by weight of evidence — the merge
+  response's auto-resolution shows up as the contradiction
+  closing with `resolution` text.
+- **Change candidates (B-077).** Extraction gains a fifth
+  kind, `event_change`, requested explicitly
+  (`POST .../sources/{sid}/extract` with
+  `{"kinds": ["event_change"]}` — it is NOT in the default
+  run). Its drafts name the event they change
+  (`draft.target_event_id` / `target_title`); approval APPLIES
+  the change to that event (moves keep the unmoved part; a
+  cancellation cancels) and the change appears in the event's
+  change feed with reason `change candidate <id>`. A change
+  naming no known event carries the `change_target_unknown`
+  flag and cannot be approved (422, plain words) — show the
+  flag and offer edit/reject. Rejecting a change leaves the
+  event standing.
+- **Re-announce drafts (B-078).** After a material change,
+  `POST /groups/{id}/events/{eid}/reannounce-drafts`
+  (organiser+) drafts the announcement from the change
+  history: the `body` names old → new for each change since
+  the last draft ("Start: Friday 06 November 2026, 06:30 PM →
+  07:30 PM") — render the body verbatim. 422 when there is
+  nothing new to announce. Drafting does NOT clear
+  `needs_reannounce`; sending is a later phase, so keep the
+  "group not told yet" indicator lit until then.
+- **Delete + undelete (B-080).** `DELETE
+  /groups/{id}/events/{eid}` (organiser+) soft-deletes: the
+  event vanishes from every list, calendar, and feed at once.
+  `GET /groups/{id}/tombstones` (organiser+) lists deleted
+  events and sources with `purge_after` (deleted + 30 days)
+  and `restorable`. Restore with `POST
+  .../events/{eid}/restore` or `POST
+  .../sources/{sid}/restore` — events come back whole
+  (history, links, RSVPs); sources rebuild with their
+  original ids and their candidates lose the
+  source-deleted stamp. After the window, restore is a 422
+  that says "gone for good" — show those words.
+- **Needs-attention badge (B-081).** `GET
+  /groups/{id}/quality-report` (member+) returns four lists —
+  `missing_place`, `missing_host` (published events only),
+  `low_confidence_fields` (the open queue),
+  `unresolved_contradictions` — and `needs_attention`, their
+  total. The badge is that number; the lists are the work
+  queue behind it.
 
 ## The contract
 

@@ -23,10 +23,10 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **553 tests, all passing** (74/340 slices:
-Phases 0, 1, 2, 3, 4, and 5 complete) — the count taken from one
-clean `./test.sh` run against the final committed Phase 5 tree
-(515 before Phase 5 + 38 new = 553, collected count reconciled).
+Alembic up/down/up clean; **588 tests, all passing** (82/340 slices:
+Phases 0, 1, 2, 3, 4, 5, and 6 complete) — the count taken from one
+clean `./test.sh` run against the final committed Phase 6 tree
+(553 before Phase 6 + 35 new = 588, collected count reconciled).
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
@@ -477,9 +477,92 @@ login, no API key, no network).
   refuses in plain words. The B-074 live-driver run is recorded
   as **awaiting a real Meta endpoint** — never faked.
 
+### Phase 6 — De-duplication, changes, truth-keeping (B-075 → B-082): ✅ COMPLETE (2026-10-24)
+- **B-075 cross-source matching** (`services/matching.py`):
+  hand-rolled scorer (title .35 / time .35 / place .20 / host
+  .10, weighted mean over present components; ½·Jaccard +
+  ½·containment on article-stripped tokens; exact date 1.0,
+  ambiguous-reading credit 0.85, ±1 day 0.4). Threshold 0.6.
+  **A bare title resemblance is halved and can never propose**
+  — a match needs time/place/host evidence too. Candidate
+  detail carries `matches` (best first, per-component scores,
+  `likely`); cancelled and tombstoned events never match.
+- **B-076 merge service** (`services/merging.py`): merging a
+  candidate into an event is field-by-field — empty fills,
+  the fuller form of the same fact refines, agreement is
+  recorded by links, genuine disagreement is settled by
+  SUPPORT: distinct sources per VALUE (sources recorded
+  backing a different value never credit the current one —
+  contradiction rows arbitrate the count). Unsupported claims
+  never move anything; ambiguous/unresolved starts are
+  skipped, never guessed. All candidate provenance becomes
+  `EventSourceLink` rows, so the merged event answers "where
+  did this come from?" per field (`GET …/events/{id}/sources`).
+  Candidate → `merged`. The edit engine was extracted from
+  B-050's PATCH path as `events.apply_changes` (and
+  `events.apply_cancellation`) so merges, changes and edits
+  share one EventChange-writing door.
+- **B-077 change candidates**: new prompt `extraction_changes`
+  v1; kind `event_change` is REQUESTABLE but deliberately NOT
+  in the default four-kind run (first announcements must not
+  draft "changes" out of themselves). The pipeline links each
+  change to its target at draft time — `matching.match_by_name`
+  treats an exact name as a REFERENCE (score 1.0), else the
+  weighted score at threshold; unmatched →
+  `change_target_unknown` flag. Approval applies the change
+  inside the approval transaction
+  (`merging.apply_change_candidate`): partial moves keep the
+  unmoved part, a start move carries the end by the same
+  delta, cancellation flows through `apply_cancellation` with
+  the source's quote as the reason. Refusals are plain and
+  total (no target / gone / cancelled / unbacked claim /
+  unresolved time / changes-nothing) and leave the candidate
+  pending; rejection leaves the event standing.
+- **B-078 re-announce drafts** (`services/announce.py` +
+  `AnnouncementDraft`): built from the material EventChange
+  rows since the last draft, each line humanised old → new in
+  the event's timezone ("Start: Friday 06 November 2026,
+  06:30 PM → 07:30 PM") — never a bare "updated".
+  Nothing-to-announce → plain 422. Drafting does NOT clear
+  `needs_reannounce` — sending is Phase 10.
+- **B-079 contradictions** (`EventContradiction`): a merge
+  tie keeps the event's value and raises a visible row
+  (values with per-value source lists, the current marked);
+  organiser event detail carries open ones. Resolve picks one
+  of the said values (else 422) and applies it through the
+  change history. A value that later arrives better-sourced
+  settles its own open contradiction automatically.
+- **B-080 tombstones** (`services/tombstones.py`, `Tombstone`,
+  `events.deleted_at`; migration `0009_phase6_truth`,
+  inspector-guarded like 0007/0008): events soft-delete —
+  gone from every read (events service, calendar views, iCal
+  feeds, flyer wall, matching) — and restore whole inside 30
+  days; post-window restore is refused in plain words even
+  before the purge; `purge_expired` hard-deletes expired
+  events children-first (`events.hard_delete_event`) and
+  drops expired stones. SOURCES keep the B-023 law at full
+  strength (chunks + provenance still go at once) but
+  `delete_source` first snapshots source+chunks+provenance+
+  flyers into the tombstone; restore rebuilds with the
+  original ids and lifts candidates' `source_deleted_at`.
+- **B-081 quality report** (`quality.group_quality_report`,
+  `GET …/quality-report`, member+): missing place / missing
+  host among PUBLISHED non-deleted events (drafts are allowed
+  to be unfinished), low-confidence fields in the open queue,
+  open contradictions — and `needs_attention`, the badge count.
+- **B-082 gate**: `tests/test_phase6_gate.py` — the whole
+  story as one scripted test (triple announcement → one
+  event → move → re-announce draft naming both times →
+  cancel). OPENAPI.json + frontend_types.ts regenerated
+  (**86 paths, 94 schemas**); FRONTEND_HANDOFF.md carries the
+  Phase 6 notes (merge view, change candidates,
+  contradictions, tombstones, quality badge). Phase 6 folds
+  into ZIP-Beta (Sat Oct 31) — no ZIP cut at this gate.
+- **35 new tests** (matching 7, merging 7, migration 1, change
+  candidates 6, announce 6, tombstones 5, quality 2, gate 1).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 6 begins at B-075 (de-duplication, changes, and
-truth-keeping).
+Phase 7 begins at B-083.
 
 ## Decisions & deviations (from the roadmap defaults)
 
