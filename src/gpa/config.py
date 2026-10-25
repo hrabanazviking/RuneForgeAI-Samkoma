@@ -95,6 +95,13 @@ class Settings(BaseSettings):
     # database backend, where it is never read.
     redis_url: str = ""
 
+    # Internal comms key (B-163, §6A.4): base64 of the 32-byte
+    # AES-256-GCM key that seals internal API payloads whenever
+    # a call crosses a process boundary. Empty derives a key
+    # from the app secret with a domain label (development
+    # posture); production sets a real one. Environment-only.
+    internal_key_b64: str = ""
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

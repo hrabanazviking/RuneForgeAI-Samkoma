@@ -1637,6 +1637,63 @@ Phase 16 begins at B-157.
   (AES-256-GCM + Ed25519 for B-163/B-167; the roadmap names
   both algorithms, and neither exists in the stdlib; wheels
   ship for every Tier-1 target incl. Pi).
+- **B-162 internal API core** ✅: `gpa/internal/{envelope,
+  registry, client, handlers}.py`. Envelope = pydantic
+  `{operation, caller, scope, payload, nonce, timestamp,
+  idempotency_key, signature}`; payloads carry ids/values
+  only, datetimes as ISO strings. Registry: operation →
+  owner + required scope; static `CALLER_GRANTS` mirror the
+  pinned edge inventory's meaning. Handlers run in the
+  CALLER's session/transaction and preserve each direct
+  call's commit discipline (job submission commits;
+  emit/notify/candidates do not). Rewired through the
+  client: events (4 emits + cancellation fan-out → one
+  `notify.request` with an `event_id` audience), announce,
+  rsvps (`notify.rsvp_promotion`), invites, reconcile
+  (caller="integrations"), groups (stub draft →
+  `candidates.create` over a new public
+  `services/candidates.create_candidate`; mint emit),
+  digests + retention chain links (`jobs.enqueue`),
+  extraction (submits → `ai.submit_job`; pending emits),
+  vision (submit), voice (transcribe submit,
+  caller="sources"), google_inbound + samtal_calendar +
+  memory (inline `Candidate(...)` → `candidates.create`).
+  NOT rewired, deliberately: same-transaction `jobs.queue()`
+  sites — the jobs module's in-process surface, not a
+  cross-module call. Defect fixed at root: announce's audit
+  line counted the removed `recipients` list (NameError
+  under approval alerts) — it now counts the notify result's
+  created ids, the people actually told. Architecture
+  inventory 115 → 106, exactly the nine rewired edges. Tests:
+  test_internal_api 9 passed; affected batches 91 + 85
+  passed (change-alerts re-run 15 passed after the fix).
+- **B-163 encrypted internal transport** ✅:
+  `gpa/internal/crypto.py` (AES-256-GCM seal/open with the
+  header as AAD; Ed25519 sign/verify; HMAC profile; comms key
+  from `GPA_INTERNAL__KEY_B64` or domain-labelled derivation
+  from the app secret), `gpa/internal/ca.py` (internal CA:
+  mint CA + server/client leaves, loopback SANs),
+  `gpa/internal/transport.py` (length-framed wire form —
+  header in clear as authenticated data, payload sealed,
+  whole message signed; `WireServer` refuses unsigned/forged
+  frames BEFORE dispatch and signs even its refusals;
+  `UnixWireServer`, loopback `TcpWireServer` + mTLS contexts,
+  `WireClient`). Root addition in client.py:
+  `execute_envelope(db, envelope) -> InternalResult` — both
+  doors now share the one `_dispatch` (registration, scope,
+  handler), so the law cannot differ by door. Acceptance
+  evidence (tests/test_internal_transport.py, 6 tests): a
+  recording TAP between a real client and server on a real
+  Unix socket holds NO readable payload content in either
+  direction while the call succeeds; an unsigned hand-made
+  frame is refused pre-dispatch; the round trip also runs
+  across a REAL subprocess boundary
+  (tests/internal_fixture_server.py) and over loopback mTLS
+  (a wrong-CA client leaf cannot complete the handshake).
+  NOT RUN: Windows named pipes (Linux builder) — the framing
+  and wire form behind the pipe are these same classes; the
+  pipe leg itself is unproven here and the papers will say
+  so.
 
 ## Standing laws in force here
 

@@ -105,21 +105,60 @@ class InternalClient:
         """
         _ensure_registered()
         op = registry.get_operation(operation)
+        envelope = InternalRequest(
+            operation=operation,
+            caller=caller,
+            scope=op.required_scope if op is not None else "",
+            payload=payload or {},
+            nonce=secrets.token_urlsafe(16),
+            timestamp=utc_now_iso(),
+            idempotency_key=idempotency_key,
+        )
+        return self._dispatch(db, envelope)
+
+    def execute_envelope(self, db: Session, envelope: InternalRequest) -> InternalResult:
+        """Dispatch a PREBUILT envelope and answer with a
+        result object instead of raising (B-163).
+
+        This is the server door's entry point: a remote caller
+        arrives as an envelope (already signature-verified by
+        the transport), and the answer must travel back as
+        data — success or problem — because the wire cannot
+        carry an exception. Scope and registration law are the
+        same `_dispatch` the in-process door enforces; nothing
+        about crossing a process weakens them."""
+        from gpa.internal.envelope import InternalResult
+
+        try:
+            data = self._dispatch(db, envelope)
+        except AppError as exc:
+            return InternalResult(
+                ok=False,
+                operation=envelope.operation,
+                error={
+                    "code": exc.code,
+                    "title": exc.title,
+                    "status": exc.status,
+                    "detail": exc.detail,
+                },
+            )
+        return InternalResult(ok=True, operation=envelope.operation, data=data)
+
+    def _dispatch(self, db: Session, envelope: InternalRequest) -> dict:
+        """The one dispatch path: registration, scope, handler.
+
+        Both doors (in-process `call`, wire `execute_envelope`)
+        come through here, so the law cannot differ by door."""
+        _ensure_registered()
+        operation = envelope.operation
+        caller = envelope.caller
+        op = registry.get_operation(operation)
         handler = registry.HANDLERS.get(operation)
         if op is None or handler is None:
             raise AppError(
                 "internal_unknown_operation",
                 detail=f"No internal operation is registered as '{operation}'.",
             )
-        envelope = InternalRequest(
-            operation=operation,
-            caller=caller,
-            scope=op.required_scope,
-            payload=payload or {},
-            nonce=secrets.token_urlsafe(16),
-            timestamp=utc_now_iso(),
-            idempotency_key=idempotency_key,
-        )
         if not registry.caller_may(caller, op.required_scope):
             self._audit(db, envelope, ok=False, error_code="internal_scope_denied")
             raise AppError(
