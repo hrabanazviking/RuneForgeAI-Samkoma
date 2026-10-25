@@ -102,3 +102,22 @@ class NewsletterDraftRequest(BaseModel):
 
     year: int = Field(ge=2000, le=2100)
     month: int = Field(ge=1, le=12)
+
+
+class BriefingResponse(BaseModel):
+    """A host briefing (B-117): the woven text, the questions
+    the history leaves open (the model's list), and the role
+    gaps (the data's list — unclaimed slots, counted, not
+    imagined)."""
+
+    summary: SummaryResponse
+    open_questions: list[str]
+    role_gaps: list[str]
+    prune_run_id: str
+
+
+class RecapResponse(BaseModel):
+    """A recap draft (B-118) — a draft, always: it becomes
+    memory only through approval."""
+
+    summary: SummaryResponse

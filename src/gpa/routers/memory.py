@@ -25,12 +25,14 @@ from gpa.models.memory import PruneRun, Summary
 from gpa.schemas.memory import (
     AskRequest,
     AskResponse,
+    BriefingResponse,
     CitationResponse,
     PruneRunResponse,
     SummariseRequest,
     SummariseResponse,
     SummaryResponse,
 )
+from gpa.services import events as event_service
 from gpa.services import memory as memory_service
 
 router = APIRouter(prefix="/api/v1/groups", tags=["memory"])
@@ -148,4 +150,34 @@ def summarise_discussion(
     return SummariseResponse(
         summary=_summary_response(result["summary"]),
         candidate_ids=[c.id for c in result["candidates"]],
+    )
+
+
+# --- Briefings (B-117) ----------------------------------------------
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/briefing",
+    response_model=BriefingResponse, status_code=201,
+)
+def brief_event(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """The host's briefing for one event: past decisions, last
+    recap, open questions, role gaps — and the pruned history
+    that matters, landmines included."""
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role
+    )
+    result = memory_service.brief_event(
+        db, actor_label=context.principal.label, group=context.group,
+        event=event,
+    )
+    return BriefingResponse(
+        summary=_summary_response(result["summary"]),
+        open_questions=result["open_questions"],
+        role_gaps=result["role_gaps"],
+        prune_run_id=result["prune_run_id"],
     )

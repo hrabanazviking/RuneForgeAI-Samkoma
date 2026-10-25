@@ -659,3 +659,176 @@ def summarise_thread(
     )
     db.commit()
     return {"summary": summary, "candidates": created}
+
+
+# --- Event briefings (B-117) ---------------------------------------
+
+BRIEF_AUTHOR = "system:memory"
+
+
+def _event_terms(group: Group, event) -> str:
+    """The pruning question for one event's briefing: the
+    event's own words, aimed at what a host needs — decisions,
+    lessons, promises, warnings."""
+    place = f" at {event.place_name}" if event.place_name else ""
+    return (
+        f"What does the group know that matters for the event "
+        f"'{event.title}'{place} — past decisions about it, last "
+        f"time's lessons, promises made, and warnings?"
+    )
+
+
+def brief_event(
+    db: Session,
+    settings: Settings | None = None,
+    *,
+    actor_label: str,
+    group: Group,
+    event,
+    client=None,
+) -> dict:
+    """Assemble the host's briefing for one event (B-117).
+
+    Two sources of truth, woven by the briefing prompt:
+    the group's STRUCTURED present — past decisions about this
+    event, the open questions still hanging, the role slots
+    nobody has claimed — and its PRUNED past: the approved
+    history judged relevant to the event's own terms. The
+    landmine rule is the point: a warning from three months
+    ago, phrased nothing like the event, must survive the
+    pruning and land in the briefing — that is what the engine
+    is FOR (Doc 07 §7.4).
+    """
+    from gpa.ai import promptlib
+    from gpa.ai.client import ModelError
+    from gpa.models.planning import OpenQuestion, RoleSlot
+
+    settings = settings or get_settings()
+    client = client if client is not None else resolve_client(settings, group)
+    corpus = approved_corpus(db, group)
+    question = _event_terms(group, event)
+    outcome = pruning.prune_once(
+        client, question=question, chunks=corpus,
+        token_budget=group.prune_token_budget,
+        record_usage=_record_usage(db, group),
+    )
+    run = write_prune_run(
+        db, actor_label=actor_label, group=group, question=question,
+        purpose="brief", corpus=corpus, outcome=outcome,
+    )
+
+    title_words = {
+        word.lower()
+        for word in "".join(
+            ch if ch.isalnum() or ch.isspace() else " " for ch in event.title
+        ).split()
+        if len(word) >= 4
+    }
+    past_decisions = [
+        d.text
+        for d in db.query(Decision)
+        .filter(Decision.group_id == group.id, Decision.status == "current")
+        .order_by(Decision.created_at)
+        .all()
+        if d.event_id == event.id
+        or any(word in d.text.lower() for word in title_words)
+    ][:5]
+    last_recap = (
+        db.query(Summary)
+        .filter(
+            Summary.group_id == group.id, Summary.kind == "recap",
+            Summary.status == "approved",
+        )
+        .order_by(Summary.created_at.desc())
+        .first()
+    )
+    open_questions = [
+        q.text
+        for q in db.query(OpenQuestion)
+        .filter(
+            OpenQuestion.group_id == group.id, OpenQuestion.status == "open"
+        )
+        .order_by(OpenQuestion.created_at)
+        .all()
+        if q.event_id in (None, event.id)
+    ][:5]
+    role_gaps = [
+        slot.role_name
+        for slot in db.query(RoleSlot)
+        .filter(RoleSlot.event_id == event.id, RoleSlot.claimed_by_id.is_(None))
+        .order_by(RoleSlot.created_at)
+        .all()
+    ]
+
+    event_block_lines = [
+        f"{event.title} — {event.starts_at.isoformat()} ({event.timezone})",
+    ]
+    if event.place_name:
+        event_block_lines.append(f"Place: {event.place_name}")
+    if past_decisions:
+        event_block_lines.append(
+            "Past decisions: " + " | ".join(past_decisions)
+        )
+    if last_recap is not None:
+        event_block_lines.append(f"Last recap: {last_recap.body[:400]}")
+    if open_questions:
+        event_block_lines.append(
+            "Open questions: " + " | ".join(open_questions)
+        )
+    if role_gaps:
+        event_block_lines.append(
+            "Roles still unclaimed: " + ", ".join(role_gaps)
+        )
+
+    template = promptlib.load_prompt("briefing")
+    schema = template.schema or {}
+    prompt = template.render(
+        EVENT="\n".join(event_block_lines),
+        CHUNKS=pruning.render_chunks(outcome.kept),
+    )
+    result = client.complete_json(prompt=prompt, schema=schema, tier="wonder")
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, operation="brief:briefing",
+        prompt_name="briefing", prompt_version=template.version,
+    )
+    if not isinstance(result.data, dict) or not isinstance(
+        result.data.get("text"), str
+    ):
+        raise ModelError(
+            "The briefing answer was malformed (no 'text'); refusing to store it."
+        )
+    summary = Summary(
+        group_id=group.id,
+        kind="event_brief",
+        title=f"Briefing — {event.title}",
+        body=result.data["text"],
+        status="final",
+        verified=True,
+        citations_json="[]",
+        range_json=json.dumps(
+            {
+                "chunk_ids": [c.chunk_id for c in outcome.kept],
+                "prune_run_id": run.id,
+                "event_id": event.id,
+            }
+        ),
+        event_id=event.id,
+        created_by=actor_label,
+    )
+    db.add(summary)
+    db.flush()
+    audit.record(
+        db, actor=actor_label, action="memory.briefing_created",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={"event_id": event.id, "prune_run_id": run.id},
+    )
+    db.commit()
+    return {
+        "summary": summary,
+        "open_questions": [
+            str(q) for q in result.data.get("open_questions", [])
+            if isinstance(q, str)
+        ],
+        "role_gaps": role_gaps,
+        "prune_run_id": run.id,
+    }
