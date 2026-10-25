@@ -13,6 +13,15 @@ class GroupCreateRequest(BaseModel):
     default_place: str = Field(default="", max_length=240)
 
 
+class ReminderRule(BaseModel):
+    """One reminder rule (B-096): N days before, or the
+    morning of. Days is required (1..365) for days_before and
+    ignored for morning_of."""
+
+    kind: str = Field(pattern="^(days_before|morning_of)$")
+    days: int | None = Field(default=None, ge=1, le=365)
+
+
 class GroupUpdateRequest(BaseModel):
     """Edit a group's settings (admin+; B-015)."""
 
@@ -27,6 +36,17 @@ class GroupUpdateRequest(BaseModel):
     # "no cap" — a very large number is the practical equivalent,
     # stated plainly rather than hidden.
     ai_daily_budget_micros: int | None = Field(default=None, ge=0)
+    # Phase 8 comms settings (B-096/B-099/B-103): the reminder
+    # rules for the group's events, the weekly digest's moment
+    # (weekday 0 = Monday … 6 = Sunday, group-local HH:MM) and
+    # whether it runs at all, and the AI reminder-wording
+    # opt-in. Saving digest settings re-anchors the digest
+    # job chain (services/digests.ensure_scheduled).
+    reminder_rules: list[ReminderRule] | None = None
+    digest_weekday: int | None = Field(default=None, ge=0, le=6)
+    digest_time: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+    digest_enabled: bool | None = None
+    ai_reminder_wording: bool | None = None
 
 
 class GroupResponse(BaseModel):
@@ -40,6 +60,13 @@ class GroupResponse(BaseModel):
     home_timezone: str
     default_place: str
     my_role: str | None = None
+    # Phase 8 comms settings, echoed so a settings screen can
+    # render them without a second read (B-096/B-099/B-103).
+    reminder_rules: list[ReminderRule] = Field(default_factory=list)
+    digest_weekday: int | None = None
+    digest_time: str = ""
+    digest_enabled: bool = True
+    ai_reminder_wording: bool = False
 
 
 class InviteRequest(BaseModel):

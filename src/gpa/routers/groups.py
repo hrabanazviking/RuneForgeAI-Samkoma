@@ -36,10 +36,16 @@ router = APIRouter(prefix="/api/v1/groups", tags=["groups"])
 def _group_response(context: GroupContext) -> GroupResponse:
     """Shape a group, including the caller's own role in it."""
     g = context.group
+    from gpa.schemas.groups import ReminderRule
+    from gpa.services import reminders as reminder_service
+
     return GroupResponse(
         id=g.id, name=g.name, slug=g.slug, description=g.description,
         visibility=g.visibility, home_timezone=g.home_timezone,
         default_place=g.default_place, my_role=context.role,
+        reminder_rules=[ReminderRule(**rule) for rule in reminder_service.rules_for(g)],
+        digest_weekday=g.digest_weekday, digest_time=g.digest_time,
+        digest_enabled=g.digest_enabled, ai_reminder_wording=g.ai_reminder_wording,
     )
 
 

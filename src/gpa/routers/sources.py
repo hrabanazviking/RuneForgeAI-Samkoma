@@ -370,7 +370,9 @@ def group_stream(
     from gpa.services import stream as stream_service
 
     database = request.app.state.db
-    events = stream_service.group_events(database.session, context.group.id)
+    events = stream_service.group_events(
+        database.session, context.group.id, user_id=context.principal.user_id
+    )
     return StreamingResponse(events, media_type="text/event-stream")
 
 

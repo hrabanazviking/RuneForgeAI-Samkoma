@@ -22,6 +22,12 @@ The generator polls the group's jobs and speaks two event kinds:
   everything else here — a comment hidden or deleted later is
   a moderation act the REST views show; the stream announces
   arrivals, it does not rewrite them.
+- ``notification.created`` — whenever a notification lands in
+  the CONNECTED member's inbox for this group (Phase 8,
+  B-101): the nudge that tells their screen to re-read the
+  inbox. Only the recipient's own stream carries it — the
+  frame names the kind and the event, never the body; the
+  inbox itself is the content's home.
 
 Honesty note (B-033): the ingests that complete synchronously
 (paste, file, newsletter, image, link) never pass through a job,
@@ -38,6 +44,7 @@ from sqlalchemy.orm import Session
 
 from gpa.models.core import Job
 from gpa.models.events import Comment, Thread
+from gpa.models.notifications import Notification
 
 # How much of a group's job history a snapshot carries. Screens
 # care about recent work; the full history lives behind the jobs
@@ -111,15 +118,46 @@ def _comment_frame(comment: Comment, thread: Thread) -> dict:
     }
 
 
+def _my_notifications(db: Session, group_id: str, user_id: str) -> list[Notification]:
+    """The connected member's inbox rows for this group, oldest
+    first — the marker arithmetic walks this order."""
+    return (
+        db.query(Notification)
+        .filter(
+            Notification.group_id == group_id,
+            Notification.recipient_user_id == user_id,
+            Notification.in_app.is_(True),
+            Notification.status != "superseded",
+        )
+        .order_by(Notification.created_at, Notification.id)
+        .all()
+    )
+
+
+def _notification_frame(row: Notification) -> dict:
+    """The nudge: kind + event + subject, never the body —
+    the inbox is the content's home (B-101)."""
+    return {
+        "notification_id": row.id,
+        "kind": row.kind,
+        "event_id": row.event_id,
+        "subject": row.subject,
+        "urgent": row.urgent,
+        "created_at": row.created_at.isoformat() + "Z",
+    }
+
+
 def group_events(
     session_factory: Callable[[], Session],
     group_id: str,
     *,
+    user_id: str | None = None,
     poll_seconds: float = 1.0,
     max_polls: int | None = None,
 ) -> Iterator[str]:
-    """Yield SSE frames: one snapshot, then job.progress changes
-    and comment.created arrivals.
+    """Yield SSE frames: one snapshot, then job.progress changes,
+    comment.created arrivals, and (for a connected member) the
+    notification.created nudges for their own inbox.
 
     ``max_polls`` bounds the generator for tests and short-lived
     consumers; the HTTP route leaves it None and the stream runs
@@ -131,6 +169,9 @@ def group_events(
     with session_factory() as db:
         snap = snapshot(db, group_id)
         existing = _group_comments(db, group_id)
+        existing_notifications = (
+            _my_notifications(db, group_id, user_id) if user_id else []
+        )
     for job in snap["jobs"]:
         seen[job["job_id"]] = (job["status"], job["progress"])
     # The comment marker starts at the newest comment that
@@ -140,6 +181,10 @@ def group_events(
     if existing:
         newest = existing[-1][0]
         comment_marker = (newest.created_at, newest.id)
+    notification_marker: tuple | None = None
+    if existing_notifications:
+        newest_row = existing_notifications[-1]
+        notification_marker = (newest_row.created_at, newest_row.id)
     yield _sse("snapshot", snap)
     polls = 0
     while max_polls is None or polls < max_polls:
@@ -148,6 +193,9 @@ def group_events(
         with session_factory() as db:
             jobs = group_jobs(db, group_id)[:SNAPSHOT_LIMIT]
             comments = _group_comments(db, group_id)
+            notifications = (
+                _my_notifications(db, group_id, user_id) if user_id else []
+            )
         for job in jobs:
             summary = _job_summary(job)
             state = (summary["status"], summary["progress"])
@@ -160,3 +208,8 @@ def group_events(
                 comment_marker = marker
                 if comment.deleted_at is None and comment.hidden_at is None:
                     yield _sse("comment.created", _comment_frame(comment, thread))
+        for row in notifications:
+            marker = (row.created_at, row.id)
+            if notification_marker is None or marker > notification_marker:
+                notification_marker = marker
+                yield _sse("notification.created", _notification_frame(row))

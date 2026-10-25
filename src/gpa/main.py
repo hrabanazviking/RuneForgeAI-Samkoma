@@ -31,8 +31,10 @@ from gpa.routers import (
     events,
     flyers,
     groups,
+    invites,
     jobs,
     meta,
+    notifications,
     planning,
     polls,
     rsvps,
@@ -92,6 +94,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # settings here, shared via the ai.client registry so job
     # handlers (which receive only db + payload) reach the same one.
     ai_client.set_client(ai_client.build_client(settings))
+    # The mail transport (Phase 8, B-095): the notification
+    # outbox sends through this driver boundary — the file
+    # driver in dev; the provider driver lands in Phase 12.
+    from gpa.services import mailer
+
+    mailer.set_transport(mailer.build_transport(settings))
     app.state.db = Database(settings.database_url)
     app.state.storage = LocalStorage(settings.storage_dir)
     # The same backend, shared via the storage registry so job
@@ -140,4 +148,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(polls.router)
     app.include_router(checklists.router)
     app.include_router(templates.router)
+    app.include_router(notifications.me_router)
+    app.include_router(notifications.group_router)
+    app.include_router(notifications.webhook_router)
+    app.include_router(invites.group_router)
+    app.include_router(invites.public_router)
     return app
