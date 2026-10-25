@@ -120,12 +120,45 @@ def test_stale_timestamp_is_refused_even_with_a_true_signature(client):
 
 def test_replay_is_refused_and_never_duplicates(client):
     owner, group, source, endpoint = world(client)
-    first = deliver(client, endpoint, PAYLOAD)
+    # A replay is BYTE-IDENTICAL: same body, same timestamp,
+    # same signature. The stamp is therefore pinned for both
+    # deliveries — deliver() otherwise re-signs with
+    # int(time.time()) at call time, and when a loaded box
+    # lets a second tick past between the two calls, the
+    # second call is a NEW signed delivery, not a replay, and
+    # the door rightly accepts it. That straddle failed this
+    # test twice in full-suite runs (767 + this one) while
+    # every pinned replay held; the pinned construction is
+    # the true attack, deterministically.
+    stamp = int(time.time())
+    first = deliver(client, endpoint, PAYLOAD, timestamp=stamp)
     assert first.status_code == 201, first.text
-    replay = deliver(client, endpoint, PAYLOAD)  # same stamp, same signature
+    replay = deliver(client, endpoint, PAYLOAD, timestamp=stamp)
     assert replay.status_code == 409, replay.text
     assert chunk_texts(client, owner, group, source["id"]) == [
         "Feed opened.", "Two more chairs, please.", "And a bigger urn.",
+    ]
+
+
+def test_resigned_fresh_delivery_is_not_a_replay(client):
+    # The mirror image of the replay law: the SAME payload
+    # signed again under a FRESH timestamp is a new delivery,
+    # not a replay — the receipt keys on the signature, and a
+    # new stamp means a new signature. Senders legitimately
+    # re-send identical form contents; only the identical
+    # signed bytes are refused. (This pins the semantics the
+    # replay test's pinned stamp relies on, so the door is
+    # never "fixed" into payload-hash dedup.)
+    owner, group, source, endpoint = world(client)
+    stamp = int(time.time())
+    first = deliver(client, endpoint, PAYLOAD, timestamp=stamp)
+    assert first.status_code == 201, first.text
+    resent = deliver(client, endpoint, PAYLOAD, timestamp=stamp + 1)
+    assert resent.status_code == 201, resent.text
+    assert chunk_texts(client, owner, group, source["id"]) == [
+        "Feed opened.",
+        "Two more chairs, please.", "And a bigger urn.",
+        "Two more chairs, please.", "And a bigger urn.",
     ]
 
 

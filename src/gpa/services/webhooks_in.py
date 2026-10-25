@@ -36,6 +36,7 @@ import logging
 import time
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from gpa.config import Settings
@@ -141,6 +142,27 @@ def revoke_endpoint(
         db.commit()
 
 
+def _refuse_replay(db: Session, *, group: Group, endpoint: WebhookEndpoint):
+    """Refuse a replay: log it, then raise the 409.
+
+    Exactly-once has two doors and both end here — the
+    sequential replay the receipt SELECT finds, and the
+    concurrent twin whose commit loses the receipt row's
+    UNIQUE(endpoint, signature) race (see receive_delivery).
+    The audit row commits BEFORE the raise, like every
+    refusal (the B-030 lesson)."""
+    audit.record(
+        db, actor="system:webhook-in", action="webhook_in.rejected",
+        group_id=group.id, entity_type="webhook_endpoint",
+        entity_id=endpoint.id, detail={"reason": "replay"},
+    )
+    db.commit()
+    raise AppError(
+        "conflict",
+        detail="That delivery was already received — a replay changes nothing.",
+    )
+
+
 def _resolve(db: Session, token: str) -> WebhookEndpoint | None:
     return (
         db.query(WebhookEndpoint)
@@ -217,16 +239,7 @@ def receive_delivery(
         .one_or_none()
     )
     if already is not None:
-        audit.record(
-            db, actor="system:webhook-in", action="webhook_in.rejected",
-            group_id=group.id, entity_type="webhook_endpoint",
-            entity_id=endpoint.id, detail={"reason": "replay"},
-        )
-        db.commit()
-        raise AppError(
-            "conflict",
-            detail="That delivery was already received — a replay changes nothing.",
-        )
+        _refuse_replay(db, group=group, endpoint=endpoint)
 
     try:
         payload = json.loads(raw_body.decode("utf-8"))
@@ -242,7 +255,23 @@ def receive_delivery(
         group_id=group.id, entity_type="source", entity_id=source.id,
         detail={"endpoint_id": endpoint.id, "chunks": added},
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # The concurrent twin of the replay check above: two
+        # identical deliveries in flight at once can BOTH pass
+        # the receipt SELECT before either commits — but only
+        # one can win the receipt row's UNIQUE(endpoint,
+        # signature) constraint. The loser's commit fails here,
+        # and exactly-once means that must read as the same
+        # 409 a sequential replay gets, never a 500: roll the
+        # dead transaction back (its chunks go with it, so
+        # nothing is archived twice) and refuse it as the
+        # replay it is. (Before this catch existed, the
+        # constraint fired but surfaced as an unhandled 500 —
+        # the guarantee held, its answer was wrong.)
+        db.rollback()
+        _refuse_replay(db, group=group, endpoint=endpoint)
     return source, added
 
 

@@ -264,3 +264,56 @@ the RC report supersedes it.
   exist in the framework with health checks that honestly
   report "not connected yet"; their live slices are
   Phase 12's, exactly as the roadmap orders.
+
+## Repair note — B-126 replay acceptance (2026-10-25, post-gate)
+
+The gate numbers above stand as the gate's record. Independent
+verification afterwards FAILED the suite twice — a forge-timer
+run during the gate and a separate clean verification run both
+read **767 passed, 1 failed**:
+`test_webhooks_in.py::test_replay_is_refused_and_never_duplicates`
+— the replayed delivery returned 201, its chunks appended a
+second time.
+
+**Root cause — the test's construction, proven; plus a latent
+service gap.** A replay is byte-identical: same body, same
+timestamp, same signature. The test's `deliver()` helper
+computes `int(time.time())` fresh on EVERY call, so its
+"replay" is a replay only if both calls land in the same
+wall-clock second. In the failing verification run's own
+access log, ~1 s elapsed under load between the endpoint's
+creation (03:42:18.808) and the first delivery (03:42:19.787);
+the second boundary fell between the two `deliver()` calls,
+the second delivery was signed with a NEW timestamp, and the
+door — correctly — accepted a distinct, valid delivery.
+Recreated deterministically with the signing stamps recorded:
+delivery 1 signed …393, delivery 2 signed …394 → 201. With
+the stamp pinned, the same attack is refused 409 every time:
+the door's exactly-once (receipt SELECT, then the receipt
+written in the SAME transaction as the chunks, under
+UNIQUE(endpoint, signature) in both the model and
+migration 0014) held throughout.
+
+The latent gap the investigation found in the service: two
+identical deliveries truly concurrent could both pass the
+receipt SELECT before either commits, and the loser's commit
+then raised an unhandled IntegrityError — the constraint
+fired, but as a 500, not the 409 the guarantee promises.
+
+**Fix.** (1) The test pins one timestamp for both deliveries
+(a true byte-identical replay; every assertion unchanged)
+and gains a mirror test,
+`test_resigned_fresh_delivery_is_not_a_replay`, pinning that
+a re-signed fresh delivery lands — the receipt keys on the
+signature, never on payload resemblance. (2)
+`services/webhooks_in.receive_delivery` catches the
+acceptance commit's IntegrityError, rolls the dead
+transaction back (the loser's chunks go with it), and
+refuses through the same replay path as a sequential replay
+— 409, audit-logged.
+
+**Proof.** `tests/test_webhooks_in.py`: 10 consecutive runs,
+7 passed each (the file's 6 + the new mirror test). Full
+suite, one clean run against the repaired tree, totals read
+from the run's own report file: **769 passed, 0 failed,
+0 errors** (768 at the gate + 1 new mirror test = 769).

@@ -23,10 +23,11 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **768 tests, all passing** (130/350 slices:
+Alembic up/down/up clean; **769 tests, all passing** (130/350 slices:
 Phases 0–11 complete) — the count taken from one clean run against
-the final Phase 11 tree (735 at the Phase 10 gate + 33 new = 768,
-collected count reconciled). ZIP-Beta cut at the Phase 8 gate
+the final Phase 11 tree as repaired at the B-126 replay fix
+(735 at the Phase 10 gate + 33 new Phase 11 tests + 1 repair
+regression test = 769, collected count reconciled). ZIP-Beta cut at the Phase 8 gate
 (releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phases 9
 and 10 cut no ZIP — they fold into ZIP-RC at B-138.
 Demo verified offline on the mock driver (seed + health + demo
@@ -1034,6 +1035,18 @@ login, no API key, no network).
   gives exactly-once (replay = 409 webhook_replay);
   refusals audit-logged (group NULL for unknown tokens);
   the DB-file grep finds neither token nor secret.
+  REPAIR (2026-10-25, post-gate verification): the replay
+  acceptance failed twice in independent full-suite runs —
+  the test's helper re-signed with int(time.time()) per
+  call, so under load a second boundary between the calls
+  made the "replay" a fresh, valid delivery (proven by a
+  recorded-signature recreation). The test now pins one
+  stamp (a true byte-identical replay); a new mirror test
+  pins that a re-signed fresh delivery is NOT a replay.
+  The service gained the concurrent half of the guarantee:
+  an acceptance commit that loses the receipt's UNIQUE
+  race now reads as the same 409 (IntegrityError →
+  rollback → replay refusal), never a 500.
 - **B-127** Integration framework (`services/integrations.py`,
   `services/sealing.py`): kinds samtal / facebook_events /
   google_calendar / custom; config sealed whole at rest
