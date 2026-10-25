@@ -11,10 +11,24 @@ ERASURE was never on the table).
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
-from gpa.deps import GroupContext, Principal, get_db, get_principal, require_group_role
+from gpa.deps import (
+    GroupContext,
+    Principal,
+    get_db,
+    get_principal,
+    require_group_role,
+    require_scope,
+)
 from gpa.errors import AppError
-from gpa.schemas.privacy import EraseRequest, EraseResponse
+from gpa.schemas.privacy import (
+    EraseRequest,
+    EraseResponse,
+    RetentionRunResponse,
+    SourcePermissionEntry,
+)
 from gpa.services import erasure as erasure_service
+from gpa.services import retention as retention_service
+from gpa.services import sources as source_service
 
 router = APIRouter(prefix="/api/v1/groups", tags=["privacy"])
 
@@ -89,4 +103,65 @@ def erase_group_route(
         storage=request.app.state.storage,
         group=context.group,
         actor_label=principal.label,
+    )
+
+
+@router.get(
+    "/{group_id}/sources/permissions",
+    response_model=list[SourcePermissionEntry],
+)
+def source_permissions(
+    group_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """Who shared what, on what permission (B-144) — every
+    source's permission record in plain words, readable by
+    any member: a group should be able to audit what was
+    brought into it and on whose say-so."""
+    from gpa.models.groups import AgentSeat
+    from gpa.models.identity import User
+
+    def who(label: str) -> str:
+        if label.startswith("user:"):
+            user = db.get(User, label[5:])
+            return user.name if user is not None else "A member"
+        if label.startswith("seat:"):
+            seat = db.get(AgentSeat, label[5:])
+            return f"{seat.name} (agent seat)" if seat is not None else "An agent seat"
+        return label
+
+    entries = []
+    for source in source_service.list_sources(db, context.group):
+        entries.append(
+            SourcePermissionEntry(
+                source_id=source.id,
+                title=source.title,
+                kind=source.kind,
+                added_by=who(source.granted_by),
+                permission=(
+                    source.granted_scope
+                    or "No permission note was recorded for this source."
+                ),
+                added_on=source.created_at.isoformat(),
+            )
+        )
+    return entries
+
+
+@router.post(
+    "/{group_id}/retention/run", response_model=RetentionRunResponse
+)
+def run_retention(
+    group_id: str,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Run the group's retention sweep NOW (B-144) — the same
+    sweep the nightly job runs; the receipt is counts only.
+    With no window set, the sweep honestly expires nothing."""
+    return retention_service.run_sweep(
+        db, storage=request.app.state.storage, group=context.group
     )

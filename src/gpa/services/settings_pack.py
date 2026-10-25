@@ -272,5 +272,11 @@ def update_settings(
         from gpa.services import digests as digest_service
 
         digest_service.ensure_scheduled(db, group=group)
+    # A retention change re-anchors the sweep chain the same
+    # way (B-144).
+    if "source_retention_days" in changes:
+        from gpa.services import retention as retention_service
+
+        retention_service.ensure_scheduled(db, group=group)
     db.commit()
     return settings_view(group)

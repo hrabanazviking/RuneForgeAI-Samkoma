@@ -28,3 +28,43 @@ class EraseResponse(BaseModel):
     erased: bool
     deleted: dict[str, int]
     storage_objects_removed: int
+
+
+class MeDataResponse(BaseModel):
+    """Everything the system holds about the caller (B-144),
+    in sections named the way a person would name them. The
+    leaves are plain records; the service guarantees no hash
+    or secret appears anywhere in them."""
+
+    account: dict
+    my_groups: list[dict]
+    my_api_keys: list[dict]
+    seats_i_created: list[dict]
+    my_notifications: dict
+    comments_i_wrote: list[dict]
+    my_rsvps: list[dict]
+    my_poll_votes: list[dict]
+    my_attendance: list[dict]
+    tasks_assigned_to_me: list[dict]
+    candidates_i_authored: list[dict]
+    my_linked_accounts: list[dict]
+
+
+class SourcePermissionEntry(BaseModel):
+    """One source's permission record, in plain words (B-144):
+    what it is, who added it, and the permission they recorded
+    when they did — the words the group can audit."""
+
+    source_id: str
+    title: str
+    kind: str
+    added_by: str
+    permission: str
+    added_on: str
+
+
+class RetentionRunResponse(BaseModel):
+    """A retention sweep's receipt: counts only (B-144)."""
+
+    sources_expired: int
+    storage_objects_removed: int
