@@ -62,6 +62,67 @@ class SubGroupMemberResponse(BaseModel):
     effective_role: str | None = None
 
 
+# ------------------------------------------------------------------
+# Announcements (B-106)
+# ------------------------------------------------------------------
+
+
+class AnnouncementCreateRequest(BaseModel):
+    """Post to the board. Times arrive as ISO-8601; the router
+    converts them to stored UTC before the service runs."""
+
+    title: str = Field(min_length=1, max_length=240)
+    body: str = Field(min_length=1)
+    pinned: bool = False
+    expires_at: datetime | None = None
+    subgroup_id: str | None = None
+
+
+class AnnouncementPatchRequest(BaseModel):
+    """Edit a post; only sent fields change. An explicit
+    ``expires_at: null`` un-expires the post."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=240)
+    body: str | None = Field(default=None, min_length=1)
+    pinned: bool | None = None
+    expires_at: datetime | None = None
+    subgroup_id: str | None = None
+
+
+class AnnouncementResponse(BaseModel):
+    """One board post. ``expired`` is computed at read time —
+    expiry is a state the row grows into, never a deletion."""
+
+    id: str
+    group_id: str
+    subgroup_id: str | None = None
+    title: str
+    body: str
+    pinned: bool = False
+    expires_at: str | None = None
+    expired: bool = False
+    created_by: str
+    created_at: str
+    updated_at: str
+
+
+def announcement_view(row, *, expired: bool = False) -> AnnouncementResponse:
+    """Build one announcement's response from its row."""
+    return AnnouncementResponse(
+        id=row.id,
+        group_id=row.group_id,
+        subgroup_id=row.subgroup_id,
+        title=row.title,
+        body=row.body,
+        pinned=row.pinned,
+        expires_at=row.expires_at.isoformat() + "Z" if row.expires_at else None,
+        expired=expired,
+        created_by=row.created_by,
+        created_at=row.created_at.isoformat() + "Z",
+        updated_at=row.updated_at.isoformat() + "Z",
+    )
+
+
 def subgroup_view(subgroup, member_count: int = 0) -> SubGroupResponse:
     """Build one sub-group's response from its row (the router
     supplies the enrolled headcount — views never query)."""
@@ -72,5 +133,5 @@ def subgroup_view(subgroup, member_count: int = 0) -> SubGroupResponse:
         description=subgroup.description,
         member_count=member_count,
         created_by=subgroup.created_by,
-        created_at=subgroup.created_at.isoformat(),
+        created_at=subgroup.created_at.isoformat() + "Z",
     )

@@ -7,19 +7,24 @@ one door (B-017) — and the permission each route needs is named
 in its dependency, never hand-rolled in the handler.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
 from gpa.deps import GroupContext, Principal, require_group_role, require_scope
 from gpa.schemas.nonprofit import (
+    AnnouncementCreateRequest,
+    AnnouncementPatchRequest,
+    AnnouncementResponse,
     SubGroupCreateRequest,
     SubGroupEnrollRequest,
     SubGroupMemberResponse,
     SubGroupPatchRequest,
     SubGroupResponse,
+    announcement_view,
     subgroup_view,
 )
+from gpa.services import announcements as announcement_service
 from gpa.services import subgroups as subgroup_service
 
 subgroups_router = APIRouter(prefix="/api/v1/groups", tags=["subgroups"])
@@ -142,6 +147,130 @@ def list_subgroup_members(
         SubGroupMemberResponse(**member)
         for member in subgroup_service.list_members(db, context.group, subgroup)
     ]
+
+
+# ------------------------------------------------------------------
+# Announcements board (B-106)
+# ------------------------------------------------------------------
+
+announcements_router = APIRouter(prefix="/api/v1/groups", tags=["announcements"])
+
+
+def _viewer_ids(db: Session, context: GroupContext):
+    """The caller's visible sub-group set (B-105's rule)."""
+    return subgroup_service.visible_subgroup_ids(
+        db, context.group,
+        user_id=context.principal.user_id, role=context.role,
+    )
+
+
+@announcements_router.post(
+    "/{group_id}/announcements", response_model=AnnouncementResponse, status_code=201
+)
+def create_announcement(
+    body: AnnouncementCreateRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Post to the board (organiser+). Announcement ≠
+    publication: it still takes an organiser ACCOUNT — a seat
+    is refused in the service (the B-043 law for humans)."""
+    from gpa.schemas.events import to_utc_naive
+
+    row = announcement_service.create_announcement(
+        db, actor_label=principal.label, actor_user_id=principal.user_id,
+        actor_is_seat=principal.is_seat, group=context.group,
+        title=body.title, body=body.body, pinned=body.pinned,
+        expires_at=to_utc_naive(body.expires_at) if body.expires_at else None,
+        subgroup_id=body.subgroup_id,
+    )
+    return announcement_view(row, expired=announcement_service.is_expired(row))
+
+
+@announcements_router.get(
+    "/{group_id}/announcements", response_model=list[AnnouncementResponse]
+)
+def list_announcements(
+    include_expired: bool = Query(default=False),
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """The board: pinned first, then newest. Expired posts are
+    gone from the board unless an organiser asks to see them."""
+    from gpa.models.groups import role_at_least
+
+    honoured = include_expired and (
+        context.role is not None and role_at_least(context.role, "organiser")
+    )
+    rows = announcement_service.list_announcements(
+        db, context.group,
+        visible_ids=_viewer_ids(db, context),
+        include_expired=honoured,
+    )
+    return [
+        announcement_view(row, expired=announcement_service.is_expired(row))
+        for row in rows
+    ]
+
+
+@announcements_router.get(
+    "/{group_id}/announcements/{announcement_id}",
+    response_model=AnnouncementResponse,
+)
+def read_announcement(
+    announcement_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """One post. A scoped post outside the caller's sub-groups
+    is a 404, like every scoped thing (B-105)."""
+    from gpa.errors import AppError
+
+    row = announcement_service.get_announcement(db, context.group, announcement_id)
+    if not subgroup_service.can_see_scoped(row.subgroup_id, _viewer_ids(db, context)):
+        raise AppError("not_found", detail="That announcement could not be found.")
+    return announcement_view(row, expired=announcement_service.is_expired(row))
+
+
+@announcements_router.patch(
+    "/{group_id}/announcements/{announcement_id}",
+    response_model=AnnouncementResponse,
+)
+def update_announcement(
+    announcement_id: str,
+    body: AnnouncementPatchRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Edit a post (organiser+ person — seats refused inside)."""
+    from gpa.schemas.events import to_utc_naive
+
+    changes = body.model_dump(exclude_unset=True)
+    if changes.get("expires_at") is not None:
+        changes["expires_at"] = to_utc_naive(changes["expires_at"])
+    row = announcement_service.update_announcement(
+        db, actor_label=principal.label, actor_is_seat=principal.is_seat,
+        group=context.group, announcement_id=announcement_id, changes=changes,
+    )
+    return announcement_view(row, expired=announcement_service.is_expired(row))
+
+
+@announcements_router.delete(
+    "/{group_id}/announcements/{announcement_id}", status_code=204
+)
+def delete_announcement(
+    announcement_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Take a post down (organiser+ person)."""
+    announcement_service.delete_announcement(
+        db, actor_label=principal.label, actor_is_seat=principal.is_seat,
+        group=context.group, announcement_id=announcement_id,
+    )
 
 
 @subgroups_router.delete(
