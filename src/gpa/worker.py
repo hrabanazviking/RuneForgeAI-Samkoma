@@ -30,6 +30,11 @@ from gpa.storage import LocalStorage, set_storage
 def main() -> None:
     """Poll the queue forever, processing jobs as they come due."""
     settings = get_settings()
+    # The internal API's audit hook (B-165), as in the API
+    # process: the worker's internal calls keep the same story.
+    from gpa.internal import auditing
+
+    auditing.install(settings=settings)
     ai_client.set_client(ai_client.build_client(settings))
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))

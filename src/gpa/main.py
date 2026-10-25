@@ -133,6 +133,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # settings here, shared via the ai.client registry so job
     # handlers (which receive only db + payload) reach the same one.
     ai_client.set_client(ai_client.build_client(settings))
+    # The internal API's audit hook (B-165): every internal
+    # call this process dispatches writes its line (caller,
+    # operation, scope, result — never payload) into the audit
+    # stream.
+    from gpa.internal import auditing
+
+    auditing.install(settings=settings)
     # The mail transport (Phase 8, B-095): the notification
     # outbox sends through this driver boundary — the file
     # driver in dev; the SMTP provider driver in production

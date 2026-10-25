@@ -1716,6 +1716,20 @@ Phase 16 begins at B-157.
   key works throughout). B-163's fixtures were aligned to
   sign as their true caller ("events") — the binding's first
   catch was our own test data.
+- **B-165 internal API audit** ✅: `gpa/internal/auditing.py`
+  — the client's audit hook (the slot B-162 reserved) writes
+  one B-019 line per dispatch: actor `module:<caller>`,
+  action `internal.<operation>`, detail = exactly {caller,
+  key_id, operation, scope, module (owner tag), result}
+  — never the payload; entity_id = the envelope nonce;
+  group_id when the payload carries one (an id, not
+  content). Installed by all three composition roots
+  (main.create_app, worker.main, arq_worker.main) inside the
+  caller's transaction, so story and act commit together.
+  Acceptance (tests/test_internal_audit.py, 4 passed): the
+  story reconstructs from audit alone in order, refusals
+  leave their line with the refusal's code, and a seeded
+  distinctive title appears in NO audit line in the stream.
 
 ## Standing laws in force here
 
