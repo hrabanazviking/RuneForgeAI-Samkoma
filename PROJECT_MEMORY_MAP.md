@@ -23,12 +23,12 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **515 tests, all passing** (62/340 slices:
-Phases 0, 1, 2, 3, and 4 complete) — the count re-verified on the
-final Phase 4 tree in one clean run after the gate (an earlier
-"507" recorded here came from runs that overlapped tree edits and
-was corrected the same evening). Demo verified offline on the mock
-driver (seed + health + demo login, no API key, no network).
+Alembic up/down/up clean; **553 tests, all passing** (74/340 slices:
+Phases 0, 1, 2, 3, 4, and 5 complete) — the count taken from one
+clean `./test.sh` run against the final committed Phase 5 tree
+(515 before Phase 5 + 38 new = 553, collected count reconciled).
+Demo verified offline on the mock driver (seed + health + demo
+login, no API key, no network).
 
 ## Slice status
 
