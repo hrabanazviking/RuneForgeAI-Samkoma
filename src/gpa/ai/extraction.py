@@ -50,6 +50,14 @@ KIND_CONFIGS: dict[str, dict] = {
     "task": {"prompt": "extraction_tasks", "date_fields": {"due"}},
     "decision": {"prompt": "extraction_decisions", "date_fields": set()},
     "question": {"prompt": "extraction_questions", "date_fields": set()},
+    # Phase 6 (B-077): words about an EXISTING event — a move, a
+    # new place, a cancellation — draft as a change candidate
+    # against that event, never as a new event. The service
+    # links the candidate to its target (services/extraction);
+    # approval applies it (services/merging).
+    "event_change": {
+        "prompt": "extraction_changes", "date_fields": {"starts", "ends"},
+    },
 }
 
 # Called after every model call so the service can write the

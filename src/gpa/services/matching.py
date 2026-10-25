@@ -264,15 +264,29 @@ def match_candidate(db: Session, group: Group, candidate: Candidate) -> list[dic
 def match_by_name(
     db: Session, group: Group, name: str, draft: dict
 ) -> tuple[Event | None, float]:
-    """The best-matching event for a named target (B-077's
-    change-candidate linking): the event whose score against
-    the change draft clears the threshold, or (None, 0.0) when
-    nothing does — an unknown target is a flagged fact, never
-    a silent guess."""
+    """The event a change names (B-077's linking).
+
+    A change's primary key is the NAME itself: when the words
+    name an event exactly (modulo case and articles), that is
+    the target — a bare-title resemblance is weak evidence for
+    a *new announcement*, but "the Harvest Supper is cancelled"
+    is not a resemblance, it is a reference. When several
+    events share the exact name, the soonest is the target (a
+    change is about the next happening of that name). Without
+    an exact name, the weighted score decides at the usual
+    threshold. No match at all returns (None, best score) —
+    an unknown target is a flagged fact, never a silent guess.
+    """
+    events = _matchable_events(db, group)
+    wanted = _normalised(name)
+    if wanted:
+        exact = [event for event in events if _normalised(event.title) == wanted]
+        if exact:
+            return exact[0], 1.0
     tz_name = group.home_timezone or "UTC"
     best: Event | None = None
     best_score = 0.0
-    for event in _matchable_events(db, group):
+    for event in events:
         result = score_candidate_event(draft, event, tz_name, title_value=name)
         if result["score"] > best_score:
             best, best_score = event, result["score"]

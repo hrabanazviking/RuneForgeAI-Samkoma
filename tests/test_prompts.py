@@ -19,6 +19,9 @@ EXPECTED_PROMPTS = {
     "extraction_tasks",
     "extraction_decisions",
     "extraction_questions",
+    # Phase 6 (B-077): change detection joins the library —
+    # words about an existing event draft as change candidates.
+    "extraction_changes",
     "flyer_reading",
     "board_segmentation",
     "summary",

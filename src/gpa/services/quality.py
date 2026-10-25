@@ -42,20 +42,28 @@ REQUIRED_FIELDS: dict[str, list[str]] = {
     "task": ["title"],
     "decision": ["text"],
     "question": ["text"],
+    # A change candidate that names no event changes nothing
+    # (B-077) — the target IS its required field.
+    "event_change": ["event"],
 }
 
 # The field that names a candidate's subject, per kind — the key
 # cross-source conflict detection compares.
 SUBJECT_FIELD: dict[str, str] = {
     "event": "title", "task": "title", "decision": "text", "question": "text",
+    "event_change": "event",
 }
 
 # Fields compared for cross-source disagreement, per kind.
+# Change candidates carry none: two change drafts disagreeing is
+# settled at the EVENT, by approval order and the contradiction
+# machinery (B-079), not by a flag on drafts.
 CONFLICT_FIELDS: dict[str, list[str]] = {
     "event": ["starts", "place"],
     "task": ["owner", "due"],
     "decision": [],
     "question": [],
+    "event_change": [],
 }
 
 

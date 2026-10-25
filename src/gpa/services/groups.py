@@ -369,6 +369,17 @@ def approve_candidate(
     event_service.mint_from_candidate(
         db, group=group, candidate=candidate, actor_label=actor_label
     )
+    # Phase 6 (B-077): approval of a change candidate APPLIES
+    # it to its event, in this same transaction — a refused
+    # application (no target, an unbacked claim, an unresolved
+    # time) rolls the approval back and the candidate stays
+    # pending, exactly like a mint that cannot happen yet.
+    if candidate.kind == "event_change":
+        from gpa.services import merging as merging_service
+
+        merging_service.apply_change_candidate(
+            db, group=group, candidate=candidate, actor_label=actor_label
+        )
     audit.record(
         db, actor=actor_label, action="candidate.approved",
         group_id=group.id, entity_type="candidate", entity_id=candidate.id,

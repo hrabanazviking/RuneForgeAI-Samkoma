@@ -39,6 +39,12 @@ from gpa.services import usage as usage_service
 
 JOB_KIND = "extract"
 ALL_KINDS = ["event", "task", "decision", "question"]
+# Everything a run may be ASKED for. The default set stays the
+# four drafting kinds; change detection (B-077) is a named
+# kind a run requests explicitly — it drafts against events
+# that already exist, and running it over every source by
+# default would draft "changes" out of first announcements.
+KNOWN_KINDS = ALL_KINDS + ["event_change"]
 # Stages from which drafting would be drafting from nothing.
 WAITING_STAGES = ("awaiting_transcription", "awaiting_segmentation")
 MACHINE_AUTHOR = "system:extraction"
@@ -61,7 +67,7 @@ def request_extraction(
     door). Returns the job; the run itself is the worker's."""
     source = source_service.get_source(db, group, source_id)
     chosen = kinds or ALL_KINDS
-    unknown = [k for k in chosen if k not in ALL_KINDS]
+    unknown = [k for k in chosen if k not in KNOWN_KINDS]
     if unknown:
         raise AppError(
             "validation_error",
@@ -174,6 +180,22 @@ def run_extraction(
                 .get("value")
                 or ""
             )
+            if kind == "event_change":
+                # Link the change to the event it names (B-077):
+                # the target is stamped into the draft before
+                # the candidate exists, so the queue can show
+                # "change to <event>" and approval knows where
+                # the change lands. An unmatched name is NOT a
+                # failure — it is flagged below
+                # (change_target_unknown) for a person to see.
+                from gpa.services import matching as matching_service
+
+                target, score = matching_service.match_by_name(
+                    db, group, str(title), item.draft
+                )
+                item.draft["target_event_id"] = target.id if target else None
+                item.draft["target_title"] = target.title if target else None
+                item.draft["match_score"] = round(score, 4)
             candidate = Candidate(
                 group_id=group.id,
                 kind=kind,
@@ -225,6 +247,15 @@ def run_extraction(
         # (coverage); the computed vocabulary merges in behind
         # them, order-stable, no duplicates.
         merged = list(dict.fromkeys(json.loads(candidate.flags_json or "[]") + computed))
+        if (
+            candidate.kind == "event_change"
+            and not _draft(candidate).get("target_event_id")
+            and "change_target_unknown" not in merged
+        ):
+            # The change names no event this group has (B-077):
+            # the draft waits in the queue saying exactly that,
+            # instead of landing on the wrong event or vanishing.
+            merged.append("change_target_unknown")
         candidate.flags_json = json.dumps(merged)
 
     # A conflict is a two-sided fact: a pre-existing candidate

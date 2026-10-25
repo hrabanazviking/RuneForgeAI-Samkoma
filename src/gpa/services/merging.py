@@ -529,3 +529,190 @@ def merge_candidate_into_event(
         **outcome,
         "contradictions": contradictions,
     }
+
+
+# ------------------------------------------------------------------
+# Change candidates (B-077): approval applies the change
+# ------------------------------------------------------------------
+
+
+def _local_parts(instant_utc: datetime, tz: ZoneInfo):
+    """An event's stored instant as (local date, local time) —
+    the parts a partial change keeps when it moves only the
+    other one ("moved to 7.30" keeps the day; "moved to
+    Saturday" keeps the hour)."""
+    local = instant_utc.replace(tzinfo=timezone.utc).astimezone(tz)
+    return local.date(), local.time()
+
+
+def apply_change_candidate(
+    db: Session,
+    *,
+    group: Group,
+    candidate: Candidate,
+    actor_label: str,
+) -> Event:
+    """Apply an approved change candidate to its event (B-077).
+
+    Called inside the approval's transaction (never commits):
+    the decision and the change land together or not at all.
+    The change applies through the same machinery as an edit —
+    EventChange rows, ``needs_reannounce`` on material fields —
+    and the candidate's source joins the event's links, so the
+    event can answer for its new state too.
+
+    Refusals are plain and total (the candidate stays pending):
+    no target linked, a target that is gone or cancelled, a
+    claimed change its source does not back, a new time that
+    never resolved to one reading, or a "change" that changes
+    nothing. A rejected change candidate never reaches here —
+    rejection is recorded and the event stands (Doc 07 §6).
+    """
+    draft = candidate_service.draft_of(candidate)
+    target_id = draft.get("target_event_id")
+    if not target_id:
+        raise AppError(
+            "validation_error",
+            detail=(
+                "This change does not name an event the group has, so "
+                "there is nothing to apply it to. Edit the draft to "
+                "name the event, or reject the change."
+            ),
+        )
+    try:
+        event = event_service.get_event(db, group, target_id)
+    except AppError:
+        raise AppError(
+            "validation_error",
+            detail="The event this change names is no longer there.",
+        ) from None
+    if event.status == "cancelled":
+        raise AppError(
+            "conflict",
+            detail="That event is already cancelled — this change has nowhere to land.",
+        )
+    fields = draft.get("fields", {})
+    if not isinstance(fields, dict):
+        fields = {}
+
+    # Every field the draft CLAIMS must be backed by its
+    # source: an unsupported claim is refused whole, in plain
+    # words, rather than partially believed.
+    claimed = [
+        name
+        for name in ("starts", "ends", "place", "cancelled")
+        if isinstance(fields.get(name), dict)
+        and fields[name].get("value") is not None
+    ]
+    for name in claimed:
+        if not fields[name].get("supported", False):
+            raise AppError(
+                "validation_error",
+                detail=(
+                    f"The change's {name} is not backed by its source's "
+                    "words, so it cannot be applied. Edit the draft "
+                    "or reject the change."
+                ),
+            )
+
+    tz = ZoneInfo(event.timezone or group.home_timezone or "UTC")
+    changes: dict = {}
+    reason = f"change candidate {candidate.id}"
+
+    starts_entry = fields.get("starts") or {}
+    moved = False
+    if "starts" in claimed:
+        resolved_date = starts_entry.get("resolved_date")
+        resolved_time = starts_entry.get("resolved_time")
+        if not resolved_date and not resolved_time:
+            raise AppError(
+                "validation_error",
+                detail=(
+                    "The change's new time never resolved to one "
+                    "reading — edit the draft to pin the day or the "
+                    "time down, or reject the change."
+                ),
+            )
+        old_date, old_time = _local_parts(event.starts_at, tz)
+        new_local = datetime.combine(
+            datetime.fromisoformat(str(resolved_date)).date()
+            if resolved_date else old_date,
+            time.fromisoformat(str(resolved_time)) if resolved_time else old_time,
+        )
+        new_start = event_service._local_to_utc(new_local, tz)
+        if new_start != event.starts_at:
+            changes["starts_at"] = new_start
+            moved = True
+
+    ends_entry = fields.get("ends") or {}
+    if "ends" in claimed:
+        resolved_date = ends_entry.get("resolved_date")
+        resolved_time = ends_entry.get("resolved_time")
+        if not resolved_date and not resolved_time:
+            raise AppError(
+                "validation_error",
+                detail=(
+                    "The change's new end never resolved to one "
+                    "reading — edit the draft or reject the change."
+                ),
+            )
+        base_date, base_time = _local_parts(
+            changes.get("starts_at", event.starts_at), tz
+        )
+        _end_date, end_time = _local_parts(event.ends_at, tz)
+        new_local = datetime.combine(
+            datetime.fromisoformat(str(resolved_date)).date()
+            if resolved_date else base_date,
+            time.fromisoformat(str(resolved_time))
+            if resolved_time else end_time,
+        )
+        new_end = event_service._local_to_utc(new_local, tz)
+        if new_end != event.ends_at:
+            changes["ends_at"] = new_end
+    elif moved:
+        # A move moves the whole event: the end travels by the
+        # same delta, keeping the event's length — a move that
+        # silently shortened the event would be a second,
+        # unannounced change.
+        delta = changes["starts_at"] - event.starts_at
+        changes["ends_at"] = event.ends_at + delta
+
+    if "place" in claimed:
+        new_place = str(fields["place"].get("value") or "")[:240]
+        if new_place != event.place_name:
+            changes["place_name"] = new_place
+
+    is_cancel = "cancelled" in claimed
+    if not changes and not is_cancel:
+        raise AppError(
+            "validation_error",
+            detail=(
+                "This change candidate does not actually change "
+                "anything about the event — reject it, or edit "
+                "the draft into a real change."
+            ),
+        )
+    if changes:
+        event_service.apply_changes(
+            db, event=event, changes=changes,
+            actor_label=actor_label, reason=reason,
+        )
+    if is_cancel:
+        quote = str(fields["cancelled"].get("quote") or "")
+        event_service.apply_cancellation(
+            db, event=event, actor_label=actor_label,
+            reason=quote or "Cancelled in a later announcement",
+        )
+    link_candidate_sources(db, event, candidate)
+    candidate.resulting_entity_type = "event"
+    candidate.resulting_entity_id = event.id
+    audit.record(
+        db, actor=actor_label, action="event.change_applied",
+        group_id=group.id, entity_type="event", entity_id=event.id,
+        detail={
+            "candidate_id": candidate.id,
+            "fields": sorted(changes),
+            "cancelled": is_cancel,
+        },
+    )
+    return event

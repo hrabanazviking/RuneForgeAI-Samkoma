@@ -16,6 +16,10 @@
       "sha256": "9e7801814499d2780af940de624b36bcb40dfda604dd2290faa1e8cf20311f48",
       "version": 1
     },
+    "extraction_changes": {
+      "sha256": "c26c7b1011477fe972bdb0b0232faad7ff96b1a8c71dfa282e94a96f08685a82",
+      "version": 1
+    },
     "extraction_decisions": {
       "sha256": "343e21ad2edb2d6a35fddb8243a48a92b014ea4f410a97bfcbe24738609e4ce2",
       "version": 1
