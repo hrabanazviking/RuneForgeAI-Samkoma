@@ -888,6 +888,19 @@ login, no API key, no network).
   (4) Approval door change (member + service-enforced pack)
   is behaviour-preserving at defaults; recorded in CHANGELOG.
   (5) Attendance "…/attendees" 405 nuance (above).
+  (6) GATE FINDINGS, fixed in cb4ba10: the first gate run
+  failed ONE test — the B-110 dry-run test's own assertion
+  (it forgot its fixture's accepted member when asserting
+  the unchanged roster; the dry run itself was correct).
+  The same run exposed a latent foundation defect: main.py's
+  request-id log filter sat on the root LOGGER, whose
+  filters never run for records propagated from child
+  loggers — third-party records (httpx) hit the handler's
+  formatter without request_id and raised. The filter now
+  rides the HANDLER. Also: a verification run died to the
+  /tmp hazard (tmpfs 100%, pytest-of-root 511M) — gate runs
+  now use --basetemp on the workspace overlay. Final clean
+  run: 704 passed (673 + 31), read from the run's own log.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 10 begins at B-113.
