@@ -8,8 +8,10 @@ the double records: the function name every GPA job travels
 under, the kind, the payload as a JSON string, and arq's
 defer/try options translated from ours. The dispatch half
 (run_gpa_job → the shared handler registry) runs for real
-against a real session. The live Redis leg is recorded
-NOT RUN in TEST_REPORT with the commands that run it.
+against a real session. The end-to-end live leg (real Redis,
+real arq worker) ran once at the slice's proof — TEST_REPORT's
+Phase 16 addendum carries it — and stays out of the suite so
+CI needs no Redis.
 """
 
 import asyncio

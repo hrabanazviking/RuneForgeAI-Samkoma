@@ -19,7 +19,7 @@ from gpa.config import get_settings
 def main() -> None:
     """Run the arq worker until stopped."""
     try:
-        from arq import create_worker
+        from arq.worker import create_worker
     except ImportError as err:
         raise SystemExit(
             "The arq job queue is not installed in this "

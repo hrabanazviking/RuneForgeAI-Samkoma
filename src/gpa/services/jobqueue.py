@@ -37,12 +37,18 @@ The honest edges, stated where they live:
   TABLE — database submissions have rows; arq submissions
   return the arq job id from :meth:`submit` for the caller's
   own records and are inspected through arq/Redis tooling.
-- **The live leg.** This environment runs no Redis server,
-  so the adapter is proven against an injected pool double
-  at its boundary (the house pattern — stub transports, fake
-  internets, fixture clients), and the end-to-end run
-  against a real Redis is recorded NOT RUN in TEST_REPORT
-  with the exact commands that run it in a deployment.
+- **The live leg RAN** (2026-10-25, TEST_REPORT's Phase 16
+  addendum): no Redis is packaged for this environment, so
+  one was compiled from source in the verify sandbox; a
+  throwaway copy of this tree (``uv sync --extra queue``)
+  submitted through the real adapter to the real server and
+  the real arq worker ran the job through this module's
+  dispatch — the handler's effect landed exactly once. It
+  caught two real defects on the way (create_worker's true
+  home in arq.worker, and the function-name registration
+  below), both fixed in this file's slice follow-up commit.
+  The suite itself still proves the adapter at an injected
+  pool double, so CI needs no Redis.
 """
 
 import asyncio
@@ -294,10 +300,15 @@ def worker_settings(settings: Settings) -> dict:
     Run it with ``python -m gpa.arq_worker`` (the console
     entry ``gpa-arq-worker``), which hands this dict to arq's
     worker — the arq twin of ``gpa-worker``."""
+    from arq import func
     from arq.connections import RedisSettings
 
     return {
-        "functions": [run_gpa_job],
+        # arq addresses functions by NAME: ours travels as
+        # ARQ_FUNCTION_NAME, so the dispatcher is registered
+        # under that name explicitly (its Python name is an
+        # implementation detail, not wire format).
+        "functions": [func(run_gpa_job, name=ARQ_FUNCTION_NAME)],
         "redis_settings": RedisSettings.from_dsn(settings.redis_url),
         "on_startup": arq_startup,
     }
