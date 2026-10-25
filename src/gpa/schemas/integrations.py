@@ -10,6 +10,8 @@ person can act on, because these schemas are what an admin
 reads when something outside this system breaks.
 """
 
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -136,6 +138,23 @@ class GoogleSyncResponse(BaseModel):
     updated: int
     cancelled: int
     unchanged: int
+
+
+# --- Integration health board (B-136) ---------------------------------
+
+
+class HealthBoardEntryResponse(BaseModel):
+    """One integration on the health board: its recorded
+    verdict and the single next step, in words."""
+
+    integration_id: str
+    kind: str
+    name: str = ""
+    status: str
+    last_checked_at: datetime | None = None
+    last_success_at: datetime | None = None
+    last_error: str = ""
+    advice: str
 
 
 # --- Embed origins (B-135) --------------------------------------------

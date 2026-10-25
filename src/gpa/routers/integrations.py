@@ -27,6 +27,7 @@ from gpa.schemas.integrations import (
     EmbedOriginsRequest,
     EmbedOriginsResponse,
     GoogleSyncResponse,
+    HealthBoardEntryResponse,
     IntegrationCreateRequest,
     IntegrationResponse,
     IntegrationUpdateRequest,
@@ -353,6 +354,26 @@ def list_integrations(
     return [
         _integration_response(request, db, row)
         for row in integration_service.list_integrations(db, context.group)
+    ]
+
+
+@router.get(
+    "/{group_id}/integrations/health-board",
+    response_model=list[HealthBoardEntryResponse],
+)
+def integration_health_board(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """The health board (B-136, organiser+): every integration
+    with its recorded state and ONE next step, in words. This
+    route is registered BEFORE /{integration_id} on purpose —
+    "health-board" is a board, not an integration id."""
+    from gpa.services import health_board
+
+    return [
+        HealthBoardEntryResponse(**entry)
+        for entry in health_board.board(db, group=context.group)
     ]
 
 
