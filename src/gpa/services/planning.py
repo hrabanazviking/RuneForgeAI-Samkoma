@@ -232,15 +232,32 @@ def create_task(
     event_id: str | None = None,
     owner_id: str | None = None,
     due_at: datetime | None = None,
+    subgroup_id: str | None = None,
+    actor_user_id: str | None = None,
 ) -> Task:
     """Direct human entry (B-083). A person creating a task MAY
     name its owner in the same act — that is the assignment, and
     it is a person's act by construction here. The owner must be
-    a member of the group."""
+    a member of the group. Scoping the task to a sub-group
+    (B-105) takes membership of that sub-group, or an
+    organiser's hand — you cannot file work into a room you
+    cannot see."""
     if not title or not title.strip():
         raise AppError("validation_error", detail="A task needs a title.")
     if event_id is not None:
         visible_event(db, group, event_id, viewer_role)
+    if subgroup_id is not None:
+        from gpa.services import subgroups as subgroup_service
+
+        subgroup_service.get_subgroup(db, group, subgroup_id)
+        visible_ids = subgroup_service.visible_subgroup_ids(
+            db, group, user_id=actor_user_id, role=viewer_role
+        )
+        if not subgroup_service.can_see_scoped(subgroup_id, visible_ids):
+            raise AppError(
+                "forbidden",
+                detail="Scoping a task to a sub-group takes membership of it, or an organiser.",
+            )
     owner_label = ""
     if owner_id is not None:
         found = member_label(db, group, owner_id)
@@ -253,6 +270,7 @@ def create_task(
     task = Task(
         group_id=group.id,
         event_id=event_id,
+        subgroup_id=subgroup_id,
         title=title.strip()[:240],
         notes=notes,
         owner_id=owner_id,
@@ -280,8 +298,16 @@ def list_tasks(
     status: str | None = None,
     unclaimed: bool = False,
     owner_id: str | None = None,
+    subgroup_id: str | None = None,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
 ) -> list[Task]:
-    """The group's tasks, soonest-due first (undated last)."""
+    """The group's tasks, soonest-due first (undated last).
+
+    ``subgroup_id`` narrows to one sub-group's work;
+    ``subgroup_scope`` (B-105, applied when ``scope_restricted``)
+    is the viewer's visible set from services/subgroups — a
+    scoped task outside it never reaches the list."""
     query = db.query(Task).filter(Task.group_id == group.id)
     if event_id is not None:
         query = query.filter(Task.event_id == event_id)
@@ -291,7 +317,16 @@ def list_tasks(
         query = query.filter(Task.owner_id.is_(None))
     if owner_id is not None:
         query = query.filter(Task.owner_id == owner_id)
+    if subgroup_id is not None:
+        query = query.filter(Task.subgroup_id == subgroup_id)
     rows = query.all()
+    if scope_restricted:
+        from gpa.services import subgroups as subgroup_service
+
+        rows = [
+            row for row in rows
+            if subgroup_service.can_see_scoped(row.subgroup_id, subgroup_scope)
+        ]
     rows.sort(key=lambda t: (t.due_at is None, t.due_at or t.created_at, t.created_at, t.id))
     return rows
 
@@ -315,6 +350,14 @@ def update_task(
         task.title = str(changes["title"]).strip()[:240]
     if "notes" in changes:
         task.notes = str(changes["notes"])
+    if "subgroup_id" in changes:
+        # Re-scoping names a sub-group of this group, or clears
+        # the scope with null (B-105).
+        if changes["subgroup_id"] is not None:
+            from gpa.services import subgroups as subgroup_service
+
+            subgroup_service.get_subgroup(db, group, changes["subgroup_id"])
+        task.subgroup_id = changes["subgroup_id"]
     if "due_at" in changes:
         task.due_at = changes["due_at"]
     if "owner_id" in changes:
@@ -756,18 +799,44 @@ def _source_link_for(db: Session, *, candidate_id: str | None) -> tuple[str | No
     return candidate_id, candidate.source_id
 
 
-def search_planning(db: Session, group: Group, query_text: str) -> list[dict]:
+def search_planning(
+    db: Session,
+    group: Group,
+    query_text: str,
+    *,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
+) -> list[dict]:
     """One search over events, tasks, decisions, questions
     (B-092) — ranked, and every hit linked to its source where
     it has one. Tombstoned events never appear; drafts appear
     only as their organiser surfaces would show them is NOT this
     endpoint's call — search is a member tool over the group's
     planning, and events are searched at published/cancelled,
-    the same bright line every member surface holds."""
+    the same bright line every member surface holds. With a
+    restricted viewer (B-105), hits scoped to a sub-group the
+    viewer is not in — directly, or through their event — never
+    appear: search must not become the leak around scoping."""
     terms = [term for term in query_text.lower().split() if term]
     if not terms:
         return []
     hits: list[dict] = []
+
+    if scope_restricted:
+        from gpa.services import subgroups as subgroup_service
+
+        event_scopes = {
+            row.id: row.subgroup_id
+            for row in db.query(Event).filter(Event.group_id == group.id).all()
+        }
+
+        def _visible(subgroup_id: str | None) -> bool:
+            return subgroup_service.can_see_scoped(subgroup_id, subgroup_scope)
+    else:
+        event_scopes = {}
+
+        def _visible(subgroup_id: str | None) -> bool:
+            return True
 
     events = (
         db.query(Event)
@@ -779,6 +848,8 @@ def search_planning(db: Session, group: Group, query_text: str) -> list[dict]:
         .all()
     )
     for event in events:
+        if not _visible(event.subgroup_id):
+            continue
         score = _score(
             [(event.title, 3), (event.place_name, 2), (event.host_label, 2),
              (event.description, 1)],
@@ -802,6 +873,8 @@ def search_planning(db: Session, group: Group, query_text: str) -> list[dict]:
             })
 
     for task in db.query(Task).filter(Task.group_id == group.id).all():
+        if not _visible(task.subgroup_id):
+            continue
         score = _score([(task.title, 3), (task.notes, 1)], terms)
         if score > 0:
             candidate_id, source_id = _source_link_for(db, candidate_id=task.candidate_id)
@@ -813,6 +886,8 @@ def search_planning(db: Session, group: Group, query_text: str) -> list[dict]:
             })
 
     for decision in db.query(Decision).filter(Decision.group_id == group.id).all():
+        if not _visible(event_scopes.get(decision.event_id)):
+            continue
         score = _score([(decision.text, 3)], terms)
         if score > 0:
             candidate_id, source_id = _source_link_for(db, candidate_id=decision.candidate_id)
@@ -824,6 +899,8 @@ def search_planning(db: Session, group: Group, query_text: str) -> list[dict]:
             })
 
     for question in db.query(OpenQuestion).filter(OpenQuestion.group_id == group.id).all():
+        if not _visible(event_scopes.get(question.event_id)):
+            continue
         score = _score([(question.text, 3)], terms)
         if score > 0:
             candidate_id, source_id = _source_link_for(db, candidate_id=question.candidate_id)

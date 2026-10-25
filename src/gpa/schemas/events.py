@@ -70,6 +70,10 @@ class EventCreateRequest(BaseModel):
     access_notes: str = ""
     event_type: str = ""
     sub_group: str = ""
+    # The named sub-group this event is scoped to (B-105); the
+    # service stamps the display word from its name when no
+    # explicit sub_group words were given.
+    subgroup_id: str | None = None
     capacity: int | None = Field(default=None, ge=1)
     status: str = "published"  # draft | published (service validates)
 
@@ -97,6 +101,7 @@ class EventPatchRequest(BaseModel):
     access_notes: str | None = None
     event_type: str | None = None
     sub_group: str | None = None
+    subgroup_id: str | None = None
     capacity: int | None = Field(default=None, ge=1)
     reason: str = ""  # carried into every change row of this patch
 
@@ -258,6 +263,7 @@ class EventResponse(BaseModel):
     access_notes: str | None = None
     event_type: str | None = None
     sub_group: str | None = None
+    subgroup_id: str | None = None
     capacity: int | None = None
     lat: float | None = None
     lng: float | None = None
@@ -356,6 +362,7 @@ def project_event(
         access_notes=event.access_notes,
         event_type=event.event_type,
         sub_group=event.sub_group,
+        subgroup_id=event.subgroup_id,
         capacity=event.capacity,
         lat=event.lat,
         lng=event.lng,

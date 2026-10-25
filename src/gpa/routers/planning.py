@@ -66,6 +66,8 @@ def create_task(
         event_id=body.event_id,
         owner_id=body.owner_id,
         due_at=to_utc_naive(body.due_at) if body.due_at else None,
+        subgroup_id=body.subgroup_id,
+        actor_user_id=principal.user_id,
     )
     return task_view(task)
 
@@ -76,13 +78,23 @@ def list_tasks(
     status: str | None = Query(default=None),
     unclaimed: bool = Query(default=False),
     owner_id: str | None = Query(default=None),
+    subgroup_id: str | None = Query(default=None),
     context: GroupContext = Depends(require_group_role("member")),
     db: Session = Depends(get_db),
 ):
-    """The group's tasks, soonest-due first, filterable."""
+    """The group's tasks, soonest-due first, filterable.
+    Sub-group-scoped tasks outside the caller's enrolments
+    never reach the list (B-105)."""
+    from gpa.services import subgroups as subgroup_service
+
     rows = planning_service.list_tasks(
         db, context.group, event_id=event_id, status=status,
-        unclaimed=unclaimed, owner_id=owner_id,
+        unclaimed=unclaimed, owner_id=owner_id, subgroup_id=subgroup_id,
+        subgroup_scope=subgroup_service.visible_subgroup_ids(
+            db, context.group,
+            user_id=context.principal.user_id, role=context.role,
+        ),
+        scope_restricted=True,
     )
     return [task_view(row) for row in rows]
 
@@ -99,13 +111,29 @@ def list_event_tasks(
     return [task_view(row) for row in rows]
 
 
+def _visible_task(db: Session, context: GroupContext, task_id: str):
+    """One task, with the B-105 scope applied: a scoped task
+    outside the caller's sub-groups is a 404, like a draft."""
+    from gpa.errors import AppError
+    from gpa.services import subgroups as subgroup_service
+
+    task = planning_service.get_task(db, context.group, task_id)
+    visible_ids = subgroup_service.visible_subgroup_ids(
+        db, context.group,
+        user_id=context.principal.user_id, role=context.role,
+    )
+    if not subgroup_service.can_see_scoped(task.subgroup_id, visible_ids):
+        raise AppError("not_found", detail="That task could not be found.")
+    return task
+
+
 @router.get("/{group_id}/tasks/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: str,
     context: GroupContext = Depends(require_group_role("member")),
     db: Session = Depends(get_db),
 ):
-    return task_view(planning_service.get_task(db, context.group, task_id))
+    return task_view(_visible_task(db, context, task_id))
 
 
 @router.patch("/{group_id}/tasks/{task_id}", response_model=TaskResponse)
@@ -118,6 +146,7 @@ def update_task(
 ):
     """Edit a task — including assigning or unassigning its
     owner (a person's act, either way)."""
+    _visible_task(db, context, task_id)
     changes = body.model_dump(exclude_unset=True)
     if changes.get("due_at") is not None:
         changes["due_at"] = to_utc_naive(changes["due_at"])
@@ -313,8 +342,18 @@ def search(
     db: Session = Depends(get_db),
 ):
     """One search over events, tasks, decisions, questions —
-    ranked, and every hit linked back to its source."""
-    hits = planning_service.search_planning(db, context.group, q)
+    ranked, and every hit linked back to its source. Scoped
+    hits outside the caller's sub-groups never appear (B-105)."""
+    from gpa.services import subgroups as subgroup_service
+
+    hits = planning_service.search_planning(
+        db, context.group, q,
+        subgroup_scope=subgroup_service.visible_subgroup_ids(
+            db, context.group,
+            user_id=context.principal.user_id, role=context.role,
+        ),
+        scope_restricted=True,
+    )
     return SearchResponse(query=q, results=hits)
 
 

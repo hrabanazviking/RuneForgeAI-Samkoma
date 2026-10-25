@@ -60,6 +60,16 @@ class Group(Base):
     digest_time: Mapped[str] = mapped_column(String(5), default="")
     digest_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     ai_reminder_wording: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Phase 9 settings pack (B-111). The review-queue rules live
+    # as typed columns because approval reads them on every act:
+    # the lowest role that may approve a candidate, and how many
+    # DISTINCT approvers a candidate needs before it is decided
+    # (1 = the first approval decides, the founding default).
+    review_min_role: Mapped[str] = mapped_column(String(16), default="organiser")
+    review_approvals_required: Mapped[int] = mapped_column(Integer, default=1)
+    # Which template set the group's shelf draws from (B-111) —
+    # a closed vocabulary owned by services/settings_pack.py.
+    template_set: Mapped[str] = mapped_column(String(32), default="starter")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

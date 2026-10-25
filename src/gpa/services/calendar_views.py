@@ -113,11 +113,24 @@ def expand_group(
     event_type=None,
     place=None,
     sub_group=None,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
 ) -> list[tuple[Event, "recurrence_service.Occurrence"]]:
     """Every (event, occurrence) pair in a window, expanded and
-    sorted — the one expansion every calendar read shares."""
+    sorted — the one expansion every calendar read shares. With
+    a restricted viewer (B-105: ``subgroup_scope`` is the
+    viewer's visible set from services/subgroups), events scoped
+    to a sub-group outside the set never expand at all — the
+    calendar must not leak what the event list hides. Callers
+    without a viewer (the organiser-issued iCal feed) pass no
+    restriction: the whole group's calendar, by design."""
     pairs: list[tuple[Event, recurrence_service.Occurrence]] = []
     for event in _live_events(db, group):
+        if scope_restricted:
+            from gpa.services import subgroups as subgroup_service
+
+            if not subgroup_service.can_see_scoped(event.subgroup_id, subgroup_scope):
+                continue
         if not _matches(
             event, q=q, event_type=event_type, place=place, sub_group=sub_group
         ):
@@ -168,6 +181,8 @@ def agenda(
     sub_group=None,
     cursor: str | None = None,
     limit: int = 50,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
 ) -> tuple[list[dict], str | None]:
     """One page of the agenda + the next page's cursor (None at
     the end). The cursor names the last occurrence served —
@@ -177,6 +192,7 @@ def agenda(
     pairs = expand_group(
         db, group, window_start=window_start, window_end=window_end,
         q=q, event_type=event_type, place=place, sub_group=sub_group,
+        subgroup_scope=subgroup_scope, scope_restricted=scope_restricted,
     )
     if cursor:
         mark = _decode_cursor(cursor)
@@ -201,7 +217,15 @@ def agenda(
 # ------------------------------------------------------------------
 
 
-def month_grid(db: Session, group: Group, *, year: int, month: int) -> dict:
+def month_grid(
+    db: Session,
+    group: Group,
+    *,
+    year: int,
+    month: int,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
+) -> dict:
     """The month as renderable weeks: Monday-first whole weeks
     covering the month, each day with its occurrences (assigned
     by the day the occurrence starts ON THE WALL in the group's
@@ -218,7 +242,10 @@ def month_grid(db: Session, group: Group, *, year: int, month: int) -> dict:
     window_end = datetime.combine(
         grid_end + timedelta(days=1), time(0, 0), tzinfo=tz
     ).astimezone(timezone.utc).replace(tzinfo=None)
-    pairs = expand_group(db, group, window_start=window_start, window_end=window_end)
+    pairs = expand_group(
+        db, group, window_start=window_start, window_end=window_end,
+        subgroup_scope=subgroup_scope, scope_restricted=scope_restricted,
+    )
     by_day: dict[date, list[dict]] = {}
     for event, occ in pairs:
         by_day.setdefault(occ.start_local.date(), []).append(
@@ -250,7 +277,15 @@ def month_grid(db: Session, group: Group, *, year: int, month: int) -> dict:
 # ------------------------------------------------------------------
 
 
-def tonight(db: Session, group: Group, *, now_utc: datetime, on_date: date | None = None) -> list[dict]:
+def tonight(
+    db: Session,
+    group: Group,
+    *,
+    now_utc: datetime,
+    on_date: date | None = None,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
+) -> list[dict]:
     """What's on this evening, in the group's own clock.
 
     The evening runs 15:00 → 03:00 local. Ordering is
@@ -264,7 +299,10 @@ def tonight(db: Session, group: Group, *, now_utc: datetime, on_date: date | Non
     end_local = datetime.combine(local_today + timedelta(days=1), EVENING_END)
     window_start = start_local.replace(tzinfo=tz).astimezone(timezone.utc).replace(tzinfo=None)
     window_end = end_local.replace(tzinfo=tz).astimezone(timezone.utc).replace(tzinfo=None)
-    pairs = expand_group(db, group, window_start=window_start, window_end=window_end)
+    pairs = expand_group(
+        db, group, window_start=window_start, window_end=window_end,
+        subgroup_scope=subgroup_scope, scope_restricted=scope_restricted,
+    )
     pairs.sort(
         key=lambda pair: (
             0 if (pair[0].lat is not None and pair[0].lng is not None) else 1,
@@ -306,17 +344,25 @@ def _place_key(event: Event) -> str | None:
 
 
 def conflicts(
-    db: Session, group: Group, *, window_start: datetime, window_end: datetime
+    db: Session,
+    group: Group,
+    *,
+    window_start: datetime,
+    window_end: datetime,
+    subgroup_scope: set[str] | None = None,
+    scope_restricted: bool = False,
 ) -> list[dict]:
     """The window's conflict flags. Cancelled events and
     cancelled occurrences take no part — a thing that will not
     happen cannot clash. Overlap is STRICT: back-to-back in the
     same room (one ends as the next begins) is a plan, not a
-    conflict, and must never flag."""
+    conflict, and must never flag. A restricted viewer (B-105)
+    only ever hears about clashes between events they may see."""
     pairs = [
         (event, occ)
         for event, occ in expand_group(
-            db, group, window_start=window_start, window_end=window_end
+            db, group, window_start=window_start, window_end=window_end,
+            subgroup_scope=subgroup_scope, scope_restricted=scope_restricted,
         )
         if event.status == "published" and not occ.cancelled
     ]

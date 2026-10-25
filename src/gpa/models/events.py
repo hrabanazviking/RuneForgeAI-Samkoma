@@ -103,6 +103,15 @@ class Event(Base):
     # ("choir"), both the group's own vocabulary.
     event_type: Mapped[str] = mapped_column(String(48), default="")
     sub_group: Mapped[str] = mapped_column(String(80), default="")
+    # The named sub-group this event is scoped to (Phase 9,
+    # B-105): a real SubGroup row behind the vocabulary word
+    # above — scoping is enforced against SubGroupMembership on
+    # the member-facing surfaces. NULL = group-wide. Deleting a
+    # sub-group that still scopes events is refused by the
+    # service, so this reference never dangles.
+    subgroup_id: Mapped[str | None] = mapped_column(
+        ForeignKey("subgroups.id"), nullable=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(16), default="draft", index=True)
     # Set by material changes (B-050); cleared only by a person
     # re-announcing (later phases). Events never send anything

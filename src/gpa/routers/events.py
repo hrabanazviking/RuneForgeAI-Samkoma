@@ -78,11 +78,13 @@ def list_events(
     db: Session = Depends(get_db),
 ):
     """The group's events, soonest first, at the caller's
-    projection level. Drafts appear only for organisers."""
+    projection level. Drafts appear only for organisers, and
+    sub-group-scoped events only for their people (B-105)."""
     from gpa.services import calendar_views
 
     rows = event_service.list_events(
-        db, context.group, role=context.role, status=status
+        db, context.group, role=context.role, status=status,
+        viewer_user_id=context.principal.user_id,
     )
     level = _level_for(context)
     return [
@@ -101,7 +103,8 @@ def get_event(
     """One event. A draft asked for by a non-organiser is a 404 —
     the bright line (B-049) is existence-level, not field-level."""
     event = event_service.get_visible_event(
-        db, context.group, event_id, context.role
+        db, context.group, event_id, context.role,
+        viewer_user_id=context.principal.user_id,
     )
     response.headers["ETag"] = event_service.etag_of(event)
     level = _level_for(context)

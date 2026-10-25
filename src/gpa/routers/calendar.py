@@ -254,8 +254,20 @@ def agenda(
         db, context.group, window_start=start, window_end=end,
         q=q, event_type=type_, place=place, sub_group=sub_group,
         cursor=cursor, limit=limit,
+        subgroup_scope=_viewer_scope(db, context), scope_restricted=True,
     )
     return AgendaResponse(items=items, next_cursor=next_cursor)
+
+
+def _viewer_scope(db: Session, context: GroupContext) -> set[str] | None:
+    """The caller's visible sub-group set (B-105): None for
+    organisers and above, else exactly their enrolments."""
+    from gpa.services import subgroups as subgroup_service
+
+    return subgroup_service.visible_subgroup_ids(
+        db, context.group,
+        user_id=context.principal.user_id, role=context.role,
+    )
 
 
 @router.get("/{group_id}/month", response_model=MonthResponse)
@@ -269,7 +281,10 @@ def month(
     in/out of month, occurrences already placed."""
     from gpa.services import calendar_views
 
-    return calendar_views.month_grid(db, context.group, year=year, month=month)
+    return calendar_views.month_grid(
+        db, context.group, year=year, month=month,
+        subgroup_scope=_viewer_scope(db, context), scope_restricted=True,
+    )
 
 
 @router.get("/{group_id}/tonight", response_model=list[OccurrenceResponse])
@@ -293,7 +308,10 @@ def tonight(
         except ValueError:
             raise AppError("validation_error", detail="date must be YYYY-MM-DD.")
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    return calendar_views.tonight(db, context.group, now_utc=now, on_date=on_date)
+    return calendar_views.tonight(
+        db, context.group, now_utc=now, on_date=on_date,
+        subgroup_scope=_viewer_scope(db, context), scope_restricted=True,
+    )
 
 
 @router.get("/{group_id}/conflicts", response_model=ConflictsResponse)
@@ -310,7 +328,8 @@ def conflicts(
 
     start, end = _window(from_, to)
     flags = calendar_views.conflicts(
-        db, context.group, window_start=start, window_end=end
+        db, context.group, window_start=start, window_end=end,
+        subgroup_scope=_viewer_scope(db, context), scope_restricted=True,
     )
     return ConflictsResponse(flags=flags)
 

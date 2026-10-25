@@ -57,7 +57,7 @@ EDITABLE_FIELDS: tuple[str, ...] = (
     "all_day", "place_name", "place_address", "lat", "lng",
     "host_label", "host_id", "cost_text", "cost_cents",
     "bring_list", "access_notes", "event_type", "sub_group",
-    "capacity",
+    "subgroup_id", "capacity",
 )
 
 # Changes the group must hear about again (B-050): when, where.
@@ -164,28 +164,84 @@ def visible_to(event: Event, role: str | None) -> bool:
     return role is not None
 
 
-def get_visible_event(db: Session, group: Group, event_id: str, role: str | None) -> Event:
+# The "no viewer named" sentinel for the sub-group scope check
+# (B-105): internal callers (jobs, minting, merges) read events
+# without a viewer and skip the check; routers always name their
+# viewer — a person id, or None for a seat — so a scoped event a
+# caller may not see is a 404, exactly like a draft.
+_SCOPE_UNSET = object()
+
+
+def _assert_subgroup_visible(
+    db: Session, group: Group, event: Event, *, viewer_user_id, role: str | None
+) -> None:
+    """The B-105 rule for one event: scoped + not enrolled +
+    not organiser = the event does not exist for this viewer."""
+    if event.subgroup_id is None:
+        return
+    from gpa.services import subgroups as subgroup_service
+
+    visible_ids = subgroup_service.visible_subgroup_ids(
+        db, group, user_id=viewer_user_id, role=role
+    )
+    if not subgroup_service.can_see_scoped(event.subgroup_id, visible_ids):
+        raise AppError("not_found", detail="That event could not be found.")
+
+
+def get_visible_event(
+    db: Session,
+    group: Group,
+    event_id: str,
+    role: str | None,
+    *,
+    viewer_user_id=_SCOPE_UNSET,
+) -> Event:
     """``get_event`` plus the bright line: a draft asked for by a
-    non-organiser is a 404, exactly as if it did not exist."""
+    non-organiser is a 404, exactly as if it did not exist. When
+    a viewer is named, the B-105 sub-group scope applies the
+    same way: a scoped event outside the viewer's sub-groups is
+    a 404 too."""
     event = get_event(db, group, event_id)
     if not visible_to(event, role):
         raise AppError("not_found", detail="That event could not be found.")
+    if viewer_user_id is not _SCOPE_UNSET:
+        _assert_subgroup_visible(
+            db, group, event, viewer_user_id=viewer_user_id, role=role
+        )
     return event
 
 
 def list_events(
-    db: Session, group: Group, *, role: str | None, status: str | None = None
+    db: Session,
+    group: Group,
+    *,
+    role: str | None,
+    status: str | None = None,
+    viewer_user_id=_SCOPE_UNSET,
 ) -> list[Event]:
     """The group's events, soonest first. Drafts ride along only
     for organisers (the bright line again); a ``status`` filter
-    narrows further but can never widen visibility."""
+    narrows further but can never widen visibility. When a
+    viewer is named, sub-group-scoped events outside the
+    viewer's enrolments never reach the list (B-105)."""
     query = db.query(Event).filter(
         Event.group_id == group.id, Event.deleted_at.is_(None)
     )
     rows = query.order_by(Event.starts_at, Event.id).all()
+    visible_ids = None
+    if viewer_user_id is not _SCOPE_UNSET:
+        from gpa.services import subgroups as subgroup_service
+
+        visible_ids = subgroup_service.visible_subgroup_ids(
+            db, group, user_id=viewer_user_id, role=role
+        )
     out = []
     for event in rows:
         if not visible_to(event, role):
+            continue
+        if viewer_user_id is not _SCOPE_UNSET and not subgroup_service.can_see_scoped(
+            event.subgroup_id, visible_ids
+        ):
             continue
         if status and event.status != status:
             continue
@@ -402,6 +458,14 @@ def create_event(
         )
     starts_at: datetime = data["starts_at"]
     ends_at: datetime = data["ends_at"]
+    # Sub-group scope (B-105): the named sub-group must be one of
+    # this group's; the event then carries its id, and its name
+    # becomes the display word unless the caller gave their own.
+    subgroup = None
+    if data.get("subgroup_id"):
+        from gpa.services import subgroups as subgroup_service
+
+        subgroup = subgroup_service.get_subgroup(db, group, data["subgroup_id"])
     tz = ZoneInfo(data.get("timezone") or group.home_timezone or "UTC")
     start_local = starts_at.replace(tzinfo=timezone.utc).astimezone(tz).replace(tzinfo=None)
     summary = (
@@ -437,7 +501,8 @@ def create_event(
         bring_list=data.get("bring_list", ""),
         access_notes=data.get("access_notes", ""),
         event_type=data.get("event_type", ""),
-        sub_group=data.get("sub_group", ""),
+        sub_group=data.get("sub_group", "") or (subgroup.name if subgroup else ""),
+        subgroup_id=subgroup.id if subgroup else None,
         capacity=data.get("capacity"),
         status=data.get("status", "published"),
         created_by=actor_label,
@@ -548,9 +613,21 @@ def update_event(
         )
     if event.status == "cancelled":
         raise AppError("conflict", detail="A cancelled event cannot be edited.")
+    # A scope change names a sub-group of THIS group or clears
+    # the scope (B-105) — validated before the edit engine runs,
+    # so a bad id refuses the whole patch, never half of it.
+    subgroup = None
+    if changes.get("subgroup_id"):
+        from gpa.services import subgroups as subgroup_service
+
+        subgroup = subgroup_service.get_subgroup(db, group, changes["subgroup_id"])
     changed_fields = apply_changes(
         db, event=event, changes=changes, actor_label=actor_label, reason=reason
     )
+    if "subgroup_id" in changed_fields and "sub_group" not in changes:
+        # The display word follows the scope unless the caller
+        # set their own words in the same patch.
+        event.sub_group = subgroup.name if subgroup is not None else ""
     if changed_fields:
         audit.record(
             db, actor=actor_label, action="event.updated",

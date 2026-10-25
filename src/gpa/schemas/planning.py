@@ -31,6 +31,8 @@ class TaskCreateRequest(BaseModel):
     title: str = Field(min_length=1, max_length=240)
     notes: str = ""
     event_id: str | None = None
+    # The named sub-group this task is scoped to (B-105).
+    subgroup_id: str | None = None
     owner_id: str | None = None
     due_at: datetime | None = None
 
@@ -41,6 +43,7 @@ class TaskPatchRequest(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=240)
     notes: str | None = None
     due_at: datetime | None = None
+    subgroup_id: str | None = None
     owner_id: str | None = None
     status: str | None = None
 
@@ -49,6 +52,7 @@ class TaskResponse(BaseModel):
     id: str
     group_id: str
     event_id: str | None = None
+    subgroup_id: str | None = None
     title: str
     notes: str = ""
     owner_id: str | None = None
@@ -72,6 +76,7 @@ def task_view(task) -> TaskResponse:
         id=task.id,
         group_id=task.group_id,
         event_id=task.event_id,
+        subgroup_id=task.subgroup_id,
         title=task.title,
         notes=task.notes,
         owner_id=task.owner_id,

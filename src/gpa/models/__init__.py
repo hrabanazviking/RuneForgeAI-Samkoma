@@ -16,6 +16,9 @@ Alembic and the test fixtures both rely on that. Domain files:
                  templates (Phase 7)
     notifications.py  notifications, preferences, quiet hours,
                  event invites, digests, mail events (Phase 8)
+    nonprofit.py sub-groups + their memberships, announcements,
+                 resources + bookings, attendance marks,
+                 candidate approvals (Phase 9)
 """
 
 from gpa.models.ai import AiUsage
@@ -41,6 +44,15 @@ from gpa.models.notifications import (
     MemberNotificationSettings,
     Notification,
     NotificationPreference,
+)
+from gpa.models.nonprofit import (
+    Announcement,
+    AttendanceMark,
+    CandidateApproval,
+    Resource,
+    ResourceBooking,
+    SubGroup,
+    SubGroupMembership,
 )
 from gpa.models.planning import (
     AvailabilityMark,

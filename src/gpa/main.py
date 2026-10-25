@@ -34,6 +34,7 @@ from gpa.routers import (
     invites,
     jobs,
     meta,
+    nonprofit,
     notifications,
     planning,
     polls,
@@ -153,4 +154,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(notifications.webhook_router)
     app.include_router(invites.group_router)
     app.include_router(invites.public_router)
+    app.include_router(nonprofit.subgroups_router)
     return app

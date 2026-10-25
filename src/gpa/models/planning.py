@@ -87,6 +87,12 @@ class Task(Base):
     event_id: Mapped[str | None] = mapped_column(
         ForeignKey("events.id", ondelete="CASCADE"), nullable=True, index=True
     )
+    # The named sub-group this task is scoped to (Phase 9,
+    # B-105); NULL = group-wide. The same visibility rule as
+    # scoped events, enforced in services/subgroups.py.
+    subgroup_id: Mapped[str | None] = mapped_column(
+        ForeignKey("subgroups.id"), nullable=True, index=True
+    )
     title: Mapped[str] = mapped_column(String(240), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
     # The owner, when a PERSON has made them the owner: a user id
@@ -281,6 +287,13 @@ class RoleSlot(Base):
         ForeignKey("events.id", ondelete="CASCADE"), index=True
     )
     role_name: Mapped[str] = mapped_column(String(80), default="")
+    # The shift window (Phase 9, B-107): a plain B-088 role slot
+    # carries no times; a SHIFT's slots all carry the same
+    # start/end, so "who is on, when" is data and the gap report
+    # can speak in days. Naive UTC like every stored instant
+    # (D-21); both NULL for a timeless slot.
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     claimed_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     claimed_by_label: Mapped[str] = mapped_column(String(160), default="")
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
