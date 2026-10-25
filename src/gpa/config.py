@@ -16,6 +16,27 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # The development-only fallback secret. It exists so a fresh clone
 # runs instantly in dev; production startup refuses it (see below).
+
+# Secrets production must never run with (B-145): the dev
+# fallback below plus the obvious placeholders a tired deploy
+# reaches for. Refused by NAME at startup, in plain words —
+# a public deployment must never sign tokens with a string
+# the whole internet can read in this file or guess in one try.
+KNOWN_DEFAULT_SECRETS = frozenset(
+    {
+        "dev-only-change-me",
+        "changeme",
+        "change-me",
+        "secret",
+        "password",
+        "dev-secret",
+        "test-secret",
+        "test-secret-for-tests-only",
+    }
+)
+
+# Production's minimum: a real secret is a long random value.
+PROD_SECRET_MIN_LENGTH = 32
 DEV_SECRET = "dev-only-change-me"
 
 
@@ -174,15 +195,24 @@ class Settings(BaseSettings):
     @field_validator("secret_key")
     @classmethod
     def _secret_must_be_real_in_prod(cls, value: str, info) -> str:
-        """Fail startup, in plain words, if prod uses the dev secret.
+        """Fail startup, in plain words, if prod runs with a
+        known-default or short secret (B-145).
 
-        A config error should stop the world loudly at boot — never
-        let a public deployment sign tokens with a published string.
+        A config error should stop the world loudly at boot —
+        never let a public deployment sign tokens with a
+        published or guessable string.
         """
         env = (info.data or {}).get("env", "dev")
-        if env == "prod" and value == DEV_SECRET:
+        if env == "prod" and value in KNOWN_DEFAULT_SECRETS:
             raise ValueError(
-                "GPA_SECRET_KEY is not set to a real secret. "
+                "GPA_SECRET_KEY is set to a known default value. "
+                "Set GPA_SECRET_KEY to a long random value before "
+                "running with GPA_ENV=prod."
+            )
+        if env == "prod" and len(value) < PROD_SECRET_MIN_LENGTH:
+            raise ValueError(
+                "GPA_SECRET_KEY is too short for production "
+                f"(under {PROD_SECRET_MIN_LENGTH} characters). "
                 "Set GPA_SECRET_KEY to a long random value before "
                 "running with GPA_ENV=prod."
             )

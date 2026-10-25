@@ -49,6 +49,25 @@ from gpa.routers import (
 )
 from gpa.storage.local import LocalStorage
 
+# Path segments after which the NEXT segment is a credential
+# (B-145): calendar feeds, guest invites, the email-in door,
+# and inbound webhook sources all carry their token in the
+# URL itself. The access log keeps the route's shape and
+# drops the credential — a log file must never become a
+# second copy of every live token.
+_TOKEN_CARRYING_SEGMENTS = frozenset({"feed", "invites", "email-in", "source"})
+
+
+def _redact_path(path: str) -> str:
+    """The access log's view of a path: token-carrying
+    segments replaced with REDACTED, everything else
+    verbatim (routes must stay recognisable in the log)."""
+    parts = path.split("/")
+    for index, part in enumerate(parts[:-1]):
+        if part in _TOKEN_CARRYING_SEGMENTS:
+            parts[index + 1] = "REDACTED"
+    return "/".join(parts)
+
 
 def _configure_logging(settings: Settings) -> None:
     """One logging setup for the whole process (idempotent)."""
@@ -74,6 +93,13 @@ def _configure_logging(settings: Settings) -> None:
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(logging.INFO)
+    # httpx/httpcore log every request's FULL URL at INFO
+    # (B-145 find) — and in this system URLs carry credentials
+    # (feeds, invites, member-pasted links). Their request
+    # lines are quieted to WARNING: errors still surface, URLs
+    # stop accumulating in log files.
+    for noisy in ("httpx", "httpcore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 class _RequestIdFilter(logging.Filter):
@@ -151,7 +177,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response = await call_next(request)
         response.headers["X-Request-Id"] = request_id
         logging.getLogger("gpa.access").info(
-            "%s %s -> %s", request.method, request.url.path, response.status_code,
+            "%s %s -> %s",
+            request.method,
+            _redact_path(request.url.path),
+            response.status_code,
             extra={"request_id": request_id},
         )
         return response
