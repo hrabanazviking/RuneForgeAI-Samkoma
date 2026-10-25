@@ -23,10 +23,11 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **642 tests, all passing** (94/340 slices:
-Phases 0, 1, 2, 3, 4, 5, 6, and 7 complete) — the count taken from
-one clean `./test.sh` run against the final committed Phase 7 tree
-(588 before Phase 7 + 54 new = 642, collected count reconciled).
+Alembic up/down/up clean; **673 tests, all passing** (104/340 slices:
+Phases 0–8 complete) — the count taken from one clean run against
+the final Phase 8 tree (642 before Phase 8 + 31 new = 673,
+collected count reconciled). ZIP-Beta cut at the Phase 8 gate
+(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy).
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
@@ -692,8 +693,96 @@ login, no API key, no network).
   11, checklists 3, budget 3, availability 4, threads 5,
   templates 4, search/digest 4, migration 1, gate 1).
 
+### Phase 8 — Reminders, notifications, digests (B-095 → B-104): COMPLETE (2026-10-24)
+- B-095 notification core: models/notifications.py (Notification,
+  NotificationPreference, MemberNotificationSettings, EventInvite,
+  Digest, MailEvent), services/notifications.py (create = row +
+  notify job in the CALLER's transaction; policy at creation —
+  preferences choose channels, both-off = audited suppression, no
+  row), services/mailer.py transport boundary (FileTransport =
+  services/mail.py file outbox; Capture/Failing for tests;
+  GPA_MAIL_TRANSPORT; provider driver is Phase 12 B-133 —
+  BOUNDARY: no real email exists in this environment).
+  jobs.queue() added (no-commit enqueue) so outbox writes are
+  transactional. RSVP promotions (B-061) moved from the audit
+  stub + bare job to real notifications (kind rsvp.promoted,
+  payload keeps to/kind/rsvp_id + gains notification_id);
+  rsvps' stub handler REMOVED, notifications' registered instead.
+- B-096 reminders: services/reminders.py — rules (group
+  reminder_rules_json; defaults 7d/1d/morning-of at 09:00/09:00/
+  08:00 event-local) materialised per RSVP'd person + host at
+  publish / edit / approval-mint / approval-change / RSVP set /
+  RSVP remove, same transaction; reschedule supersedes
+  outstanding rows and DELETES their queued jobs (roadmap says
+  "cancelled"; deletion is stronger — superseded rows keep the
+  record). Bodies: template from facts (formatted start, place,
+  bring lines, EventChange words). Migration 0011.
+- B-097 change alerts: announce.approve_announcement + POST
+  .../reannounce-drafts/{id}/approve — alerts exactly the
+  RSVP'd (event_recipients: coming+maybe; guests at their
+  invited address; +guests ride the member), clears
+  needs_reannounce, stamps sent_at/sent_by; second approve 409.
+- B-098 invites: services/invites.py — token sha256 at rest,
+  shown once (create response link + the invite notification);
+  public GET (B-059 public projection) + POST rsvp via
+  rsvps.set_rsvp as guest:<email>; tamper = 404, nothing made.
+  GPA_PUBLIC_BASE_URL builds links ("" = path-only).
+- B-099 digest: services/digests.py + Jinja2 templates in
+  src/gpa/templates/ (jinja2 3.1.6 was ALREADY a declared,
+  locked dependency — used as-is). Compose = B-093
+  planning_digest + next week's events; Digest row stores both
+  renderings; one digest notification per active member.
+  Scheduling = digest_run job chain: anchored by digest
+  settings save (update_group → ensure_scheduled) or a manual
+  run; each run queues its successor. assert_alt_text runs on
+  every render (templates carry no images).
+- B-100 preferences: switches (default on; absence = on) +
+  quiet hours per member per group, member's timezone; policy
+  ONCE at creation; only reminder-category held; urgent never
+  held; cancellation alerts are urgent because cancel_event is
+  the organiser's act.
+- B-101 inbox: GET /users/me/inbox (+ unread_only), mark-read
+  (other's = 404); SSE notification.created frames in
+  services/stream.py (recipient's stream only, no body).
+- B-102 deliverability: attempts on the row; dead at 5 (=
+  job max_attempts); failures list (organiser+) + resend;
+  /webhooks/mail/{provider} stubbed receiver (bounce marks
+  the notification failed; signature checks arrive with the
+  Phase 12 provider). deliver() COMMITS the failure record
+  before raising — the job chassis rolls back on handler
+  failure, and the record must survive it.
+- B-103 AI wording: group ai_reminder_wording opt-in;
+  reminder_wording prompt v1 (spark tier); ships ONLY if the
+  formatted start, place, and every bring item survive
+  verbatim; template_body + wording_source stored either way;
+  any ModelError = template ships.
+- B-104 gate: tests/test_phase8_gate.py — invite → guest
+  answer → reminder delivered → move → approved alert to
+  member + guest → digest mention, capture transport as the
+  mailbox, run_at + send_after moves as the fake clock.
+- **ZIP-BETA CUT**: gpa-backend-v0.3-2026-10-24.zip (releases/;
+  §8 anatomy — repo under gpa-backend/, OPENAPI.json,
+  FRONTEND_HANDOFF.md, CHANGELOG.md, TEST_REPORT.md,
+  SHA256SUMS.txt, release-manifest.json). ZIP-Alpha was never
+  cut separately: its gate passed 2026-10-24 and it folded
+  into Beta (manifest states this). OPENAPI.json +
+  frontend_types.ts regenerated (133 paths, 150 schemas).
+  make_release_zip.py grew the §8 train shape (flat ZIP-0
+  shape kept). Three test_rsvps assertions updated as
+  superseded (Phase 4 pattern): they counted ALL notify jobs;
+  the outbox now carries reminders on the same queue, so they
+  select by payload kind — intent unchanged.
+- Deviations/boundaries: (1) mail = driver boundary, no real
+  sending (above). (2) B-096 old jobs DELETED not cancelled.
+  (3) Digest chain anchoring: settings-save/manual-run anchors;
+  a group that never touches settings gets its chain at first
+  manual run. (4) In-app channel exists NOW as the inbox
+  (roadmap text said Phase 12; B-101 in this phase defines it —
+  the phase's own slices win). (5) GroupResponse grew comms
+  fields (additive).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 8 begins at B-095.
+Phase 9 begins at B-105.
 
 ## Decisions & deviations (from the roadmap defaults)
 

@@ -1,4 +1,4 @@
-# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–7
+# Frontend Handoff — ZIP-Beta (v0.3) · Foundation + Phases 1–8
 
 *Regenerated at each release. Read this first.*
 
@@ -531,6 +531,82 @@ separate ZIP. The planning screens below are the group's home.
   hit has `type`, `title`, `snippet`, `score`, and
   source links (`candidate_id`, `source_id`, `event_id`)
   for "where did this come from?" navigation.
+
+## Reminders, notifications, digests (Phase 8) — NEW in ZIP-Beta
+
+The backend now speaks. Everything below is live and tested.
+
+- **Inbox screen** — `GET /users/me/inbox` (the caller's own
+  notifications across their groups; `?unread_only=true`),
+  `POST /users/me/inbox/{id}/read`. One row per message: the
+  inbox item and the email are the SAME notification (subject,
+  body, status), so the two can never disagree. The group
+  stream (`GET /groups/{id}/stream`) now also emits
+  `notification.created` frames for the connected member's own
+  inbox — kind + event + subject only; fetch the inbox for the
+  body.
+- **Notification preferences screen** — `GET/PUT
+  /users/me/groups/{group_id}/notification-preferences`:
+  switches per channel (email / in_app) per kind (invite,
+  reminder, change, digest, rsvp) — all default ON — plus
+  quiet hours `{start, end, timezone}` (HH:MM). A reminder
+  whose moment lands in quiet hours is HELD to the quiet end
+  (status `held`), never dropped. Urgent rows (an organiser's
+  cancellation) are never held.
+- **Event invites** — `POST /groups/{id}/events/{event_id}/invites`
+  (organiser+) returns `{…, link}` — the link carries the raw
+  token and is shown ONLY in this response (listings show a
+  prefix). The invitee also gets an `invite` notification.
+  Public, no account: `GET /invites/{token}` (the event's
+  public projection + `account_offered`), `POST
+  /invites/{token}/rsvp` `{status, guests, note}` → the answer
+  lands as `guest:<email>` in the RSVP list. Tampered token =
+  404, nothing created.
+- **Change alerts** — after drafting a re-announcement
+  (Phase 6), `POST /groups/{id}/events/{event_id}/reannounce-drafts/{draft_id}/approve`
+  (organiser+, publish scope) sends it: exactly the RSVP'd
+  people (coming + maybe) get a `change.announcement`
+  notification; `needs_reannounce` clears; the draft records
+  `sent_at`/`sent_by`. Approving twice is a 409.
+- **Reminders** — automatic: at publish, on any edit, and on
+  every RSVP change, each RSVP'd person (plus the host) gets
+  one `reminder` notification per rule at its moment
+  (defaults: 7 days before 09:00, 1 day before 09:00,
+  morning-of 08:00 — event-local). Moving an event supersedes
+  the old rows (their jobs are deleted) and writes new ones
+  whose bodies carry place, bring-list, and what changed.
+  Group settings (PATCH group): `reminder_rules`
+  `[{kind: days_before, days: N} | {kind: morning_of}]`,
+  `ai_reminder_wording` (bool) — when on, reminder bodies may
+  be AI-rephrased AROUND the facts; the row keeps
+  `template_body` + `wording_source` (`ai` /
+  `template_fallback`) so you can show provenance if you want.
+- **Weekly digest** — `GET /groups/{id}/digests`,
+  `POST /groups/{id}/digest/run` (organiser+; composes +
+  sends now and anchors the weekly chain). Group settings:
+  `digest_weekday` (0 = Monday), `digest_time` ("HH:MM"),
+  `digest_enabled`. The digest body (text + HTML stored on
+  the row) sections: Coming up / Tasks needing an owner /
+  Open questions / Polls awaiting your vote. Members receive
+  it as a `digest` notification (inbox + email per
+  preferences).
+- **Deliverability (admin)** — `GET
+  /groups/{id}/notification-failures` (organiser+):
+  failed/dead notifications + provider mail events;
+  `POST /groups/{id}/notifications/{notification_id}/resend`
+  requeues one (attempts reset). Notification statuses:
+  queued / held / sent / failed / dead / superseded.
+- **Mail, honestly** — email leaves through ONE transport
+  boundary. In dev it is the file outbox (messages as JSON in
+  the outbox dir, like the magic-link mail you already know).
+  The real provider driver is Phase 12 (B-133); the
+  bounce/complaint receiver `POST /webhooks/mail/{provider}`
+  exists in stub form now (records the event; a bounce marks
+  its notification failed). Nothing in this ZIP claims a real
+  email reached a real inbox.
+- **ZIP-Alpha note** — no separate Alpha ZIP was cut: its
+  gate passed on 2026-10-24 and it folded into this Beta,
+  whose range is B-001 → B-104.
 
 ## The contract
 

@@ -75,7 +75,7 @@
         "type": "object"
       },
       "AnnouncementDraftResponse": {
-        "description": "A drafted re-announcement (B-078): the body names old \u2192\nnew for every material change it covers. Drafting only \u2014\nsending is Phase 10.",
+        "description": "A drafted re-announcement (B-078): the body names old \u2192\nnew for every material change it covers. ``sent_at`` /\n``sent_by`` record the approval that sent it as change\nalerts (Phase 8, B-097); null until then.",
         "properties": {
           "body": {
             "title": "Body",
@@ -108,6 +108,29 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "sent_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent By"
           }
         },
         "required": [
@@ -1621,6 +1644,76 @@
         "title": "DigestEventResponse",
         "type": "object"
       },
+      "DigestResponse": {
+        "description": "A stored digest (B-099): both renderings, as sent.",
+        "properties": {
+          "body_html": {
+            "title": "Body Html",
+            "type": "string"
+          },
+          "body_text": {
+            "title": "Body Text",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "week_end": {
+            "format": "date-time",
+            "title": "Week End",
+            "type": "string"
+          },
+          "week_start": {
+            "format": "date-time",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "week_start",
+          "week_end",
+          "subject",
+          "body_text",
+          "body_html",
+          "created_by",
+          "created_at",
+          "sent_at"
+        ],
+        "title": "DigestResponse",
+        "type": "object"
+      },
       "EmailChangeRequest": {
         "description": "Ask to move the account to a new email (B-020). The change\ncompletes only when the token sent to the NEW address is used.",
         "properties": {
@@ -2507,6 +2600,31 @@
         "title": "FacebookDraftResponse",
         "type": "object"
       },
+      "FailuresResponse": {
+        "description": "The admin deliverability view (B-102).",
+        "properties": {
+          "mail_events": {
+            "items": {
+              "$ref": "#/components/schemas/MailEventResponse"
+            },
+            "title": "Mail Events",
+            "type": "array"
+          },
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "title": "Notifications",
+            "type": "array"
+          }
+        },
+        "required": [
+          "notifications",
+          "mail_events"
+        ],
+        "title": "FailuresResponse",
+        "type": "object"
+      },
       "FeedIssueRequest": {
         "description": "Issue a feed, optionally narrowed: statuses (published /\ncancelled), a place word, a sub-group. The filter is part of\nthe issued feed \u2014 a leaked URL leaks only its own scope.",
         "properties": {
@@ -2939,6 +3057,11 @@
       "GroupResponse": {
         "description": "A group as the API shows it.",
         "properties": {
+          "ai_reminder_wording": {
+            "default": false,
+            "title": "Ai Reminder Wording",
+            "type": "boolean"
+          },
           "default_place": {
             "title": "Default Place",
             "type": "string"
@@ -2946,6 +3069,27 @@
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "digest_enabled": {
+            "default": true,
+            "title": "Digest Enabled",
+            "type": "boolean"
+          },
+          "digest_time": {
+            "default": "",
+            "title": "Digest Time",
+            "type": "string"
+          },
+          "digest_weekday": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Weekday"
           },
           "home_timezone": {
             "title": "Home Timezone",
@@ -2969,6 +3113,13 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "reminder_rules": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderRule"
+            },
+            "title": "Reminder Rules",
+            "type": "array"
           },
           "slug": {
             "title": "Slug",
@@ -3006,6 +3157,17 @@
             ],
             "title": "Ai Daily Budget Micros"
           },
+          "ai_reminder_wording": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Reminder Wording"
+          },
           "default_place": {
             "anyOf": [
               {
@@ -3029,6 +3191,42 @@
               }
             ],
             "title": "Description"
+          },
+          "digest_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Enabled"
+          },
+          "digest_time": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{2}:\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Time"
+          },
+          "digest_weekday": {
+            "anyOf": [
+              {
+                "maximum": 6.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digest Weekday"
           },
           "home_timezone": {
             "anyOf": [
@@ -3054,6 +3252,20 @@
               }
             ],
             "title": "Name"
+          },
+          "reminder_rules": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ReminderRule"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reminder Rules"
           },
           "visibility": {
             "anyOf": [
@@ -3158,6 +3370,28 @@
         "title": "InboundAddressResponse",
         "type": "object"
       },
+      "InboxResponse": {
+        "description": "The caller's inbox page (B-101).",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "unread": {
+            "title": "Unread",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "unread"
+        ],
+        "title": "InboxResponse",
+        "type": "object"
+      },
       "InstantiationResponse": {
         "description": "What instantiating built: the event (full event view\nrides in ``event`` as a plain dict from the events schema)\nand the ids of the plan built around it.",
         "properties": {
@@ -3201,6 +3435,22 @@
         "title": "InstantiationResponse",
         "type": "object"
       },
+      "InviteCreateRequest": {
+        "description": "Invite one address to one event (B-098).",
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "InviteCreateRequest",
+        "type": "object"
+      },
       "InviteRequest": {
         "description": "Invite a person by email with a starting role (B-016).",
         "properties": {
@@ -3220,6 +3470,143 @@
           "email"
         ],
         "title": "InviteRequest",
+        "type": "object"
+      },
+      "InviteRespondRequest": {
+        "description": "Answer an invite without an account (B-098).",
+        "properties": {
+          "guests": {
+            "default": 0,
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Guests",
+            "type": "integer"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          },
+          "status": {
+            "pattern": "^(coming|cant|maybe)$",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "InviteRespondRequest",
+        "type": "object"
+      },
+      "InviteRespondResponse": {
+        "description": "The answer's record: attributed to the invited address,\nwith the account offer stated, never hidden.",
+        "properties": {
+          "account_offered": {
+            "title": "Account Offered",
+            "type": "boolean"
+          },
+          "principal_label": {
+            "title": "Principal Label",
+            "type": "string"
+          },
+          "rsvp_id": {
+            "title": "Rsvp Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rsvp_id",
+          "principal_label",
+          "status",
+          "account_offered"
+        ],
+        "title": "InviteRespondResponse",
+        "type": "object"
+      },
+      "InviteResponse": {
+        "description": "An invite as its creator sees it. ``link`` carries the\nraw token and is present ONLY on the creation response \u2014\nthe token is shown once (B-014's discipline); later reads\nshow the prefix only.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "rsvp_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rsvp Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "token_prefix": {
+            "title": "Token Prefix",
+            "type": "string"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "event_id",
+          "email",
+          "user_id",
+          "token_prefix",
+          "status",
+          "expires_at",
+          "rsvp_id"
+        ],
+        "title": "InviteResponse",
         "type": "object"
       },
       "JobResponse": {
@@ -3365,6 +3752,96 @@
           "email"
         ],
         "title": "MagicLinkRequest",
+        "type": "object"
+      },
+      "MailEventResponse": {
+        "description": "One provider mail event (B-102).",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "notification_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notification Id"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "email",
+          "event_type",
+          "notification_id",
+          "detail",
+          "created_at"
+        ],
+        "title": "MailEventResponse",
+        "type": "object"
+      },
+      "MailWebhookRequest": {
+        "description": "A provider's delivery webhook, stubbed shape (B-102):\nthe provider signs and authenticates with its own driver\nin Phase 12; the recorded shape is this.",
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "event_type": {
+            "pattern": "^(bounce|complaint)$",
+            "title": "Event Type",
+            "type": "string"
+          },
+          "notification_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notification Id"
+          }
+        },
+        "required": [
+          "email",
+          "event_type"
+        ],
+        "title": "MailWebhookRequest",
         "type": "object"
       },
       "MatchView": {
@@ -3615,6 +4092,152 @@
           "weeks"
         ],
         "title": "MonthResponse",
+        "type": "object"
+      },
+      "NotificationResponse": {
+        "description": "One notification: one row, both channels, full state.",
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "body_html": {
+            "title": "Body Html",
+            "type": "string"
+          },
+          "body_text": {
+            "title": "Body Text",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "in_app": {
+            "title": "In App",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_error": {
+            "title": "Last Error",
+            "type": "string"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "recipient_email": {
+            "title": "Recipient Email",
+            "type": "string"
+          },
+          "recipient_label": {
+            "title": "Recipient Label",
+            "type": "string"
+          },
+          "send_after": {
+            "format": "date-time",
+            "title": "Send After",
+            "type": "string"
+          },
+          "send_email": {
+            "title": "Send Email",
+            "type": "boolean"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          },
+          "template_body": {
+            "title": "Template Body",
+            "type": "string"
+          },
+          "urgent": {
+            "title": "Urgent",
+            "type": "boolean"
+          },
+          "wording_source": {
+            "title": "Wording Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "event_id",
+          "recipient_label",
+          "recipient_email",
+          "kind",
+          "send_email",
+          "in_app",
+          "subject",
+          "body_text",
+          "body_html",
+          "template_body",
+          "wording_source",
+          "urgent",
+          "send_after",
+          "status",
+          "attempts",
+          "last_error",
+          "sent_at",
+          "read_at",
+          "created_at"
+        ],
+        "title": "NotificationResponse",
         "type": "object"
       },
       "OccurrenceResponse": {
@@ -4098,6 +4721,89 @@
         "title": "PollVoteRequest",
         "type": "object"
       },
+      "PreferenceSwitch": {
+        "description": "One channel \u00d7 kind switch (B-100).",
+        "properties": {
+          "channel": {
+            "pattern": "^(email|in_app)$",
+            "title": "Channel",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "kind": {
+            "pattern": "^(invite|reminder|change|digest|rsvp)$",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "kind"
+        ],
+        "title": "PreferenceSwitch",
+        "type": "object"
+      },
+      "PreferencesResponse": {
+        "description": "The member's full effective policy in one group.",
+        "properties": {
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "quiet_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuietHours"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "switches": {
+            "items": {
+              "$ref": "#/components/schemas/PreferenceSwitch"
+            },
+            "title": "Switches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "group_id",
+          "switches",
+          "quiet_hours"
+        ],
+        "title": "PreferencesResponse",
+        "type": "object"
+      },
+      "PreferencesUpdateRequest": {
+        "description": "Write switches and/or quiet hours. ``quiet_hours``\nomitted leaves them untouched; an explicit empty object\nclears them (the service owns that reading).",
+        "properties": {
+          "quiet_hours": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuietHours"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "switches": {
+            "items": {
+              "$ref": "#/components/schemas/PreferenceSwitch"
+            },
+            "title": "Switches",
+            "type": "array"
+          }
+        },
+        "title": "PreferencesUpdateRequest",
+        "type": "object"
+      },
       "PrintEventRow": {
         "description": "One event as the noticeboard needs it: every fact present\nas text (B-072). ``when`` is words (\"Saturday 24 October\n2026, 7:00 PM \u2013 9:00 PM\"), not an instant \u2014 paper has no\ntimezone conversions.",
         "properties": {
@@ -4295,6 +5001,82 @@
           "field"
         ],
         "title": "ProvenanceEntry",
+        "type": "object"
+      },
+      "PublicInviteResponse": {
+        "description": "An invite's public face: the event, and whether an\naccount is on offer (it always is, after answering).",
+        "properties": {
+          "account_offered": {
+            "title": "Account Offered",
+            "type": "boolean"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "group_name": {
+            "title": "Group Name",
+            "type": "string"
+          },
+          "place_address": {
+            "title": "Place Address",
+            "type": "string"
+          },
+          "place_name": {
+            "title": "Place Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "group_id",
+          "group_name",
+          "title",
+          "description",
+          "starts_at",
+          "ends_at",
+          "timezone",
+          "place_name",
+          "place_address",
+          "status",
+          "email",
+          "account_offered"
+        ],
+        "title": "PublicInviteResponse",
         "type": "object"
       },
       "QualityContradictionRef": {
@@ -4651,6 +5433,38 @@
         "title": "QueueStatusResponse",
         "type": "object"
       },
+      "QuietHours": {
+        "description": "The member's quiet window (B-100), in their timezone.",
+        "properties": {
+          "end": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "Start",
+            "type": "string"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "QuietHours",
+        "type": "object"
+      },
       "RecurrenceRequest": {
         "description": "Set/replace a series rule (B-052). ``exceptions`` replaces\nthe whole exception list; omit it to keep the existing ones.",
         "properties": {
@@ -4761,6 +5575,34 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "ReminderRule": {
+        "description": "One reminder rule (B-096): N days before, or the\nmorning of. Days is required (1..365) for days_before and\nignored for morning_of.",
+        "properties": {
+          "days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
+          "kind": {
+            "pattern": "^(days_before|morning_of)$",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ReminderRule",
         "type": "object"
       },
       "ResolveContradictionRequest": {
@@ -8610,6 +9452,96 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/digest/run": {
+      "post": {
+        "description": "Compose and send this week's digest now (organiser+),\nand anchor the weekly chain from here.",
+        "operationId": "run_digest_now_api_v1_groups__group_id__digest_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Digest Now",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/digests": {
+      "get": {
+        "description": "The group's stored digests, newest first.",
+        "operationId": "list_digests_api_v1_groups__group_id__digests_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DigestResponse"
+                  },
+                  "title": "Response List Digests Api V1 Groups  Group Id  Digests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Digests",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events": {
       "get": {
         "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers.",
@@ -9816,6 +10748,122 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/invites": {
+      "get": {
+        "description": "An event's invites (prefixes only \u2014 the tokens\nthemselves are gone by design).",
+        "operationId": "list_invites_api_v1_groups__group_id__events__event_id__invites_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InviteResponse"
+                  },
+                  "title": "Response List Invites Api V1 Groups  Group Id  Events  Event Id  Invites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Invites",
+        "tags": [
+          "invites"
+        ]
+      },
+      "post": {
+        "description": "Invite one address to this event (organiser+). The\nresponse's link is shown ONCE \u2014 send it on, or trust the\nnotification the invitee also receives.",
+        "operationId": "create_invite_api_v1_groups__group_id__events__event_id__invites_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Invite",
+        "tags": [
+          "invites"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/occurrences": {
       "get": {
         "description": "This event's occurrences in a window (B-052): the API\nreturns occurrences, never the rule, so the frontend does\nzero date maths. ``from``/``to`` are ISO datetimes; the\ndefault window is the event's start through +92 days.",
@@ -10057,6 +11105,67 @@
           }
         },
         "summary": "Draft Reannouncement",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/reannounce-drafts/{draft_id}/approve": {
+      "post": {
+        "description": "Approve a draft and SEND the change alerts (B-097):\nexactly the event's RSVP'd people are told, through the\noutbox, and the event's needs_reannounce flag clears \u2014\nthe group has been told.",
+        "operationId": "approve_reannouncement_api_v1_groups__group_id__events__event_id__reannounce_drafts__draft_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "draft_id",
+            "required": true,
+            "schema": {
+              "title": "Draft Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementDraftResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Reannouncement",
         "tags": [
           "events"
         ]
@@ -11267,6 +12376,101 @@
         "summary": "Month",
         "tags": [
           "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/notification-failures": {
+      "get": {
+        "description": "Failed and dead notifications for this group, with the\nprovider's mail events about them (organiser+). A failing\naddress is visible here \u2014 never silently retried forever.",
+        "operationId": "get_failures_api_v1_groups__group_id__notification_failures_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailuresResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Failures",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/notifications/{notification_id}/resend": {
+      "post": {
+        "description": "Requeue a failed/dead notification (organiser+): a\nperson's decision, with attempts reset.",
+        "operationId": "resend_notification_api_v1_groups__group_id__notifications__notification_id__resend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "title": "Notification Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resend Notification",
+        "tags": [
+          "notifications"
         ]
       }
     },
@@ -13918,6 +15122,102 @@
         ]
       }
     },
+    "/api/v1/invites/{token}": {
+      "get": {
+        "description": "The invite's public face: enough of the event to answer\nit \u2014 the B-059 PUBLIC projection (no host, no cost, no\naccess notes), never the group's internals.",
+        "operationId": "view_invite_api_v1_invites__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInviteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "View Invite",
+        "tags": [
+          "invites"
+        ]
+      }
+    },
+    "/api/v1/invites/{token}/rsvp": {
+      "post": {
+        "description": "Answer without an account: the RSVP lands attributed\nto the invited address (``guest:<email>``), and an account\nis offered \u2014 in the response, and never as a toll gate.",
+        "operationId": "respond_invite_api_v1_invites__token__rsvp_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteRespondRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteRespondResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Respond Invite",
+        "tags": [
+          "invites"
+        ]
+      }
+    },
     "/api/v1/jobs/{job_id}": {
       "get": {
         "description": "One job's state: queued, running, done, or dead-lettered.",
@@ -14276,6 +15576,186 @@
         ]
       }
     },
+    "/api/v1/users/me/groups/{group_id}/notification-preferences": {
+      "get": {
+        "description": "My effective notification policy in this group: every\nswitch (defaults filled in) and my quiet hours.",
+        "operationId": "get_preferences_api_v1_users_me_groups__group_id__notification_preferences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Preferences",
+        "tags": [
+          "notifications"
+        ]
+      },
+      "put": {
+        "description": "Set my switches / quiet hours in this group.",
+        "operationId": "put_preferences_api_v1_users_me_groups__group_id__notification_preferences_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Preferences",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/users/me/inbox": {
+      "get": {
+        "description": "My notifications across my groups: the same rows the\nemail channel sends from \u2014 the two can never disagree\nabout what was sent (B-101).",
+        "operationId": "get_inbox_api_v1_users_me_inbox_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unread_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unread Only",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inbox",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/users/me/inbox/{notification_id}/read": {
+      "post": {
+        "operationId": "mark_inbox_read_api_v1_users_me_inbox__notification_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "title": "Notification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Inbox Read",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/api/v1/users/me/password": {
       "post": {
         "description": "Change my password (current password required); every\nexisting session is revoked by the service (B-020).",
@@ -14308,6 +15788,59 @@
         "summary": "Change Password",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/api/v1/webhooks/mail/{provider}": {
+      "post": {
+        "description": "Record a provider's bounce/complaint (stubbed\nreceiver): a bounce also marks its notification failed,\nso the address shows on the admin failure list.",
+        "operationId": "mail_webhook_api_v1_webhooks_mail__provider__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailWebhookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MailEventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mail Webhook",
+        "tags": [
+          "notifications"
         ]
       }
     },

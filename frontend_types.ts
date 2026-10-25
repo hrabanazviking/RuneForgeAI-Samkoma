@@ -25,6 +25,8 @@ export interface AnnouncementDraftResponse {
   event_id: string;
   group_id: string;
   id: string;
+  sent_at?: string | unknown | null | null;
+  sent_by?: string | unknown | null | null;
 }
 
 export interface ApiKeyCreateRequest {
@@ -302,6 +304,19 @@ export interface DigestEventResponse {
   title: string;
 }
 
+export interface DigestResponse {
+  body_html: string;
+  body_text: string;
+  created_at: string;
+  created_by: string;
+  group_id: string;
+  id: string;
+  sent_at: string | unknown | null | null;
+  subject: string;
+  week_end: string;
+  week_start: string;
+}
+
 export interface EmailChangeRequest {
   new_email: string;
 }
@@ -431,6 +446,11 @@ export interface FacebookDraftResponse {
   payload: Record<string, unknown>;
 }
 
+export interface FailuresResponse {
+  mail_events: MailEventResponse[];
+  notifications: NotificationResponse[];
+}
+
 export interface FeedIssueRequest {
   filters?: Record<string, unknown>;
 }
@@ -519,22 +539,32 @@ export interface GroupCreateRequest {
 }
 
 export interface GroupResponse {
+  ai_reminder_wording?: boolean;
   default_place: string;
   description: string;
+  digest_enabled?: boolean;
+  digest_time?: string;
+  digest_weekday?: number | unknown | null | null;
   home_timezone: string;
   id: string;
   my_role?: string | unknown | null | null;
   name: string;
+  reminder_rules?: ReminderRule[];
   slug: string;
   visibility: string;
 }
 
 export interface GroupUpdateRequest {
   ai_daily_budget_micros?: number | unknown | null | null;
+  ai_reminder_wording?: boolean | unknown | null | null;
   default_place?: string | unknown | null | null;
   description?: string | unknown | null | null;
+  digest_enabled?: boolean | unknown | null | null;
+  digest_time?: string | unknown | null | null;
+  digest_weekday?: number | unknown | null | null;
   home_timezone?: string | unknown | null | null;
   name?: string | unknown | null | null;
+  reminder_rules?: ReminderRule[] | unknown | null | null;
   visibility?: string | unknown | null | null;
 }
 
@@ -557,6 +587,11 @@ export interface InboundAddressResponse {
   token_prefix: string;
 }
 
+export interface InboxResponse {
+  items: NotificationResponse[];
+  unread: number;
+}
+
 export interface InstantiationResponse {
   checklist_item_ids: string[];
   event_id: string;
@@ -565,9 +600,39 @@ export interface InstantiationResponse {
   template_id: string;
 }
 
+export interface InviteCreateRequest {
+  email: string;
+}
+
 export interface InviteRequest {
   email: string;
   role?: string;
+}
+
+export interface InviteRespondRequest {
+  guests?: number;
+  note?: string;
+  status: string;
+}
+
+export interface InviteRespondResponse {
+  account_offered: boolean;
+  principal_label: string;
+  rsvp_id: string;
+  status: string;
+}
+
+export interface InviteResponse {
+  email: string;
+  event_id: string;
+  expires_at: string;
+  group_id: string;
+  id: string;
+  link?: string | unknown | null | null;
+  rsvp_id: string | unknown | null | null;
+  status: string;
+  token_prefix: string;
+  user_id: string | unknown | null | null;
 }
 
 export interface JobResponse {
@@ -601,6 +666,23 @@ export interface LoginRequest {
 
 export interface MagicLinkRequest {
   email: string;
+}
+
+export interface MailEventResponse {
+  created_at: string;
+  detail: string;
+  email: string;
+  event_type: string;
+  id: string;
+  notification_id: string | unknown | null | null;
+  provider: string;
+}
+
+export interface MailWebhookRequest {
+  detail?: string;
+  email: string;
+  event_type: string;
+  notification_id?: string | unknown | null | null;
 }
 
 export interface MatchView {
@@ -656,6 +738,30 @@ export interface MonthResponse {
   timezone: string;
   weeks: MonthDay[][];
   year: number;
+}
+
+export interface NotificationResponse {
+  attempts: number;
+  body_html: string;
+  body_text: string;
+  created_at: string;
+  event_id: string | unknown | null | null;
+  group_id: string | unknown | null | null;
+  id: string;
+  in_app: boolean;
+  kind: string;
+  last_error: string;
+  read_at: string | unknown | null | null;
+  recipient_email: string;
+  recipient_label: string;
+  send_after: string;
+  send_email: boolean;
+  sent_at: string | unknown | null | null;
+  status: string;
+  subject: string;
+  template_body: string;
+  urgent: boolean;
+  wording_source: string;
 }
 
 export interface OccurrenceResponse {
@@ -746,6 +852,23 @@ export interface PollVoteRequest {
   option_id: string;
 }
 
+export interface PreferenceSwitch {
+  channel: string;
+  enabled?: boolean;
+  kind: string;
+}
+
+export interface PreferencesResponse {
+  group_id: string;
+  quiet_hours: QuietHours | unknown | null | null;
+  switches: PreferenceSwitch[];
+}
+
+export interface PreferencesUpdateRequest {
+  quiet_hours?: QuietHours | unknown | null | null;
+  switches?: PreferenceSwitch[];
+}
+
 export interface PrintEventRow {
   bring?: string;
   cost?: string;
@@ -779,6 +902,22 @@ export interface ProvenanceEntry {
   region?: number[] | unknown | null | null;
   sent_at?: string | unknown | null | null;
   supported?: boolean;
+}
+
+export interface PublicInviteResponse {
+  account_offered: boolean;
+  description: string;
+  email: string;
+  ends_at: string;
+  event_id: string;
+  group_id: string;
+  group_name: string;
+  place_address: string;
+  place_name: string;
+  starts_at: string;
+  status: string;
+  timezone: string;
+  title: string;
 }
 
 export interface QualityContradictionRef {
@@ -847,6 +986,12 @@ export interface QueueStatusResponse {
   spent_today_micros: number;
 }
 
+export interface QuietHours {
+  end: string;
+  start: string;
+  timezone?: string | unknown | null | null;
+}
+
 export interface RecurrenceRequest {
   exceptions?: Record<string, unknown>[] | unknown | null | null;
   rrule: string;
@@ -868,6 +1013,11 @@ export interface RegisterRequest {
   name?: string;
   password: string;
   timezone?: string;
+}
+
+export interface ReminderRule {
+  days?: number | unknown | null | null;
+  kind: string;
 }
 
 export interface ResolveContradictionRequest {
