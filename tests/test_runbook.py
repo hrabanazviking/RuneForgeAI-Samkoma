@@ -137,7 +137,10 @@ def test_runbook_disk_full_and_recovery(tmp_path):
         settings = make_settings(tmp_path, storage_dir=mount / "storage")
         app = create_app(settings)
         client = TestClient(app)
-        assert client.get("/health").json()["checks"]["storage"]["status"] == "ok"
+        owner = register(client)  # deep checks need a signed-in caller
+        assert client.get(
+            "/health", headers=bearer(owner)
+        ).json()["checks"]["storage"]["status"] == "ok"
 
         storage = app.state.storage
         keys = []
@@ -150,13 +153,15 @@ def test_runbook_disk_full_and_recovery(tmp_path):
                 )
         except OSError:
             pass
-        health = client.get("/health").json()
+        health = client.get("/health", headers=bearer(owner)).json()
         assert health["checks"]["storage"]["status"] == "error"
         assert health["status"] == "degraded"
 
         for key in keys:  # the runbook fix: free the space
             storage.delete(key)
-        assert client.get("/health").json()["checks"]["storage"]["status"] == "ok"
+        assert client.get(
+            "/health", headers=bearer(owner)
+        ).json()["checks"]["storage"]["status"] == "ok"
     finally:
         subprocess.run(["umount", str(mount)], capture_output=True)
 
@@ -184,6 +189,7 @@ def test_runbook_token_expired_and_fresh_login(tmp_path):
 
 
 def test_runbook_job_stuck_requeue_and_drain(client, app, db_session, settings):
+    owner = register(client)  # deep /health checks need a signed-in caller
     job_service.register_handler("runbook_probe", lambda db, payload: None)
     job = Job(kind="runbook_probe", status="running", payload_json="{}",
               locked_by="worker-that-died")
@@ -194,7 +200,7 @@ def test_runbook_job_stuck_requeue_and_drain(client, app, db_session, settings):
     job.created_at = stale
     db_session.commit()
 
-    health = client.get("/health").json()
+    health = client.get("/health", headers=bearer(owner)).json()
     assert health["checks"]["jobs"]["stuck_running"] >= 1
     assert health["status"] == "degraded"
 

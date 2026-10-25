@@ -3,9 +3,13 @@
 One page, five failures, the exact fix for each. Every entry
 is reproduced from a deliberately broken box in
 `tests/test_runbook.py` — if a fix stops working, a test
-says so. Start every diagnosis at **`GET /health`**: it is
-unauthenticated, and its `checks` block names the failing
-layer before you read a single log line.
+says so. Start every diagnosis at **`GET /health`**: the
+status word is public (a load balancer needs it), and the
+`checks` block — which names the failing layer before you
+read a single log line — is disclosed to any signed-in
+session, so bring your operator login. (Anonymous callers
+get the minimal liveness answer only; the Phase 13 threat
+model owns that surface.)
 
 | # | Failure | /health says |
 |---|---------|--------------|

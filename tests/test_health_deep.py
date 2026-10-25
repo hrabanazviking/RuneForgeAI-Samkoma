@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 
-from conftest import make_settings
+from conftest import bearer, make_settings, register
 from gpa.main import create_app
 from gpa.models.core import Job
 from gpa.services import health as health_service
@@ -30,7 +30,16 @@ def _job(db_session, *, status, age_minutes=0, kind="notify"):
 
 
 def test_health_reports_the_deep_checks(client):
-    body = client.get("/health").json()
+    # Anonymous callers get the Phase 13 minimal surface:
+    # the deep checks are operational data, disclosed to
+    # signed-in callers only (the threat model's test pins
+    # the anonymous side of this bargain).
+    anonymous = client.get("/health").json()
+    assert anonymous["status"] == "ok"
+    assert anonymous["checks"] == {}
+
+    owner = register(client)
+    body = client.get("/health", headers=bearer(owner)).json()
     assert body["status"] == "ok"
     checks = body["checks"]
     assert checks["database"]["status"] == "ok"
@@ -52,7 +61,8 @@ def test_health_counts_jobs_and_flags_stuck_and_dead(client, db_session):
     _job(db_session, status="done")
     _job(db_session, status="dead")
 
-    response = client.get("/health")
+    owner = register(client)
+    response = client.get("/health", headers=bearer(owner))
     assert response.status_code == 200  # degraded still answers 200
     body = response.json()
     assert body["status"] == "degraded"  # dead + stuck demand eyes
@@ -70,7 +80,9 @@ def test_health_storage_failure_degrades(app):
     # reproduction. (An unusable storage dir at BOOT refuses
     # the boot instead — a different, also-honest answer.)
     app.state.storage = _FailingStorage()
-    body = TestClient(app).get("/health").json()
+    client = TestClient(app)
+    owner = register(client)
+    body = client.get("/health", headers=bearer(owner)).json()
     assert body["checks"]["storage"]["status"] == "error"
     assert body["status"] == "degraded"
 
@@ -89,8 +101,10 @@ def test_health_database_down_is_503_with_the_health_body(tmp_path):
     assert response.status_code == 503
     body = response.json()
     assert body["status"] == "down"
-    assert body["checks"]["database"]["status"] == "error"
     assert body["database"] == "error"
+    # Anonymous even here: the error's detail can carry a
+    # filesystem path, so the deep checks stay empty.
+    assert body["checks"] == {}
 
 
 def test_deep_health_unit_reports_down_without_raising(tmp_path):
