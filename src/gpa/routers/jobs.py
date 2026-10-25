@@ -43,7 +43,7 @@ def _job_group_id(db: Session, job) -> str | None:
     outbound webhook (delivery). Anything else names no group.
     """
     try:
-        payload = json.loads(job.payload_json or "{}")
+        payload = job_service.payload_of(job)
     except ValueError:
         return None
     if not isinstance(payload, dict):

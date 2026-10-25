@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from gpa.errors import AppError
 from gpa.models.groups import Candidate, Group
 from gpa.models.sources import Provenance
-from gpa.services import audit, quality
+from gpa.services import audit, quality, sources as source_service
 
 # Statuses a reviewer may still act on (edit / reject / merge /
 # approve). Decided rows — approved, rejected, merged,
@@ -151,7 +151,7 @@ def provenance_of(db: Session, candidate: Candidate) -> list[dict]:
                 "field": row.field,
                 "chunk_id": row.chunk_id,
                 "chunk_position": None,
-                "quote": row.quote,
+                "quote": source_service.open_quote(db, row),
                 # A vision row's evidence is its region (B-063):
                 # the box rides along so the queue can highlight
                 # the rectangle the field was read from.

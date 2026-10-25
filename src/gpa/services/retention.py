@@ -57,7 +57,7 @@ def _job_group_id(job: Job) -> str | None:
     import json
 
     try:
-        return json.loads(job.payload_json or "{}").get("group_id")
+        return job_service.payload_of(job).get("group_id")
     except ValueError:
         return None
 

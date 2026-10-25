@@ -1755,6 +1755,42 @@ Phase 16 begins at B-157.
   Acceptance (tests/test_internal_profiles.py, 11 passed):
   the same probes pass in BOTH profiles unchanged; a copied
   database yields no readable job payload; legacy rows read.
+- **B-167 field-level encryption** ✅: `gpa/crypto/fields.py`
+  — master key (env `GPA_MASTER_KEY_B64`, never in the DB;
+  dev derivation fallback) wraps per-group random data keys
+  (`group_keys` table, migration 0017); fields seal as
+  `enc:v1:` + AES-256-GCM with the seal bound to group +
+  field name; a keyed HMAC blind index rides for lookup
+  fields. Adopted by the rawest content: source chunk text +
+  sender names (sealed in sources/transcribe/vision/
+  tombstone-restore writers, opened in the list_chunks
+  funnel via set_committed_value so no flush can write
+  plaintext back), provenance quotes (add_provenance seals;
+  candidates/events/merging/tombstone-export read through
+  open_quote; merging dedups on OPENED quotes — seals are
+  nonce-random and never match themselves), and
+  event-source-link quotes (opened+resealed at mint, never
+  copied sealed-to-sealed; the events router opens for
+  projection). The group export opens all three at assembly
+  (the archive is the owner's readable data). Opening never
+  creates key material: a sealed value naming a keyless group
+  is tampering. DEFECTS FOUND BY THE REGRESSION BATCH, fixed
+  at root (B-166 completeness): vision's payload stamp,
+  retention's payload reader, the jobs router's projection,
+  and erasure's job attribution (a SQL LIKE over payload_json
+  matches nothing under sealing — jobs of an erased group
+  would have survived; attribution now opens payloads).
+  Deliberate new architecture pins, with reasons: candidates→
+  sources, merging→sources, transcribe→sources (quote/chunk
+  sealing law lives with the data's owner; writes ride the
+  caller's transaction), stream→jobs (payload reading law),
+  erasure→jobs (payload attribution) — inventory 106 → 111.
+  Acceptance (tests/test_field_encryption.py, 6 passed): raw
+  DB+WAL grep finds no seeded secret/name/text while the API
+  serves them whole; wrapped keys distinct per group, data
+  keys nowhere in the file; cross-group/cross-field opens
+  refused. NOT yet sealed (service is field-generic; named
+  next adopters): candidate draft fields and discussion text.
 
 ## Standing laws in force here
 

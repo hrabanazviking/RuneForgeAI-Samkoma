@@ -145,6 +145,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     from gpa.services import jobs as _jobs
 
     _jobs.set_settings(settings)
+    # The field-encryption service's settings (B-167): the
+    # master key's one source in this process.
+    from gpa.crypto import fields as _fields
+
+    _fields.set_settings(settings)
     # The mail transport (Phase 8, B-095): the notification
     # outbox sends through this driver boundary — the file
     # driver in dev; the SMTP provider driver in production

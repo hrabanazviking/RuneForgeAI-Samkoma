@@ -152,6 +152,18 @@ def list_event_sources(
         .order_by(EventSourceLink.created_at, EventSourceLink.id)
         .all()
     )
+    # Link quotes are sealed at rest (B-167); open them for
+    # the projection, committed-value style so no flush can
+    # write the opened form back.
+    from sqlalchemy.orm import attributes
+
+    from gpa.crypto import fields
+
+    for row in rows:
+        attributes.set_committed_value(
+            row, "quote",
+            fields.open_text(db, context.group.id, "event_link.quote", row.quote),
+        )
     return [source_link_view(row) for row in rows]
 
 

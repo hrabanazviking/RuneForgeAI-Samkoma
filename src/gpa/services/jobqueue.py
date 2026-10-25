@@ -293,6 +293,10 @@ async def arq_startup(ctx: dict) -> None:
     # The job chassis' sealing settings (B-166), as in the
     # other composition roots.
     job_service.set_settings(settings)
+    # The field-encryption service's settings (B-167).
+    from gpa.crypto import fields as _fields
+
+    _fields.set_settings(settings)
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))
     _outbound.set_settings(settings)

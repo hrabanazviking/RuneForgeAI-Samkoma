@@ -110,9 +110,9 @@ def request_vision_read(
     # The job's id joins its payload (enqueue commits first — the
     # id only exists afterwards) so the run can advance its own
     # progress row and stamp its candidates (B-069, as B-045).
-    payload = json.loads(job.payload_json or "{}")
+    payload = job_service.payload_of(job)
     payload["job_id"] = job.id
-    job.payload_json = json.dumps(payload)
+    job_service.store_payload(job, payload)
     db.commit()
     audit.record(
         db, actor=actor_label, action="vision.requested",
@@ -303,11 +303,12 @@ def _read_one_flyer(
     chunks = source_service.list_chunks(db, source)
     if chunks:
         chunk = chunks[0]
-        chunk.text = reading.transcript
+        chunk.text = source_service.seal_chunk_text(db, source.group_id, reading.transcript)
         chunk.region_json = json.dumps({"box": region_box or [0, 0, 1, 1]})
     else:
         chunk = SourceChunk(
-            source_id=source.id, position=0, text=reading.transcript,
+            source_id=source.id, position=0,
+            text=source_service.seal_chunk_text(db, source.group_id, reading.transcript),
             region_json=json.dumps({"box": region_box or [0, 0, 1, 1]}),
         )
         db.add(chunk)

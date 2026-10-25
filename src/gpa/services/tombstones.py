@@ -175,7 +175,7 @@ def snapshot_source(db: Session, source: Source) -> str:
                 {
                     "id": row.id, "candidate_id": row.candidate_id,
                     "chunk_id": row.chunk_id, "field": row.field,
-                    "quote": row.quote, "region_json": row.region_json,
+                    "quote": source_service.open_quote(db, row), "region_json": row.region_json,
                 }
                 for row in provenance
             ],
@@ -262,8 +262,11 @@ def restore_source(db: Session, *, actor_label: str, group: Group, source_id: st
         db.add(
             SourceChunk(
                 id=chunk_data["id"], source_id=chunk_data["source_id"],
-                position=chunk_data["position"], text=chunk_data["text"],
-                sender=chunk_data["sender"],
+                position=chunk_data["position"],
+                # The snapshot carries opened text; restoring
+                # seals it again (B-167).
+                text=source_service.seal_chunk_text(db, source.group_id, chunk_data["text"]),
+                sender=source_service.seal_chunk_sender(db, source.group_id, chunk_data["sender"]),
                 sent_at=_stamp(chunk_data["sent_at"]),
                 timestamp_text=chunk_data["timestamp_text"],
                 region_json=chunk_data["region_json"],

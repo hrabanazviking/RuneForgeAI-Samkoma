@@ -39,6 +39,10 @@ def main() -> None:
     from gpa.services import jobs as _jobs
 
     _jobs.set_settings(settings)
+    # The field-encryption service's settings (B-167).
+    from gpa.crypto import fields as _fields
+
+    _fields.set_settings(settings)
     ai_client.set_client(ai_client.build_client(settings))
     mailer.set_transport(mailer.build_transport(settings))
     messenger_transport.set_transport(messenger_transport.build_transport(settings))

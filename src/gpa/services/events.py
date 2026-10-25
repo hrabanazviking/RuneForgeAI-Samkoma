@@ -68,6 +68,13 @@ MATERIAL_FIELDS: frozenset[str] = frozenset(
 )
 
 
+def _seal_link_quote(db, group_id: str, quote: str) -> str:
+    """An event-source link's quote, sealed (B-167)."""
+    from gpa.crypto import fields
+
+    return fields.seal_text(db, group_id, "event_link.quote", quote)
+
+
 def _stringify(value) -> str:
     """A field value's change-history form: datetimes as ISO-8601
     UTC (the stored convention), booleans as words, None as empty."""
@@ -397,7 +404,12 @@ def mint_from_candidate(
         db.add(
             EventSourceLink(
                 event_id=event.id, source_id=chunk.source_id,
-                field=row.field, quote=row.quote,
+                field=row.field,
+                # The quote crosses stores: opened from the
+                # provenance seal, resealed as a link quote
+                # (B-167) — never copied sealed-to-sealed,
+                # never stored in the clear.
+                quote=_seal_link_quote(db, event.group_id, source_service.open_quote(db, row)),
             )
         )
         linked_sources.add(chunk.source_id)
@@ -506,7 +518,10 @@ def create_event(
     )
     db.add(event)
     db.flush()
-    db.add(EventSourceLink(event_id=event.id, source_id=source.id, field="", quote=summary))
+    db.add(EventSourceLink(
+        event_id=event.id, source_id=source.id, field="",
+        quote=_seal_link_quote(db, group.id, summary),
+    ))
     audit.record(
         db, actor=actor_label, action="event.created",
         group_id=group.id, entity_type="event", entity_id=event.id,

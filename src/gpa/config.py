@@ -108,6 +108,12 @@ class Settings(BaseSettings):
     # (development custody, full machinery).
     internal_identities_dir: str = ""
 
+    # Field-encryption master key (B-167): base64 of 32 bytes.
+    # Wraps every group's data key; never stored in the
+    # database. Empty derives a master from the app secret
+    # (development posture); production sets a real one.
+    master_key_b64: str = ""
+
     # Replay window for signed internal messages (B-164).
     internal_replay_window_seconds: int = 300
 
