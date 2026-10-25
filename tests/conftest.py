@@ -63,6 +63,11 @@ PG_FILE_TESTS = {
     # The B-151 parent-directory guarantee is about SQLite
     # file paths.
     ("test_foundation.py", "test_database_opens_in_a_directory_that_does_not_exist_yet"),
+    # WAL + synchronous=FULL are SQLite PRAGMAs; there is no
+    # PostgreSQL spelling of them. The durability intent is
+    # carried by the server's own configuration, and that the
+    # app honours its engine is what the whole PG mode proves.
+    ("test_foundation.py", "test_sqlite_pragmas"),
     # Greps the SQLite file's bytes for an unsealed secret;
     # the parity test reads the raw stored column on PG.
     ("test_integrations_framework.py", "test_config_is_sealed_at_rest_and_reads_back"),
