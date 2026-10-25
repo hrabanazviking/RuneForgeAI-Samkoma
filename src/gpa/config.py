@@ -104,6 +104,21 @@ class Settings(BaseSettings):
     ai_price_spark_micros_per_1k: int = 0
     ai_price_wonder_micros_per_1k: int = 0
 
+    # Mail transport (Phase 8, B-095). The notification outbox
+    # sends through ONE driver boundary (services/mailer.py):
+    # "file" is the dev driver — messages land as JSON files in
+    # ``outbox_dir``, exactly where an operator (or a test) can
+    # read them; the real provider driver lands in Phase 12
+    # (B-133) behind the same protocol. Tests register capture /
+    # failing transports through the mailer registry instead.
+    mail_transport: str = "file"
+
+    # The public origin invite links are built on (B-098):
+    # "{public_base_url}/invite/<token>". Empty means links are
+    # path-only ("/invite/<token>") — right for local dev, and
+    # the frontend can absolutise them itself.
+    public_base_url: str = ""
+
     # Board segmentation (Phase 5, B-064, decision D-19): SAM is
     # used ONLY to cut a board photo into poster regions. Its base
     # URL names a SAM-shaped HTTP endpoint; empty (the default)

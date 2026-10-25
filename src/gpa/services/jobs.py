@@ -34,6 +34,32 @@ def register_handler(kind: str, handler: Callable[[Session, dict], None]) -> Non
     HANDLERS[kind] = handler
 
 
+def queue(
+    db: Session,
+    *,
+    kind: str,
+    payload: dict | None = None,
+    run_at=None,
+    max_attempts: int = 5,
+) -> Job:
+    """Add a queued job WITHOUT committing (Phase 8).
+
+    The outbox pattern (B-095) writes a notification row and its
+    send job in the caller's transaction, so both exist or
+    neither does. ``enqueue`` below is this plus a commit, for
+    callers who own no larger transaction.
+    """
+    job = Job(
+        kind=kind,
+        payload_json=json.dumps(payload or {}),
+        run_at=run_at or now_utc(),
+        max_attempts=max_attempts,
+    )
+    db.add(job)
+    db.flush()
+    return job
+
+
 def enqueue(
     db: Session,
     settings: Settings,
@@ -44,13 +70,13 @@ def enqueue(
     max_attempts: int | None = None,
 ) -> Job:
     """Commit a new queued job and return it."""
-    job = Job(
+    job = queue(
+        db,
         kind=kind,
-        payload_json=json.dumps(payload or {}),
-        run_at=run_at or now_utc(),
+        payload=payload,
+        run_at=run_at,
         max_attempts=max_attempts or settings.job_max_attempts,
     )
-    db.add(job)
     db.commit()
     return job
 

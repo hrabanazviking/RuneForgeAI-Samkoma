@@ -8,7 +8,7 @@ role, never a fake user (roadmap D-35).
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from gpa.db import Base
@@ -46,6 +46,20 @@ class Group(Base):
     # micro-units of currency to match the AiUsage ledger. NULL
     # means "no cap set" — the soft-stop has nothing to stop at.
     ai_daily_budget_micros: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Phase 8 comms settings (B-096/B-099/B-103). Reminder rules
+    # as JSON: a list of {"kind": "days_before", "days": n} and
+    # {"kind": "morning_of"} — empty means the roadmap defaults
+    # (7 days, 1 day, morning-of). The digest schedule: weekday
+    # (0 = Monday … 6 = Sunday, group-local) + "HH:MM"; NULL
+    # weekday means the default (Monday 08:00) when the digest
+    # is enabled. ``ai_reminder_wording`` is the B-103 opt-in:
+    # the model may rephrase reminder words around the facts,
+    # never change them.
+    reminder_rules_json: Mapped[str] = mapped_column(Text, default="")
+    digest_weekday: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    digest_time: Mapped[str] = mapped_column(String(5), default="")
+    digest_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    ai_reminder_wording: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

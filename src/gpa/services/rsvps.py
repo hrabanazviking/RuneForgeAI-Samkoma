@@ -4,13 +4,18 @@ One answer per person per event: coming / can't / maybe, plus
 guests and a note. Capacity turns answers into arithmetic the
 SERVICE owns: when the coming-set overflows the room, the
 overflow waits — in arrival order, as data (``waitlist_position``)
-— and when a seat frees, the next in line is promoted and a
-notification job is enqueued for them.
+— and when a seat frees, the next in line is promoted and told.
 
-The notification itself is Phase 11's outbox; here the job is
-the durable record, and this module registers its ``notify``
-handler (an audit-writing stub in the transcribe stub's style)
-so a promotion is never a job that fails for want of a handler.
+Since Phase 8 the telling is the notification outbox
+(services/notifications.py): a promotion writes a real
+Notification row (kind ``rsvp.promoted``) whose send job the
+outbox owns — the ``notify`` handler lives there now. This
+module's Phase 4 audit-stub handler and its bare job enqueue
+were superseded by that move; the job payload still carries
+``to``/``kind``/``rsvp_id`` for anyone reading the queue.
+Answer changes also re-materialise the event's reminders
+(B-096): a new "coming" starts being reminded, a withdrawn
+one stops.
 """
 
 from sqlalchemy.orm import Session
@@ -21,7 +26,8 @@ from gpa.models.events import RSVP_STATUSES, Event, Rsvp
 from gpa.models.groups import Group
 from gpa.services import audit
 from gpa.services import events as event_service
-from gpa.services import jobs as job_service
+from gpa.services import notifications as notify_service
+from gpa.services import reminders as reminder_service
 
 NOTIFY_JOB_KIND = "notify"
 
@@ -78,33 +84,22 @@ def _notify_promotions(
     db: Session, settings: Settings, *, group: Group, event: Event,
     promoted: list[Rsvp], actor_label: str,
 ) -> None:
-    """One notification job per promotion (B-061's acceptance):
-    the freed seat OFFERED to the next in line is a job on the
-    durable queue, never a side-effect lost with the request."""
+    """One notification per promotion (B-061's acceptance): the
+    freed seat OFFERED to the next in line is a row in the
+    notification outbox with its own send job — durable, and
+    never a side-effect lost with the request. (Phase 8
+    superseded this module's old bare-job enqueue: the payload
+    keeps ``to``/``kind``/``rsvp_id``, and gains the
+    ``notification_id`` the outbox handler delivers.)"""
     for row in promoted:
-        # Audit first, then enqueue: enqueue commits the session,
-        # carrying the audit row with it — audit-after-enqueue
-        # would strand the last promotion's row uncommitted.
         audit.record(
             db, actor=actor_label, action="rsvp.promoted",
             group_id=group.id, entity_type="rsvp", entity_id=row.id,
             detail={"event_id": event.id, "to": row.principal_label},
         )
-        job_service.enqueue(
-            db, settings,
-            kind=NOTIFY_JOB_KIND,
-            payload={
-                "group_id": group.id,
-                "event_id": event.id,
-                "rsvp_id": row.id,
-                "to": row.principal_label,
-                "kind": "rsvp.promoted",
-                "message": (
-                    f"A place opened up at '{event.title}' — "
-                    f"you were next in line and now have a seat."
-                ),
-            },
-        )
+        notify_service.notify_rsvp_promotion(db, group=group, event=event, rsvp=row)
+    if promoted:
+        db.commit()
 
 
 def set_rsvp(
@@ -157,6 +152,9 @@ def set_rsvp(
         group_id=group.id, entity_type="event", entity_id=event.id,
         detail={"status": status, "guests": guests},
     )
+    # The answer set changed, so the reminder set does too
+    # (B-096) — in this same transaction.
+    reminder_service.schedule_reminders(db, group=group, event=event)
     db.commit()
     _notify_promotions(
         db, settings, group=group, event=event,
@@ -191,6 +189,7 @@ def remove_rsvp(
         db, actor=principal_label, action="rsvp.removed",
         group_id=group.id, entity_type="event", entity_id=event.id,
     )
+    reminder_service.schedule_reminders(db, group=group, event=event)
     db.commit()
     _notify_promotions(
         db, settings, group=group, event=event, promoted=promoted,
@@ -246,34 +245,3 @@ def summary(db: Session, event: Event) -> dict:
         "cant": len([r for r in rows if r.status == "cant"]),
     }
 
-
-# ------------------------------------------------------------------
-# The notify job handler (Phase 11 grows the real outbox here)
-# ------------------------------------------------------------------
-
-
-def handle_notify(db: Session, payload: dict) -> None:
-    """Record a queued notification in the audit trail.
-
-    The honest stub, in services/transcribe.py's style: the job
-    chassis delivers the payload; the audit row is the durable
-    record that the notification was queued and for whom. Real
-    delivery (mail/push) is the notifications module's work in
-    Phase 11 — nothing here pretends an email was sent."""
-    audit.record(
-        db, actor="system:notify", action="notification.queued",
-        group_id=payload.get("group_id"),
-        entity_type="event", entity_id=payload.get("event_id", ""),
-        detail={
-            "to": payload.get("to"), "kind": payload.get("kind"),
-            "message": payload.get("message"),
-        },
-    )
-
-
-def register_handlers() -> None:
-    """Register the notify handler with the job chassis."""
-    job_service.register_handler(NOTIFY_JOB_KIND, handle_notify)
-
-
-register_handlers()

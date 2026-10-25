@@ -14,6 +14,8 @@ Alembic and the test fixtures both rely on that. Domain files:
     planning.py  tasks, decisions, open questions, polls,
                  checklists, role slots, cost lines, availability,
                  templates (Phase 7)
+    notifications.py  notifications, preferences, quiet hours,
+                 event invites, digests, mail events (Phase 8)
 """
 
 from gpa.models.ai import AiUsage
@@ -32,6 +34,14 @@ from gpa.models.events import (
 )
 from gpa.models.groups import AgentSeat, Candidate, Group, Membership
 from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User
+from gpa.models.notifications import (
+    Digest,
+    EventInvite,
+    MailEvent,
+    MemberNotificationSettings,
+    Notification,
+    NotificationPreference,
+)
 from gpa.models.planning import (
     AvailabilityMark,
     AvailabilitySlot,
@@ -62,7 +72,9 @@ __all__ = [
     "Comment",
     "CostLine",
     "Decision",
+    "Digest",
     "Event",
+    "EventInvite",
     "EventChange",
     "EventContradiction",
     "EventSourceLink",
@@ -71,7 +83,11 @@ __all__ = [
     "Group",
     "InboundAddress",
     "Job",
+    "MailEvent",
+    "MemberNotificationSettings",
     "Membership",
+    "Notification",
+    "NotificationPreference",
     "OneTimeToken",
     "OpenQuestion",
     "Poll",
