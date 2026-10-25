@@ -47,6 +47,7 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "internal_bad_payload": (422, "That internal call's payload could not be understood"),
     "internal_tampered": (400, "That internal message failed its integrity check"),
     "internal_bad_signature": (401, "That internal message's signature did not verify"),
+    "internal_replayed": (401, "That internal message was already seen"),
     "internal_bad_key": (500, "The internal key configuration is invalid"),
 }
 

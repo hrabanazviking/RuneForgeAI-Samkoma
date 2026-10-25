@@ -101,9 +101,20 @@ def caller_may(caller: str, scope: str) -> bool:
     and tests via :func:`grant`; B-164's identity-backed
     authoriser answers the same question from key material.
     """
-    return scope in CALLER_GRANTS.get(caller, frozenset()) | _EXTRA_GRANTS.get(
+    return scope in grants_for(caller)
+
+
+def grants_for(caller: str) -> frozenset[str]:
+    """Every scope a caller holds (static table + runtime
+    grants) — the read side B-164's identities report."""
+    return CALLER_GRANTS.get(caller, frozenset()) | _EXTRA_GRANTS.get(
         caller, frozenset()
     )
+
+
+def known_callers() -> list[str]:
+    """Every caller name granted anything, static or runtime."""
+    return sorted(set(CALLER_GRANTS) | set(_EXTRA_GRANTS))
 
 
 _EXTRA_GRANTS: dict[str, set[str]] = {}

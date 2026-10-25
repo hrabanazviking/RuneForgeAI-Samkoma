@@ -102,6 +102,15 @@ class Settings(BaseSettings):
     # posture); production sets a real one. Environment-only.
     internal_key_b64: str = ""
 
+    # Service identities (B-164): a directory of <name>.seed /
+    # <name>.pub files (with <name>.pub.prev as rotation
+    # overlap). Empty = identities derived from the app secret
+    # (development custody, full machinery).
+    internal_identities_dir: str = ""
+
+    # Replay window for signed internal messages (B-164).
+    internal_replay_window_seconds: int = 300
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

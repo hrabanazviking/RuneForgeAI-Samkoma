@@ -1694,6 +1694,28 @@ Phase 16 begins at B-157.
   and wire form behind the pipe are these same classes; the
   pipe leg itself is unproven here and the papers will say
   so.
+- **B-164 service identities + replay protection** ✅:
+  `gpa/internal/identity.py` (per-module Ed25519 identities,
+  key ids = SHA-256 fingerprint prefix; custody = an
+  identities directory of `<name>.seed`/`.pub`(+`.pub.prev`
+  overlap) or, dev posture, HMAC derivation from the app
+  secret — distinct key per module either way; scopes ARE
+  the registry's grants, never duplicated) and
+  `gpa/internal/replay.py` (5-minute window + seen-nonce
+  store, `internal_replayed`; in-memory per door process —
+  the restart-within-window residual is documented in the
+  module, not hidden). The door now binds envelope caller to
+  the authenticated signing identity, and `Channel.verify`
+  returns the matched key id under rotation overlap.
+  Acceptance (tests/test_internal_identity.py): impersonation
+  refused at three layers (forged signer name → bad
+  signature; honest signer + lying caller → binding refusal;
+  own name + wrong scopes → scope denial), captured-message
+  replay + stale timestamp refused, rotation overlap loses
+  nothing (old key lands mid-rotation, refused after, new
+  key works throughout). B-163's fixtures were aligned to
+  sign as their true caller ("events") — the binding's first
+  catch was our own test data.
 
 ## Standing laws in force here
 

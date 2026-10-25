@@ -67,7 +67,7 @@ def main() -> None:
         key=key,
         signer_id="fixture-server",
         signing_key=server_key,
-        public_keys={"fixture-client": client_pub},
+        public_keys={"events": client_pub},
     )
     server = UnixWireServer(socket_path, WireServer(channel, dispatch))
     serve_in_thread(server)

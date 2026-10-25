@@ -157,6 +157,15 @@ def public_key_b64(private_key: Ed25519PrivateKey) -> str:
     return _b64(raw)
 
 
+def key_id_of(public_b64: str) -> str:
+    """A public key's printable id (B-164): the first 16 hex
+    characters of its SHA-256 — short enough for logs and
+    audit lines, long enough that collisions are not a
+    practical concern at a deployment's key count."""
+    raw = base64.b64decode(public_b64.encode("ascii"))
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+
 def seed_b64(private_key: Ed25519PrivateKey) -> str:
     from cryptography.hazmat.primitives import serialization
 
@@ -216,6 +225,7 @@ __all__ = [
     "canonical_header_bytes",
     "generate_key_b64",
     "generate_signing_key",
+    "key_id_of",
     "load_internal_key",
     "open_sealed",
     "public_key_b64",

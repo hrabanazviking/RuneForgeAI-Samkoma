@@ -61,9 +61,13 @@ def _channel_pair():
     key = os.urandom(32)
     client_key = crypto.generate_signing_key()
     server_key = crypto.generate_signing_key()
+    # The client speaks AS the events module (the envelope's
+    # caller) — B-164 binds caller to the signing identity,
+    # so the fixture signs with the events name, not a pet
+    # name.
     client = Channel(
         key=key,
-        signer_id="fixture-client",
+        signer_id="events",
         signing_key=client_key,
         public_keys={"fixture-server": crypto.public_key_b64(server_key)},
     )
@@ -71,7 +75,7 @@ def _channel_pair():
         key=key,
         signer_id="fixture-server",
         signing_key=server_key,
-        public_keys={"fixture-client": crypto.public_key_b64(client_key)},
+        public_keys={"events": crypto.public_key_b64(client_key)},
     )
     return client, server
 
@@ -255,7 +259,7 @@ def test_unsigned_frame_is_refused_before_dispatch(tmp_path, echo_world):
             "nonce": "forged",
             "timestamp": "2026-10-25T12:00:00+00:00",
             "idempotency_key": None,
-            "signer": "fixture-client",
+            "signer": "events",
             "payload": {"note": SECRET_TEXT},  # in the clear!
         }
         write_frame(raw, json.dumps(forged).encode())
@@ -310,7 +314,7 @@ def test_cross_process_unix_roundtrip(tmp_path):
             time.sleep(0.05)
         channel = Channel(
             key=key,
-            signer_id="fixture-client",
+            signer_id="events",
             signing_key=client_key,
             public_keys={"fixture-server": crypto.public_key_b64(server_key)},
         )

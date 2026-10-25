@@ -113,7 +113,7 @@ class Channel:
         signer_id: str = "",
         signing_key=None,
         hmac_secret: bytes = b"",
-        public_keys: dict[str, str] | None = None,
+        public_keys: dict[str, str | list[str]] | None = None,
     ) -> None:
         if profile not in ("ed25519", "hmac"):
             raise AppError("internal_bad_key", detail=f"Unknown channel profile {profile!r}.")
@@ -132,19 +132,34 @@ class Channel:
             raise AppError("internal_bad_key", detail="This channel end cannot sign.")
         return crypto.sign(self.signing_key, data)
 
-    def verify(self, signer: str, signature: str, data: bytes) -> None:
-        """Refuses (internal_bad_signature) on ANY failure —
-        unknown signer, wrong profile material, bad math."""
+    def verify(self, signer: str, signature: str, data: bytes) -> str:
+        """Verify a signature; returns the KEY ID of the key
+        that verified (B-164 — with rotation overlap a signer
+        may have two accepted keys, and audit wants to know
+        which one spoke). Any failure — unknown signer, bad
+        math — is ``internal_bad_signature``."""
         if self.profile == "hmac":
             crypto.verify_hmac(self.hmac_secret, signature, data)
-            return
-        public = self.public_keys.get(signer)
-        if public is None:
+            import hashlib
+
+            return hashlib.sha256(self.hmac_secret).hexdigest()[:16]
+        accepted = self.public_keys.get(signer)
+        if accepted is None:
             raise AppError(
                 "internal_bad_signature",
                 detail=f"Unknown internal signer {signer!r}.",
             )
-        crypto.verify(public, signature, data)
+        candidates = [accepted] if isinstance(accepted, str) else list(accepted)
+        for public in candidates:
+            try:
+                crypto.verify(public, signature, data)
+                return crypto.key_id_of(public)
+            except AppError:
+                continue
+        raise AppError(
+            "internal_bad_signature",
+            detail="An internal message's signature did not verify.",
+        )
 
 
 def seal_request(channel: Channel, request: InternalRequest) -> bytes:
@@ -171,6 +186,15 @@ def open_request(channel: Channel, wire: bytes) -> InternalRequest:
     """Wire bytes → envelope (server side). Signature first —
     an unsigned or forged message is refused before a single
     byte is decrypted or dispatched."""
+    request, _signer, _key_id = open_request_detailed(channel, wire)
+    return request
+
+
+def open_request_detailed(
+    channel: Channel, wire: bytes
+) -> tuple[InternalRequest, str, str]:
+    """`open_request`, plus the authenticated facts B-164
+    binds policy to: (envelope, signer name, key id)."""
     try:
         message = json.loads(wire)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -183,8 +207,9 @@ def open_request(channel: Channel, wire: bytes) -> InternalRequest:
             "internal_bad_signature",
             detail="An unsigned internal message is never accepted.",
         )
-    channel.verify(
-        str(message.get("signer", "")),
+    signer = str(message.get("signer", ""))
+    key_id = channel.verify(
+        signer,
         str(signature),
         crypto.canonical_header_bytes(message),
     )
@@ -195,7 +220,7 @@ def open_request(channel: Channel, wire: bytes) -> InternalRequest:
     payload = json.loads(
         crypto.open_sealed(channel.key, str(message["payload_sealed"]), aad=crypto.canonical_header_bytes(header))
     )
-    return InternalRequest(
+    request = InternalRequest(
         operation=message["operation"],
         caller=message["caller"],
         scope=message["scope"],
@@ -205,6 +230,7 @@ def open_request(channel: Channel, wire: bytes) -> InternalRequest:
         idempotency_key=message.get("idempotency_key"),
         signature=signature,
     )
+    return request, signer, key_id
 
 
 def seal_result(channel: Channel, result: InternalResult, *, nonce: str) -> bytes:
@@ -267,17 +293,43 @@ Dispatcher = Callable[[InternalRequest], InternalResult]
 class WireServer:
     """The crypto door itself: wire bytes in, wire bytes out,
     dispatch between verify and seal. Transport-agnostic —
-    the socket runners below are thin shells around it."""
+    the socket runners below are thin shells around it.
 
-    def __init__(self, channel: Channel, dispatcher: Dispatcher) -> None:
+    B-164's bindings live here, at the door, so no dispatcher
+    can forget them: the envelope's caller must BE the
+    authenticated signing identity (a worker's key cannot
+    speak with an AI module's name), and — when a replay
+    guard is installed — the message's nonce must be fresh
+    within its window."""
+
+    def __init__(
+        self,
+        channel: Channel,
+        dispatcher: Dispatcher,
+        *,
+        replay_guard=None,
+    ) -> None:
         self.channel = channel
         self.dispatcher = dispatcher
+        self.replay_guard = replay_guard
 
     def handle(self, wire: bytes) -> bytes:
         nonce = ""
         try:
-            request = open_request(self.channel, wire)
+            request, signer, key_id = open_request_detailed(self.channel, wire)
             nonce = request.nonce
+            if request.caller != signer:
+                raise AppError(
+                    "internal_bad_signature",
+                    detail=(
+                        f"An internal message's caller '{request.caller}' is not "
+                        f"its signing identity '{signer}'."
+                    ),
+                )
+            if self.replay_guard is not None:
+                self.replay_guard.check(
+                    key_id=key_id, nonce=request.nonce, timestamp=request.timestamp
+                )
             result = self.dispatcher(request)
         except AppError as err:
             result = InternalResult(
@@ -462,6 +514,7 @@ __all__ = [
     "WireServer",
     "client_mtls_context",
     "open_request",
+    "open_request_detailed",
     "open_result",
     "read_frame",
     "seal_request",
