@@ -363,6 +363,10 @@ class GroupSettingsResponse(BaseModel):
     digest_enabled: bool
     template_set: str
     ai_daily_budget_micros: int | None
+    # Phase 10 memory dials (B-114/B-119).
+    prune_max_passes: int
+    prune_token_budget: int
+    prune_driver: str
 
 
 class GroupSettingsUpdateRequest(BaseModel):
@@ -381,6 +385,13 @@ class GroupSettingsUpdateRequest(BaseModel):
     digest_enabled: bool | None = None
     template_set: str | None = Field(default=None, max_length=32)
     ai_daily_budget_micros: int | None = Field(default=None, ge=0)
+    # The pass cap's le=3 is the engine's hard ceiling restated
+    # at the door (B-114); the service validates again.
+    prune_max_passes: int | None = Field(default=None, ge=1, le=3)
+    prune_token_budget: int | None = Field(default=None, ge=0, le=10_000_000)
+    prune_driver: str | None = Field(
+        default=None, pattern="^(hosted|local)$"
+    )
 
 
 # ------------------------------------------------------------------

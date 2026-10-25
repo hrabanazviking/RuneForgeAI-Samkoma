@@ -12,7 +12,11 @@ written as a single pack instead of scattered fields:
 - the template set the group's shelf draws from — a closed
   vocabulary; a new set registers here, never by free text;
 - the daily AI budget cap (B-047), in micro-units; null means
-  no cap.
+  no cap;
+- the memory dials (Phase 10): the pruning pass cap and
+  per-run token budget (B-114, hard-capped here AND in the
+  engine), and which engine judges the group's history —
+  hosted or the group's own local endpoint (B-119).
 
 Every change is audited with its old and new values in one
 ``group.settings_updated`` row, and a digest change re-anchors
@@ -40,6 +44,16 @@ from gpa.services import reminders as reminder_service
 # here, in code, never by a caller's free text.
 TEMPLATE_SETS: tuple[str, ...] = ("starter",)
 
+# The pruning-driver vocabulary (Phase 10, B-119): "hosted" is
+# the process's configured MetaModelClient; "local" is the
+# group's own OpenAI-compatible endpoint. The engine enforces
+# the pass ceiling itself (ai/pruning.MAX_PASSES_CEILING); the
+# pack's bounds below mirror it so a write past the ceiling is
+# refused at the door, not merely ignored in the engine.
+PRUNE_DRIVERS: tuple[str, ...] = ("hosted", "local")
+PRUNE_MAX_PASSES_CAP = 3
+PRUNE_TOKEN_BUDGET_MAX = 10_000_000
+
 # Roles that may be named as the review floor. "guest" is on
 # the ladder but is not a membership a group grants its
 # reviewers — the floor starts at member.
@@ -61,6 +75,9 @@ def settings_view(group: Group) -> dict:
         "digest_enabled": group.digest_enabled,
         "template_set": group.template_set,
         "ai_daily_budget_micros": group.ai_daily_budget_micros,
+        "prune_max_passes": group.prune_max_passes,
+        "prune_token_budget": group.prune_token_budget,
+        "prune_driver": group.prune_driver,
     }
 
 
@@ -164,6 +181,42 @@ def update_settings(
             "from": group.ai_daily_budget_micros, "to": value,
         }
         group.ai_daily_budget_micros = value
+
+    if "prune_max_passes" in changes:
+        value = changes["prune_max_passes"]
+        if not isinstance(value, int) or not 1 <= value <= PRUNE_MAX_PASSES_CAP:
+            raise _invalid(
+                f"prune_max_passes must be 1 to {PRUNE_MAX_PASSES_CAP} — "
+                "the engine's hard cap, not a suggestion."
+            )
+        detail["prune_max_passes"] = {
+            "from": group.prune_max_passes, "to": value,
+        }
+        group.prune_max_passes = value
+
+    if "prune_token_budget" in changes:
+        value = changes["prune_token_budget"]
+        if (
+            not isinstance(value, int)
+            or not 0 <= value <= PRUNE_TOKEN_BUDGET_MAX
+        ):
+            raise _invalid(
+                "prune_token_budget is a whole number of tokens "
+                f"(0 to {PRUNE_TOKEN_BUDGET_MAX}); 0 means the engine may not spend."
+            )
+        detail["prune_token_budget"] = {
+            "from": group.prune_token_budget, "to": value,
+        }
+        group.prune_token_budget = value
+
+    if "prune_driver" in changes:
+        value = changes["prune_driver"]
+        if value not in PRUNE_DRIVERS:
+            raise _invalid(
+                f"prune_driver must be one of: {', '.join(PRUNE_DRIVERS)}."
+            )
+        detail["prune_driver"] = {"from": group.prune_driver, "to": value}
+        group.prune_driver = value
 
     if not detail:
         # An empty pack is a valid read of intent but changes
