@@ -16,6 +16,7 @@ from gpa.db import Database
 from gpa.services import jobs as job_service
 from gpa.services import transcribe as _transcribe  # noqa: F401 — registers its handler on import
 from gpa.services import extraction as _extraction  # noqa: F401 — registers its handler on import
+from gpa.services import rsvps as _rsvps  # noqa: F401 — registers the notify handler on import
 
 
 def main() -> None:

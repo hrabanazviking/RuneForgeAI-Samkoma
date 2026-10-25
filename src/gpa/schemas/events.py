@@ -305,6 +305,91 @@ def occurrence_view(event: "Event", occ, *, flyer: FlyerView | None = None) -> O
     )
 
 
+class CommentCreateRequest(BaseModel):
+    """Post to an event's thread (B-060)."""
+
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class CommentEditRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class CommentResponse(BaseModel):
+    """One comment as a viewer at some level sees it: hidden and
+    deleted are organiser-visible flags; to members a hidden or
+    deleted comment is simply absent from the list (the service
+    filters it before this shape is built)."""
+
+    id: str
+    thread_id: str
+    event_id: str
+    author_label: str
+    body: str
+    edited_at: str | None = None
+    hidden: bool = False
+    deleted: bool = False
+    created_at: str
+
+
+def comment_view(comment, thread) -> CommentResponse:
+    """One comment row → its wire shape."""
+    return CommentResponse(
+        id=comment.id,
+        thread_id=comment.thread_id,
+        event_id=thread.parent_id,
+        author_label=comment.author_label,
+        body=comment.body,
+        edited_at=iso_utc(comment.edited_at),
+        hidden=comment.hidden_at is not None,
+        deleted=comment.deleted_at is not None,
+        created_at=iso_utc(comment.created_at),
+    )
+
+
+class RsvpRequest(BaseModel):
+    """The caller's own answer (B-061): an upsert — answering
+    again updates the same row, it never stacks a second one."""
+
+    status: str  # coming | cant | maybe (service validates)
+    guests: int = Field(default=0, ge=0)
+    note: str = ""
+
+
+class RsvpResponse(BaseModel):
+    id: str
+    event_id: str
+    principal_label: str
+    status: str
+    guests: int
+    note: str = ""
+    waitlisted: bool = False
+    waitlist_position: int | None = None
+    updated_at: str
+
+
+class RsvpListResponse(BaseModel):
+    """Every answer plus the summary counts (B-061)."""
+
+    rsvps: list[RsvpResponse]
+    summary: dict
+
+
+def rsvp_view(row: "Rsvp") -> RsvpResponse:
+    """One RSVP row → its wire shape."""
+    return RsvpResponse(
+        id=row.id,
+        event_id=row.event_id,
+        principal_label=row.principal_label,
+        status=row.status,
+        guests=row.guests,
+        note=row.note,
+        waitlisted=row.waitlisted,
+        waitlist_position=row.waitlist_position,
+        updated_at=iso_utc(row.updated_at),
+    )
+
+
 def change_row(change: "EventChange") -> EventChangeResponse:
     """One change-history row → its wire shape."""
     return EventChangeResponse(

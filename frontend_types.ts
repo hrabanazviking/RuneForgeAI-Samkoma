@@ -105,6 +105,26 @@ export interface ChunkResponse {
   timestamp_text?: string | unknown | null | null;
 }
 
+export interface CommentCreateRequest {
+  body: string;
+}
+
+export interface CommentEditRequest {
+  body: string;
+}
+
+export interface CommentResponse {
+  author_label: string;
+  body: string;
+  created_at: string;
+  deleted?: boolean;
+  edited_at?: string | unknown | null | null;
+  event_id: string;
+  hidden?: boolean;
+  id: string;
+  thread_id: string;
+}
+
 export interface ConflictFlag {
   available_minutes?: number | unknown | null | null;
   distance_km?: number | unknown | null | null;
@@ -475,6 +495,29 @@ export interface RegisterRequest {
 
 export interface RoleChangeRequest {
   role: string;
+}
+
+export interface RsvpListResponse {
+  rsvps: RsvpResponse[];
+  summary: Record<string, unknown>;
+}
+
+export interface RsvpRequest {
+  guests?: number;
+  note?: string;
+  status: string;
+}
+
+export interface RsvpResponse {
+  event_id: string;
+  guests: number;
+  id: string;
+  note?: string;
+  principal_label: string;
+  status: string;
+  updated_at: string;
+  waitlist_position?: number | unknown | null | null;
+  waitlisted?: boolean;
 }
 
 export interface SeatCreateRequest {

@@ -616,6 +616,97 @@
         "title": "ChunkResponse",
         "type": "object"
       },
+      "CommentCreateRequest": {
+        "description": "Post to an event's thread (B-060).",
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CommentCreateRequest",
+        "type": "object"
+      },
+      "CommentEditRequest": {
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CommentEditRequest",
+        "type": "object"
+      },
+      "CommentResponse": {
+        "description": "One comment as a viewer at some level sees it: hidden and\ndeleted are organiser-visible flags; to members a hidden or\ndeleted comment is simply absent from the list (the service\nfilters it before this shape is built).",
+        "properties": {
+          "author_label": {
+            "title": "Author Label",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "deleted": {
+            "default": false,
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "edited_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited At"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "hidden": {
+            "default": false,
+            "title": "Hidden",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "title": "Thread Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "thread_id",
+          "event_id",
+          "author_label",
+          "body",
+          "created_at"
+        ],
+        "title": "CommentResponse",
+        "type": "object"
+      },
       "ConflictFlag": {
         "properties": {
           "available_minutes": {
@@ -2700,6 +2791,113 @@
         "title": "RoleChangeRequest",
         "type": "object"
       },
+      "RsvpListResponse": {
+        "description": "Every answer plus the summary counts (B-061).",
+        "properties": {
+          "rsvps": {
+            "items": {
+              "$ref": "#/components/schemas/RsvpResponse"
+            },
+            "title": "Rsvps",
+            "type": "array"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "rsvps",
+          "summary"
+        ],
+        "title": "RsvpListResponse",
+        "type": "object"
+      },
+      "RsvpRequest": {
+        "description": "The caller's own answer (B-061): an upsert \u2014 answering\nagain updates the same row, it never stacks a second one.",
+        "properties": {
+          "guests": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Guests",
+            "type": "integer"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "RsvpRequest",
+        "type": "object"
+      },
+      "RsvpResponse": {
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "guests": {
+            "title": "Guests",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "principal_label": {
+            "title": "Principal Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "waitlist_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waitlist Position"
+          },
+          "waitlisted": {
+            "default": false,
+            "title": "Waitlisted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "principal_label",
+          "status",
+          "guests",
+          "updated_at"
+        ],
+        "title": "RsvpResponse",
+        "type": "object"
+      },
       "SeatCreateRequest": {
         "description": "Create an agent seat (B-018): a name, a role, and the scopes\nits key will carry. Approval is never among a seat's powers.",
         "properties": {
@@ -4680,6 +4878,222 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/comments/{comment_id}": {
+      "delete": {
+        "description": "Delete your own comment: a tombstone, returned flagged.",
+        "operationId": "delete_comment_api_v1_groups__group_id__comments__comment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Comment",
+        "tags": [
+          "discussion"
+        ]
+      },
+      "patch": {
+        "description": "Edit your own comment (nobody else's \u2014 ever).",
+        "operationId": "edit_comment_api_v1_groups__group_id__comments__comment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentEditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Comment",
+        "tags": [
+          "discussion"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/comments/{comment_id}/hide": {
+      "post": {
+        "description": "Moderation: hide a comment (audited, reversible).",
+        "operationId": "hide_comment_api_v1_groups__group_id__comments__comment_id__hide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Hide Comment",
+        "tags": [
+          "discussion"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/comments/{comment_id}/unhide": {
+      "post": {
+        "description": "Moderation, reversed: the comment returns to view.",
+        "operationId": "unhide_comment_api_v1_groups__group_id__comments__comment_id__unhide_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unhide Comment",
+        "tags": [
+          "discussion"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/conflicts": {
       "get": {
         "description": "Conflict flags over a window (B-057): double-booked\nhosts and rooms, travel-impossible hops. Flags, never\nblocks \u2014 reading them changes nothing.",
@@ -4921,7 +5335,7 @@
         ]
       },
       "patch": {
-        "description": "Edit an event (B-050, D-15): If-Match carries the version\nread; every changed field lands in the change history; the\nresponse carries the new ETag.",
+        "description": "Edit an event (B-050, D-15): If-Match carries the version\nread; every changed field lands in the change history; the\nresponse carries the new ETag. A capacity change re-runs\nthe RSVP waitlist (B-061) \u2014 a bigger room promotes the line.",
         "operationId": "update_event_api_v1_groups__group_id__events__event_id__patch",
         "parameters": [
           {
@@ -5164,6 +5578,122 @@
         "summary": "Clone Event",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/comments": {
+      "get": {
+        "description": "The event's discussion. Members see live comments only;\norganisers see the hidden and the tombstones too, flagged.",
+        "operationId": "list_comments_api_v1_groups__group_id__events__event_id__comments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentResponse"
+                  },
+                  "title": "Response List Comments Api V1 Groups  Group Id  Events  Event Id  Comments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Comments",
+        "tags": [
+          "discussion"
+        ]
+      },
+      "post": {
+        "description": "Post to the event's thread, as yourself \u2014 a seat's words\nare the seat's (B-018), a person's are theirs.",
+        "operationId": "post_comment_api_v1_groups__group_id__events__event_id__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Comment",
+        "tags": [
+          "discussion"
         ]
       }
     },
@@ -5623,6 +6153,163 @@
         "summary": "Add Exception",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/rsvp": {
+      "delete": {
+        "description": "Withdraw your answer. A freed seat promotes the next in\nline, with their notification job, in the same act.",
+        "operationId": "remove_rsvp_api_v1_groups__group_id__events__event_id__rsvp_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Rsvp",
+        "tags": [
+          "rsvps"
+        ]
+      },
+      "put": {
+        "description": "Answer \u2014 or change your answer. When the room is full,\nthe response says so honestly: ``waitlisted`` with your\nposition in line.",
+        "operationId": "set_rsvp_api_v1_groups__group_id__events__event_id__rsvp_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Rsvp",
+        "tags": [
+          "rsvps"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/rsvps": {
+      "get": {
+        "description": "Every answer + the summary counts.",
+        "operationId": "list_rsvps_api_v1_groups__group_id__events__event_id__rsvps_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Rsvps",
+        "tags": [
+          "rsvps"
         ]
       }
     },

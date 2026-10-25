@@ -23,8 +23,8 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **472 tests, all passing** (48/340 slices:
-Phases 0, 1, 2, and 3 complete). Demo verified offline on the mock
+Alembic up/down/up clean; **507 tests, all passing** (62/340 slices:
+Phases 0, 1, 2, 3, and 4 complete). Demo verified offline on the mock
 driver (seed + health + demo login, no API key, no network).
 
 ## Slice status
@@ -244,9 +244,119 @@ driver (seed + health + demo login, no API key, no network).
   FRONTEND_HANDOFF.md carries the review-queue notes. Phase 3
   folds into ZIP-Alpha (Wed Oct 28) — no ZIP cut at this gate.
 
+### Phase 4 — Events, calendar, and publishing out (B-049 → B-062): ✅ COMPLETE (2026-10-24)
+
+- **B-049 events core** (`models/events.py`, migration
+  `0007_phase4_events`, `services/events.py`): Event +
+  EventSourceLink + EventChange + Recurrence + CalendarFeed +
+  Thread + Comment + Rsvp tables. Approval of an event candidate
+  now MINTS a published event in the approval's transaction
+  (services/groups.py calls `mint_from_candidate`) and fills
+  `resulting_entity_*` — Phase 3's NULL boundary is lifted.
+  A draft with no resolved start is refused in plain words and
+  the candidate stays pending. Direct organiser entry records a
+  **manual source** (new `manual` SOURCE_KIND) and links it.
+  Bright line: drafts are 404 below organiser on every surface.
+  Mint defaults (recorded decisions): a draft with a resolved
+  date but no time becomes an all-day event; a missing end is
+  +1 day (all-day) or +2 hours (timed) — a stated end always wins.
+- **B-050 editing + history**: PATCH requires `If-Match`
+  (ETag `"v<n>"`, `Event.version`); stale = 409 `stale_version`
+  (new error code) naming the current version. Every changed
+  field writes an EventChange; material fields (starts/ends/
+  timezone/all_day/place) set `needs_reannounce`. Change feed
+  complete + ordered. A capacity PATCH re-runs the RSVP waitlist.
+- **B-051 cancel + clone**: cancel carries a reason, sets
+  cancelled_at + needs_reannounce; cancelled refuses edits.
+  Clone copies structure + the RRULE (exceptions reset — they
+  name the old series' dates), never RSVPs/discussion/history;
+  born a draft.
+- **B-052 recurrence** (`services/recurrence.py`, hand-rolled,
+  no deps): RFC 5545 subset (FREQ/INTERVAL/COUNT/UNTIL/BYDAY
+  with ordinals/BYMONTHDAY/BYMONTH), validated at write time.
+  **Wall-clock law**: expansion walks LOCAL candidates and
+  converts each through the zone — the weekly-over-DST golden
+  (19:00 EDT → 19:00 EST, UTC instant moves) passes at service
+  AND API level. Exceptions are data on the Recurrence row
+  (original_start / moved_to / cancelled). The API returns
+  occurrences, never rules.
+- **B-053 iCal** (`services/ical.py`, hand-rolled): serialiser
+  with RFC escaping/folding, VTIMEZONE enumerated from the
+  zone's REAL transitions (daily scan + bisection), per-event
+  .ics (drafts 404), per-group feed — token shown once, stored
+  hashed (B-014 discipline), filters on the feed row
+  (statuses/place_contains/sub_group), revocation instant.
+  Cancelled emitted `STATUS:CANCELLED`, never vanished; moved
+  occurrences ride as RECURRENCE-ID VEVENTs, cancelled as
+  EXDATE. Round-trip proof: parse the feed back, expand with
+  our own engine, occurrences equal the API's (golden test).
+- **B-054 links**: Google add-to-calendar URL built server-side
+  (golden string test, exact parameter match) + webcal form of
+  a feed URL; the organiser event detail carries `links`
+  (google_calendar, ics_download).
+- **B-055 agenda/month**: occurrence-expanded, `q` over
+  title/place/host, type/place/sub_group filters, cursor
+  pagination (cursor = last occurrence's (start, event,
+  original start)); month grid is whole Monday-first weeks
+  with in_month marks — the frontend does zero date maths.
+- **B-056 tonight**: evening = 15:00 → 03:00 local in the GROUP
+  tz; pinned (lat/lng) events first, then start time; flyer-born
+  events carry flyer {thumbnail, alt_text, alt_text_status} —
+  the visible-defect law rides along.
+- **B-057 conflicts**: host_overlap / place_overlap /
+  travel_impossible (haversine at an assumed 40 km/h) computed
+  over expanded occurrences; STRICT overlap, so back-to-back
+  in the same room never flags (guarded by an exact-set test).
+  **Boundary: resource double-booking is NOT computed — Phase 9
+  owns the resource model; the conflicts response carries a
+  `resource_note` saying so.**
+- **B-058 Facebook drafts**: Meta-shaped payload (name,
+  start/end with true offsets, description, place, timezone) +
+  copy-ready text + flyer cover suggestion. **Drafts only —
+  nothing is posted; the real create is Phase 12 with a human
+  pressing the button.** Draft events 404, cancelled 409.
+- **B-059 projections**: `project_event` builds public/member/
+  organiser levels server-side — member-only fields (access
+  notes, host, cost, bring) are ABSENT from public, not
+  blanked; public route `/api/v1/public/groups/{slug}/events`
+  exists only for `public-listed` groups. Leak suite greps the
+  public response for member-only strings.
+- **B-060 discussion**: threads/comments under events
+  (polymorphic parent — Phase 7 generalises). Post/edit-own/
+  delete-own (tombstone); organiser hide/unhide, audited
+  (`comment.hidden` test asserts the audit row). Members never
+  see hidden/deleted; organisers see both, flagged. The group
+  SSE stream now also emits `comment.created`, polled from the
+  Comment table (no in-memory bus).
+- **B-061 RSVPs**: upsert per (event, principal); capacity
+  seats parties in arrival order; the waitlist is STRICT
+  next-in-line — a party that doesn't fit blocks the line (no
+  queue-jumping by smaller parties; guarded by test). A freed
+  seat (answer change, withdrawal, or a capacity PATCH)
+  promotes in order and enqueues a `notify` job per promotion
+  — EXCEPT a promotion caused by your own answer change (your
+  response already told you). `services/rsvps.py` registers the
+  `notify` handler (audit-writing stub; real delivery is
+  Phase 11's outbox). The chassis runs promotion jobs to
+  `done` in tests.
+- **B-062 gate**: `tests/test_phase4_gate.py` — flyer in →
+  chat extracted → candidate approved → published event
+  (flyer linked) → .ics parsed back to the same times →
+  discussion + RSVP live → agenda + tonight show it.
+  OPENAPI.json + frontend_types.ts regenerated (**72 paths,
+  72 schemas**); FRONTEND_HANDOFF.md carries the calendar +
+  event screen notes. Phase 4 folds into ZIP-Beta (Sat Oct 31)
+  per the roadmap train — no ZIP cut at this gate.
+- **Superseded Phase 3 assertions, updated with the phase**:
+  `test_candidates.py` now asserts approval MINTS (the NULL
+  boundary was Phase 4's to lift); the role matrix's approve
+  fixture approves a task candidate (same permission door —
+  a title-only event draft is now honestly unmintable).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 4 begins at B-049 (events minted from approvals — it fills
-the `resulting_entity_*` link Phase 3 deliberately left NULL).
+Phase 5 begins at B-063 (vision reading — it fills Flyer
+transcripts/alt text and sets `Event.flyer_id` on flyer-born
+events, the link B-062's gate sets by hand today).
 
 ## Decisions & deviations (from the roadmap defaults)
 
@@ -269,6 +379,18 @@ the `resulting_entity_*` link Phase 3 deliberately left NULL).
   everyone else gets the 404. Implemented in deps.get_group_context.
 - Test suite takes ~1 minute, almost all of it Argon2 hashing in
   registrations — acceptable; revisit only if it slows the train.
+- **Phase 4 added NO new dependencies either** — the RRULE
+  expander and the iCal serialiser/parser are hand-rolled
+  in-house (D-46), as the task required; zoneinfo (stdlib)
+  carries every timezone truth.
+- **D-15's remaining half**: ETag/If-Match is built (B-050);
+  the `Idempotency-Key` store for POST creates is NOT yet
+  built anywhere in the codebase — no Phase 4 slice names it,
+  and claiming it would be a lie in this map. It belongs with
+  the write-safety work of the multi-user phases.
+- **Migrations 0007 is a guarded create-tables revision** in
+  the 0006 style: 0001 builds from live metadata, so fresh
+  databases already hold the Phase 4 tables when 0007 runs.
 - **No new dependencies in Phase 2** — the roadmap's B-025 escape
   hatch (add pypdf) was NOT needed: B-025's stdlib PDF text-layer
   reader (FlateDecode + Tj/TJ) covers text-layer PDFs, and

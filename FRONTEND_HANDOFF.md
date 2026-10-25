@@ -1,11 +1,11 @@
-# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–3
+# Frontend Handoff — ZIP-0 (Foundation) + Phases 1–4
 
 *Regenerated at each release. Read this first.*
 
 ## What you have
 
 A running backend with the full identity + groups + permissions
-layer working and tested (472 tests green at Phase 3). You can now build:
+layer working and tested (507 tests green at Phase 4). You can now build:
 
 - **Sign-in screens** — register, password login, magic-link login,
   refresh, logout, password reset, email change.
@@ -132,10 +132,14 @@ it here. Build this screen first and build it well.
   title re-derived); `POST …/candidates/{id}/reject`;
   `POST …/candidates/{id}/merge` with `{into_candidate_id}`
   (the loser stays whole under status `merged` — show the link);
-  `POST …/candidates/{id}/approve` (the Phase 1 route). Approval
-  records the decision: **`resulting_entity_id` stays null until
-  Phase 4 mints published events** — do not render an event link
-  yet, render the approval itself.
+  `POST …/candidates/{id}/approve` (the Phase 1 route). Since
+  Phase 4, approving an EVENT candidate **mints the published
+  event in the same act**: `resulting_entity_type` is `"event"`
+  and `resulting_entity_id` links to it — render the event link.
+  Approving a draft whose date never resolved is refused (422,
+  plain words — "edit the draft to give it a date first") and
+  the candidate stays pending. Other kinds still record the
+  decision only (their entities are Phase 7).
 - **Queue status + the budget:** `GET /groups/{id}/candidates/status`
   → `{pending_count, paused, pause_reason, spent_today_micros,
   budget_micros}`. When a group's daily AI budget is spent,
@@ -146,9 +150,130 @@ it here. Build this screen first and build it well.
   The cap is set via `PATCH /groups/{id}` `ai_daily_budget_micros`
   (admin+; it can be set or changed, not cleared back to null).
 
-Not yet built (later phases): published events/calendar
-(Phase 4 mints them from approvals), reminders, digests,
-notifications.
+**New in Phase 4: events + the calendar — the second most
+important screen set in the product.** An approved event
+candidate is now a real event, and every read below is
+occurrence-expanded server-side: **the frontend does zero date
+maths of its own, anywhere.**
+
+- **The bright line:** events are `draft` / `published` /
+  `cancelled`. Drafts reach NO surface below — they are a 404
+  to anyone below organiser, even by id. Cancelled events stay
+  visible everywhere, marked cancelled. Build your states on
+  exactly those three words.
+- **Event CRUD:** `POST /groups/{id}/events` (organiser+;
+  direct entry — it records a manual source behind the event),
+  `GET …/events` (soonest first), `GET …/events/{id}`,
+  `POST …/events/{id}/publish`, `POST …/events/{id}/cancel`
+  (body `{reason}` — the reason is shown with the cancellation),
+  `POST …/events/{id}/clone` (201; structure copies, RSVPs and
+  discussion never do; the clone is a draft).
+- **Editing is optimistic-concurrency (D-15):** reads carry an
+  `ETag` header (`"v<n>"`) and the organiser projection carries
+  the same value in `etag`. `PATCH …/events/{id}` **requires**
+  `If-Match` with the version you read: a stale version is 409
+  `stale_version` whose detail names the CURRENT version — show
+  a "someone changed this; re-read and re-apply" state, never
+  silently retry. Every changed field lands in
+  `GET …/events/{id}/changes` (old/new/changed_by/reason, in
+  order) — that's your "what changed" view, verbatim. Material
+  changes (time, place) set `needs_reannounce: true` on the
+  organiser projection; surface it as "the group needs telling".
+- **Projections (B-059):** the same event renders at three
+  levels, chosen by the server from the caller's role —
+  `public` (title, times, place, flyer; NO host, cost, bring
+  list, or access notes — those fields are absent, not blanked),
+  `member` (everything practical, incl. `access_notes`),
+  `organiser` (plus `etag`, `needs_reannounce`, `created_by`,
+  `candidate_id`, `cancelled_reason`, `links`). The public page
+  lives on its own route: `GET /api/v1/public/groups/{slug}/events`
+  (only for `public-listed` groups; anything else is a 404).
+  Never try to "hide" member fields client-side on a member
+  response — ask for the public route instead.
+- **Recurrence:** `PUT/GET/DELETE …/events/{id}/recurrence`
+  (`{rrule, exceptions?}`), `POST …/events/{id}/recurrence/exceptions`
+  (`{original_start, moved_to?, cancelled}` — LOCAL ISO times in
+  the event's timezone). Rules are validated at write time in
+  plain words. **You never expand a rule:** reads below return
+  occurrences. `GET …/events/{id}/occurrences?from&to` is the
+  per-event form.
+- **Agenda:** `GET /groups/{id}/agenda?from&to` (ISO datetimes;
+  defaults: from now, +31 days) → `{items, next_cursor}`.
+  Occurrences carry `occurrence_start`/`occurrence_end`
+  rendered in the EVENT's timezone with its true offset
+  (`-04:00` vs `-05:00` across DST — render these strings, do
+  not recompute), `starts_at`/`ends_at` in UTC alongside, plus
+  `is_exception` and `occurrence_cancelled` flags. Filters:
+  `q` (title/place/host), `type`, `place`, `sub_group`.
+  Pagination: pass `cursor` from the previous page's
+  `next_cursor`; `limit` ≤ 200. Pages are stable.
+- **Month:** `GET /groups/{id}/month?year&month` → whole
+  Monday-first weeks (`weeks[][]` of `{date, in_month,
+  occurrences}`) — render cells as given; days outside the
+  month arrive marked `in_month: false`, no holes to fill.
+- **Tonight:** `GET /groups/{id}/tonight[?date=YYYY-MM-DD]` —
+  the evening (15:00 → 03:00 local), events with pinned
+  coordinates first, then by start. Flyer-born events carry
+  `flyer: {flyer_id, thumbnail_key, alt_text, alt_text_status}`
+  — the same visible-defect law as the upload screen: an
+  `awaiting_description` alt state is shown, never hidden.
+- **Conflicts:** `GET /groups/{id}/conflicts?from&to` →
+  `{flags, resource_note}`. Flags are `host_overlap` /
+  `place_overlap` / `travel_impossible`, each naming both
+  events + a plain-words `message` — render the message.
+  Flags never block anything; there is no "resolve" call.
+  (Back-to-back events in one room never flag — if you think
+  you see one, it's a bug report, not a UI state.)
+  `resource_note` says resources aren't computed yet (Phase 9).
+- **iCal out:** `GET …/events/{id}/ics` (member+; a draft is a
+  404) downloads one event. **Group feed:**
+  `POST /groups/{id}/calendar/feeds` (organiser+, body
+  `{filters}` — `statuses`, `place_contains`, `sub_group`) →
+  the response carries the raw `token`, `feed_url`, and
+  `webcal_url` **once only** (only a hash is stored; a lost
+  URL means revoke + re-issue). `GET …/calendar/feeds` lists
+  prefixes; `POST …/calendar/feeds/{feed_id}/revoke` kills a
+  feed instantly. The fetch route
+  `GET /api/v1/calendar/feed/{token}.ics` needs no login — the
+  token is the credential; treat it like a password in the UI
+  (masked, with a revoke button). Cancelled events arrive in
+  feeds AS cancelled; drafts never arrive.
+- **Links:** the organiser event detail carries `links`:
+  `google_calendar` (a ready add-to-calendar URL — the server
+  computed the times; use it verbatim) and `ics_download`.
+- **Facebook drafts:** `GET …/events/{id}/facebook-draft`
+  (organiser+) → `{payload, copy_text, cover}`. `payload` is
+  Meta-shaped (name, start_time/end_time with true offsets,
+  description, place, timezone); `copy_text` is a paste-anywhere
+  text block; `cover` suggests the event's flyer. **Nothing is
+  posted** — the real Facebook Event is created by a human via
+  a later integration. Draft events 404 here; cancelled 409.
+- **Discussion:** `GET/POST …/events/{id}/comments`,
+  `PATCH/DELETE /groups/{id}/comments/{comment_id}` (your own
+  only — 403 otherwise; delete is a tombstone),
+  `POST …/comments/{id}/hide|unhide` (organiser+; audited).
+  Member lists omit hidden/deleted entirely; organiser lists
+  include them flagged (`hidden`, `deleted`) with bodies kept.
+  The group SSE stream now also emits `comment.created` frames
+  (`comment_id`, `event_id`, `author`, `body`) — same
+  `GET /groups/{id}/stream` door as job progress.
+- **RSVPs:** `PUT …/events/{id}/rsvp` `{status: coming|cant|
+  maybe, guests, note}` (your own answer; an upsert),
+  `DELETE …/events/{id}/rsvp`, `GET …/events/{id}/rsvps` →
+  `{rsvps, summary}` (summary: capacity, confirmed_seats,
+  waitlisted_parties, maybe, cant). When the room is full the
+  PUT response says `waitlisted: true` + `waitlist_position` —
+  show "you're #N in line" in those words. The line is strict
+  arrival order: a party that doesn't fit blocks it (no
+  queue-jumping), and a freed seat promotes the next in line,
+  whose notification rides the job queue (delivery is a later
+  phase). Answering a cancelled event is a 409.
+
+Not yet built (later phases): flyer/board vision reading
+(Phase 5 — it will set `flyer_id` on events and complete alt
+texts), tasks/decisions/polls as entities (Phase 7), reminders,
+digests, real notification delivery (Phase 11), the Facebook
+posting integration (Phase 12).
 
 ## The contract
 

@@ -15,6 +15,12 @@ The generator polls the group's jobs and speaks two event kinds:
   as it is;
 - ``job.progress`` — whenever a job's status or progress
   changes: id, kind, status, progress, and the source it serves.
+- ``comment.created`` — whenever a comment lands in one of the
+  group's event threads (B-060): the comment id, its event, its
+  author, and its words. Polled from the Comment table like
+  everything else here — a comment hidden or deleted later is
+  a moderation act the REST views show; the stream announces
+  arrivals, it does not rewrite them.
 
 Honesty note (B-033): the ingests that complete synchronously
 (paste, file, newsletter, image, link) never pass through a job,
@@ -30,6 +36,7 @@ from typing import Callable, Iterator
 from sqlalchemy.orm import Session
 
 from gpa.models.core import Job
+from gpa.models.events import Comment, Thread
 
 # How much of a group's job history a snapshot carries. Screens
 # care about recent work; the full history lives behind the jobs
@@ -77,6 +84,30 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
+def _group_comments(db: Session, group_id: str) -> list[tuple[Comment, Thread]]:
+    """The group's comments (through their threads), oldest
+    first — the marker arithmetic below walks this order."""
+    rows = (
+        db.query(Comment, Thread)
+        .join(Thread, Comment.thread_id == Thread.id)
+        .filter(Thread.group_id == group_id)
+        .order_by(Comment.created_at, Comment.id)
+        .all()
+    )
+    return rows
+
+
+def _comment_frame(comment: Comment, thread: Thread) -> dict:
+    return {
+        "comment_id": comment.id,
+        "thread_id": thread.id,
+        "event_id": thread.parent_id if thread.parent_type == "event" else None,
+        "author": comment.author_label,
+        "body": comment.body,
+        "created_at": comment.created_at.isoformat() + "Z",
+    }
+
+
 def group_events(
     session_factory: Callable[[], Session],
     group_id: str,
@@ -84,7 +115,8 @@ def group_events(
     poll_seconds: float = 1.0,
     max_polls: int | None = None,
 ) -> Iterator[str]:
-    """Yield SSE frames: one snapshot, then job.progress changes.
+    """Yield SSE frames: one snapshot, then job.progress changes
+    and comment.created arrivals.
 
     ``max_polls`` bounds the generator for tests and short-lived
     consumers; the HTTP route leaves it None and the stream runs
@@ -95,8 +127,16 @@ def group_events(
     seen: dict[str, tuple[str, int]] = {}
     with session_factory() as db:
         snap = snapshot(db, group_id)
+        existing = _group_comments(db, group_id)
     for job in snap["jobs"]:
         seen[job["job_id"]] = (job["status"], job["progress"])
+    # The comment marker starts at the newest comment that
+    # existed at connect: the stream announces NEW arrivals,
+    # it does not replay the group's whole conversation.
+    comment_marker: tuple | None = None
+    if existing:
+        newest = existing[-1][0]
+        comment_marker = (newest.created_at, newest.id)
     yield _sse("snapshot", snap)
     polls = 0
     while max_polls is None or polls < max_polls:
@@ -104,9 +144,16 @@ def group_events(
         polls += 1
         with session_factory() as db:
             jobs = group_jobs(db, group_id)[:SNAPSHOT_LIMIT]
+            comments = _group_comments(db, group_id)
         for job in jobs:
             summary = _job_summary(job)
             state = (summary["status"], summary["progress"])
             if seen.get(summary["job_id"]) != state:
                 seen[summary["job_id"]] = state
                 yield _sse("job.progress", summary)
+        for comment, thread in comments:
+            marker = (comment.created_at, comment.id)
+            if comment_marker is None or marker > comment_marker:
+                comment_marker = marker
+                if comment.deleted_at is None and comment.hidden_at is None:
+                    yield _sse("comment.created", _comment_frame(comment, thread))

@@ -9,7 +9,7 @@ routers/calendar.py; the .ics doors in the same file keep this
 one about the event itself.
 """
 
-from fastapi import APIRouter, Depends, Header, Query, Response
+from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -109,6 +109,7 @@ def update_event(
     event_id: str,
     body: EventPatchRequest,
     response: Response,
+    request: Request,
     if_match: str | None = Header(default=None),
     context: GroupContext = Depends(require_group_role("organiser")),
     principal: Principal = Depends(require_scope("publish")),
@@ -116,7 +117,8 @@ def update_event(
 ):
     """Edit an event (B-050, D-15): If-Match carries the version
     read; every changed field lands in the change history; the
-    response carries the new ETag."""
+    response carries the new ETag. A capacity change re-runs
+    the RSVP waitlist (B-061) — a bigger room promotes the line."""
     changes = body.model_dump(exclude_unset=True)
     reason = changes.pop("reason", "")
     for field_name in ("starts_at", "ends_at"):
@@ -126,6 +128,13 @@ def update_event(
         db, actor_label=principal.label, group=context.group,
         event_id=event_id, changes=changes, if_match=if_match, reason=reason,
     )
+    if "capacity" in changes:
+        from gpa.services import rsvps as rsvp_service
+
+        rsvp_service.rebalance_and_notify(
+            db, request.app.state.settings, group=context.group,
+            event=event, actor_label=principal.label,
+        )
     response.headers["ETag"] = event_service.etag_of(event)
     return project_event(event, "organiser")
 
