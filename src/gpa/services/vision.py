@@ -49,6 +49,7 @@ from gpa.errors import AppError
 from gpa.models.core import FileAsset, Job
 from gpa.models.groups import Candidate, Group
 from gpa.models.sources import Flyer, Provenance, Source, SourceChunk
+from gpa.internal.client import call_internal
 from gpa.services import audit, images as image_service, jobs as job_service
 from gpa.services import quality, sources as source_service, usage as usage_service
 from gpa.storage import get_storage
@@ -94,14 +95,18 @@ def request_vision_read(
                 "reads flyer and board-photo sources."
             ),
         )
-    job = job_service.enqueue(
-        db, settings, kind=JOB_KIND,
+    data = call_internal(
+        db, caller="extraction", operation="ai.submit_job",
         payload={
-            "group_id": group.id,
-            "source_id": source.id,
-            "requested_by": actor_label,
+            "kind": JOB_KIND,
+            "payload": {
+                "group_id": group.id,
+                "source_id": source.id,
+                "requested_by": actor_label,
+            },
         },
     )
+    job = db.get(Job, data["job_id"])
     # The job's id joins its payload (enqueue commits first — the
     # id only exists afterwards) so the run can advance its own
     # progress row and stamp its candidates (B-069, as B-045).

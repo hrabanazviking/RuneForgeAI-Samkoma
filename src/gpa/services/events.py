@@ -32,6 +32,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from gpa.errors import AppError
+from gpa.internal.client import call_internal
 from gpa.models.events import (
     AnnouncementDraft,
     Comment,
@@ -515,11 +516,12 @@ def create_event(
         # Born published = published, for the outward record
         # too (Phase 11, B-128): the announcement rides the
         # same transaction as the entry itself.
-        from gpa.services import outbound
-
-        outbound.emit(
-            db, group=group, kind="event.published",
-            data=outbound.event_data(event),
+        call_internal(
+            db, caller="events", operation="integrations.emit",
+            payload={
+                "group_id": group.id, "kind": "event.published",
+                "event_id": event.id,
+            },
         )
     db.commit()
     return event
@@ -652,11 +654,13 @@ def update_event(
             # And the change is announced outward in the same
             # transaction (Phase 11, B-128): subscribed
             # webhooks hear event.changed with the field list.
-            from gpa.services import outbound
-
-            outbound.emit(
-                db, group=group, kind="event.changed",
-                data=outbound.event_data(event, fields=changed_fields),
+            call_internal(
+                db, caller="events", operation="integrations.emit",
+                payload={
+                    "group_id": group.id, "kind": "event.changed",
+                    "event_id": event.id,
+                    "event_extra": {"fields": changed_fields},
+                },
             )
     db.commit()
     return event
@@ -701,10 +705,12 @@ def publish_event(
     reminders.schedule_reminders(db, group=group, event=event)
     # The publish is announced outward in the same transaction
     # (Phase 11, B-128): subscribed webhooks hear event.published.
-    from gpa.services import outbound
-
-    outbound.emit(
-        db, group=group, kind="event.published", data=outbound.event_data(event)
+    call_internal(
+        db, caller="events", operation="integrations.emit",
+        payload={
+            "group_id": group.id, "kind": "event.published",
+            "event_id": event.id,
+        },
     )
     db.commit()
     return event
@@ -759,33 +765,36 @@ def cancel_event(
     was_published = event.status == "published"
     apply_cancellation(db, event=event, actor_label=actor_label, reason=reason)
     if was_published:
-        from gpa.services import notifications as notify_service
-
-        for recipient in notify_service.event_recipients(db, event.id):
-            notify_service.create_notification(
-                db,
-                group=group,
-                recipient_user=recipient["user"],
-                recipient_label=recipient["label"],
-                recipient_email=recipient["email"],
-                kind="change.cancellation",
-                subject=f"Cancelled: {event.title}",
-                body_text=(
+        # The fan-out itself — recipients, preferences, quiet
+        # hours — is the notifications module's work, asked for
+        # through the internal API (B-162): this module states
+        # the fact and the words; that module decides delivery.
+        call_internal(
+            db, caller="events", operation="notify.request",
+            payload={
+                "group_id": group.id,
+                "audience": {"event_id": event.id},
+                "kind": "change.cancellation",
+                "subject": f"Cancelled: {event.title}",
+                "body_text": (
                     f"'{event.title}' has been cancelled. "
                     "There is nothing to come to — sorry for the change of plans."
                 ),
-                event_id=event.id,
-                urgent=True,
-            )
+                "event_id": event.id,
+                "urgent": True,
+            },
+        )
     if was_published:
         # A published event's cancellation is announced outward
         # in the same transaction (Phase 11, B-128) — a draft's
         # cancellation announces nothing, as it never travelled.
-        from gpa.services import outbound
-
-        outbound.emit(
-            db, group=group, kind="event.cancelled",
-            data=outbound.event_data(event, reason=reason),
+        call_internal(
+            db, caller="events", operation="integrations.emit",
+            payload={
+                "group_id": group.id, "kind": "event.cancelled",
+                "event_id": event.id,
+                "event_extra": {"reason": reason},
+            },
         )
     audit.record(
         db, actor=actor_label, action="event.cancelled",

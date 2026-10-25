@@ -32,9 +32,9 @@ from gpa.models.groups import Group, Membership
 from gpa.models.identity import User, now_utc
 from gpa.models.core import Job
 from gpa.models.integrations import ExternalEventLink
+from gpa.internal.client import call_internal
 from gpa.services import audit
 from gpa.services import jobs as job_service
-from gpa.services import notifications as notify_service
 
 RECONCILE_JOB_KIND = "reconcile"
 RUN_AT = time(2, 30)  # nightly, group-local
@@ -249,12 +249,15 @@ def reconcile_group(
             user = db.get(User, membership.user_id)
             if user is None:
                 continue
-            notify_service.create_notification(
-                db, group=group, recipient_user=user,
-                recipient_label=f"user:{user.id}",
-                kind="change.drift",
-                subject="Outside copies have drifted",
-                body_text=body,
+            call_internal(
+                db, caller="integrations", operation="notify.request",
+                payload={
+                    "group_id": group.id,
+                    "audience": {"user_id": user.id, "label": f"user:{user.id}"},
+                    "kind": "change.drift",
+                    "subject": "Outside copies have drifted",
+                    "body_text": body,
+                },
             )
     audit.record(
         db, actor=actor, action="integration.reconciled",
