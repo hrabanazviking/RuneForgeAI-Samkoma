@@ -317,3 +317,96 @@ refuses through the same replay path as a sequential replay
 suite, one clean run against the repaired tree, totals read
 from the run's own report file: **769 passed, 0 failed,
 0 errors** (768 at the gate + 1 new mirror test = 769).
+
+---
+
+# Addendum — Phase 12 (B-138 gate, 2026-10-25; ZIP-RC)
+
+Phase 12 cuts **ZIP-RC** (the train's v0.4 release
+candidate): Phases 9–12 fold into it, as promised at the
+B-112 / B-122 / B-130 gates.
+
+## Suite
+
+- **797 passed, 0 failed, 0 errors** — one clean run
+  (`./test.sh`, exit 0) against the final Phase 12 tree,
+  temp base on the workspace overlay per the standing /tmp
+  practice, totals read from the run's own report file
+  (`/tmp/gpa-test-output.txt`: "797 passed, 1 warning in
+  1919.67s"; the one warning is the Starlette TestClient
+  deprecation notice).
+- Collected = passed = 797. Reconciliation: 769 at the
+  Phase 11 close (768 gate + the B-126 repair test) + 28
+  new Phase 12 tests = 797.
+- Contract: 182 OpenAPI paths, 212 schemas (was 174 / 204)
+  — `OPENAPI.json` regenerated at this gate is the exact
+  schema the snapshot test passed against in the same run;
+  `frontend_types.ts` generated from it.
+
+## Phase 12's new tests (28)
+
+| File | Tests | Covers |
+|---|---|---|
+| test_migrations_phase12.py | 1 | Migration 0015 up/down/up (external_url, messenger columns, embed origins) |
+| test_facebook_events.py | 3 | Fixture life create → differs → update → cancel → remove; plain-words refusals (no integration / incomplete config / unavailable client); member 403 + draft 404 |
+| test_google_calendar.py | 4 | Connect verdict recorded; sync upserts/edits/cancellation propagation; one-way scope (a Google-side edit is never read back and is NOT silently overwritten); plain-words refusals |
+| test_mail_provider.py | 5 | SMTP message shape/TLS/login/Message-ID via a recording stub; refusal → TransportError; startup validation naming both missing settings; end-to-end delivery through the SMTP driver; webhook signature (unsigned/wrong 401, correct HMAC records the bounce) |
+| test_messenger_notifications.py | 4 | Opt-in needs link AND switch; driver_unavailable recorded while email carries; capture driver marks the leg sent; the quiet-hours hold is shared by every channel |
+| test_embed_public.py | 5 | Register normalises/validates (paths refused); public page carries public facts only (leak check); CORS answers only for registered origins (incl. preflight both ways); embed door 403s an unregistered origin; a private group has no page anywhere |
+| test_health_board.py | 3 | Broken-token advice names the reconnect/fresh-token step; unconfigured + unchecked advice; a working integration needs nothing (+ member 403) |
+| test_reconcile.py | 2 | Planted drift (Facebook edit + Google deletion) reported to organisers only, outside copies untouched; settling by the deliberate roads makes the next run clean; the nightly chain anchors on connect and perpetuates itself |
+| test_phase12_gate.py | 1 | B-138: one event's full outward life — draft → press → sync → move → both doors repair → clean reconcile → approved re-announce (mailbox + Messenger leg driver_unavailable) → cancellation by both doors → registered-origin embed |
+
+## The honest boundaries
+
+- **No live third-party action of any kind.** No Facebook
+  Page/group account, Google account, or mail provider is
+  connected for this project in this environment, and
+  publishing/sending is the project owner's word alone.
+  B-131 ships the recorded-fixture integration test; the
+  roadmap's "live smoke test on a throwaway event" is
+  recorded as **NOT RUN — awaits a connected account and
+  Volmarr's word**. B-132 likewise: OAuth + sync built and
+  proven against recorded fixtures/stub transport; the
+  one-way-out scope decision is stated in the handoff.
+  B-133: the provider driver is fully wired at the B-095
+  transport boundary with config + SPF/DKIM deployment
+  notes (DEPLOYMENT.md); the "real digest in a real inbox"
+  acceptance is recorded as a **pre-submission checklist
+  item, not run**. B-134: B-125's Messenger access does not
+  exist, so the slice ships the clean `driver_unavailable`
+  path, with the shared opt-in/quiet-hours tests proving
+  the email/in-app channels carry identical rules.
+- All fixtures are invented; no real credentials,
+  endpoints with real tokens, or user data anywhere in
+  the repo. Integration secrets ride the B-127
+  sealed-config framework.
+- Samtal remains fixtures-only, exactly as Phase 11 left
+  it — this suite never touches the live village.
+
+## Finds inside the phase (all fixed, all covered)
+
+- **A latent red in the phase's own foundation:** the
+  B-131 foundation commit grew the notification `CHANNELS`
+  vocabulary to include `messenger`, but the preference
+  schema still pinned `^(email|in_app)$`, so the Phase 8
+  inbox test failed until B-134's schema half landed
+  (committed with B-133, noted in that commit). The
+  per-slice affected-test runs for B-131/B-132 did not
+  include the inbox file — the full gate run is what
+  guarantees the whole tree, and it is green.
+- **Reconciliation's settings threading:** the first
+  reconcile build unsealed integration configs with the
+  process-default settings; a config sealed under other
+  settings reads back as empty, which reported every
+  Google copy "missing". `reconcile_group` now takes the
+  caller's settings (the router passes the app's own; the
+  nightly job uses the deployment env, which is what
+  sealed them there).
+- **Press/sync repair split:** an early draft let a press
+  silently overwrite an EDITED outside copy — a direct
+  violation of B-132's pinned one-way law ("not silently
+  overwritten by us either"). The shipped rule: a copy
+  DELETED outside is restored by the organiser's own
+  press/sync; an edited copy stands until a person
+  settles it. No defect was found in Phases 0–11 code.

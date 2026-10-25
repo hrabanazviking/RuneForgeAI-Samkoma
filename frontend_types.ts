@@ -419,6 +419,14 @@ export interface DigestResponse {
   week_start: string;
 }
 
+export interface DriftEntryResponse {
+  connector: string;
+  event_id: string;
+  external_id: string;
+  kind: string;
+  title: string;
+}
+
 export interface EmailChangeRequest {
   new_email: string;
 }
@@ -428,6 +436,14 @@ export interface EmailInRequest {
   html?: string;
   subject?: string;
   text?: string;
+}
+
+export interface EmbedOriginsRequest {
+  origins?: string[];
+}
+
+export interface EmbedOriginsResponse {
+  origins?: string[];
 }
 
 export interface EventAttendanceResponse {
@@ -556,6 +572,14 @@ export interface FacebookDraftResponse {
   payload: Record<string, unknown>;
 }
 
+export interface FacebookPublishResponse {
+  action?: string | unknown | null | null;
+  differs?: boolean;
+  external_id?: string | unknown | null | null;
+  status: string;
+  url?: string | unknown | null | null;
+}
+
 export interface FailuresResponse {
   mail_events: MailEventResponse[];
   notifications: NotificationResponse[];
@@ -640,6 +664,14 @@ export interface GenerateImageRequest {
   description?: string;
 }
 
+export interface GoogleSyncResponse {
+  cancelled: number;
+  integration_id: string;
+  pushed: number;
+  unchanged: number;
+  updated: number;
+}
+
 export interface GroupCreateRequest {
   default_place?: string;
   description?: string;
@@ -708,6 +740,17 @@ export interface GroupUpdateRequest {
 
 export interface HTTPValidationError {
   detail?: ValidationError[];
+}
+
+export interface HealthBoardEntryResponse {
+  advice: string;
+  integration_id: string;
+  kind: string;
+  last_checked_at?: string | unknown | null | null;
+  last_error?: string;
+  last_success_at?: string | unknown | null | null;
+  name?: string;
+  status: string;
 }
 
 export interface HealthResponse {
@@ -957,11 +1000,13 @@ export interface NotificationResponse {
   in_app: boolean;
   kind: string;
   last_error: string;
+  messenger_status?: string;
   read_at: string | unknown | null | null;
   recipient_email: string;
   recipient_label: string;
   send_after: string;
   send_email: boolean;
+  send_messenger?: boolean;
   sent_at: string | unknown | null | null;
   status: string;
   subject: string;
@@ -1170,6 +1215,13 @@ export interface PublicInviteResponse {
   title: string;
 }
 
+export interface PublicPageResponse {
+  description?: string;
+  events?: EventResponse[];
+  name: string;
+  slug: string;
+}
+
 export interface QualityContradictionRef {
   contradiction_id: string;
   event_id: string;
@@ -1244,6 +1296,10 @@ export interface QuietHours {
 
 export interface RecapResponse {
   summary: SummaryResponse;
+}
+
+export interface ReconcileResponse {
+  drift?: DriftEntryResponse[];
 }
 
 export interface RecurrenceRequest {

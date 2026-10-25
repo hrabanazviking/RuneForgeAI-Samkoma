@@ -23,13 +23,14 @@ uv run alembic upgrade head   # migration path (GPA_DATABASE_URL)
 ```
 
 Verified 2026-10-24: fresh `uv sync` → `./run.sh` → `/health` ok;
-Alembic up/down/up clean; **769 tests, all passing** (130/350 slices:
-Phases 0–11 complete) — the count taken from one clean run against
-the final Phase 11 tree as repaired at the B-126 replay fix
-(735 at the Phase 10 gate + 33 new Phase 11 tests + 1 repair
-regression test = 769, collected count reconciled). ZIP-Beta cut at the Phase 8 gate
-(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); Phases 9
-and 10 cut no ZIP — they fold into ZIP-RC at B-138.
+Alembic up/down/up clean; **797 tests, all passing** (138/350 slices:
+Phases 0–12 complete) — the count taken from one clean run against
+the final Phase 12 tree at the B-138 gate (769 at the Phase 11
+close + 28 new Phase 12 tests = 797, collected count reconciled).
+ZIP-Beta cut at the Phase 8 gate
+(releases/gpa-backend-v0.3-2026-10-24.zip, §8 anatomy); ZIP-RC cut
+at the Phase 12 gate (releases/gpa-backend-v0.4-2026-10-25.zip,
+§8 anatomy) — Phases 9–12 fold into it.
 Demo verified offline on the mock driver (seed + health + demo
 login, no API key, no network).
 
@@ -1087,8 +1088,113 @@ login, no API key, no network).
   the phase's own new code (registration import order for
   the outbound service; a test-data slip in B-124's test).
 
+### Phase 12 — External publishing integrations (B-131 → B-138) ✅
+The outward doors. **Standing boundary for the whole phase:
+no live third-party action of any kind exists in this
+environment** — no Facebook Page/group account, Google
+account, or mail provider is connected for this project,
+and publishing/sending is Volmarr's word alone. Every
+client boundary below ships the recorded-fixture double +
+the honest unavailable default; live smoke tests are
+recorded NOT RUN in TEST_REPORT, never faked.
+- **B-131** Facebook Event creation (`services/facebook_events.py`):
+  client boundary (Protocol + unavailable default +
+  `FixtureFacebookClient`, page-addressed); POST/GET/DELETE
+  `/groups/{id}/events/{eid}/facebook` beside the B-058
+  draft route. THE PRESS: first press creates the Page
+  copy (link row + payload hash), a press with our side
+  unmoved is a stated no-op, a press after our edit
+  updates, a press on a cancelled event carries the
+  cancellation out; cancelled-without-a-copy stays B-058's
+  409. `facebook_state` reports `differs` from the link
+  hash. Health: the facebook branch of `integrations._run_check`
+  gates on config, then pings through the boundary.
+- **B-132** Google Calendar sync (`services/google_calendar.py`):
+  same boundary shape (calendar-addressed). `google-connect`
+  (admin) records the verdict on the row; `google-sync`
+  (organiser + publish) upserts published, propagates
+  cancellations as cancellations, never travels drafts,
+  hash-quiet on agreement. **One-way OUT, proven by test:**
+  a Google-side edit is never read back — the tampered
+  copy stands for B-137 to notice.
+- **B-133** Real mail provider (`SmtpTransport` in
+  `services/mailer.py`, stdlib smtplib, injectable connect
+  factory; `GPA_MAIL_*` settings): startup refuses a
+  half-configured SMTP deployment in plain words; the
+  B-102 provider webhook demands the HMAC signature
+  (`GPA_MAIL_WEBHOOK_SECRET`) when one is set — an unsigned
+  report records nothing. `DEPLOYMENT.md` (repo root)
+  carries provider setup + SPF/DKIM/DMARC notes and the
+  pre-submission checklist; the "real digest in a real
+  inbox" acceptance is a checklist item there, NOT RUN.
+- **B-134** Messenger notifications
+  (`services/messenger_transport.py`): B-125's access does
+  not exist, so the boundary's real driver is the
+  unavailable one and the slice ships the clean
+  `driver_unavailable`: a row that asked for Messenger
+  records `messenger_status` on the Notification and
+  completes via its other channels. Opt-in = the member's
+  messenger preference switch AND a B-123 Messenger
+  account link; preferences and the quiet-hours hold are
+  the SHARED machinery (the messenger word joined
+  `CHANNELS` + the preference pattern in the phase's
+  foundation, migration 0015).
+- **B-135** Embed + public page (`services/embed.py`):
+  `groups.embed_origins_json` register via GET/PUT
+  `/groups/{id}/embed-origins` (organiser read, admin
+  write; an origin is scheme + host, normalised, paths
+  refused in plain words); `GET /public/groups/{slug}` is
+  the public page payload (B-059 projection);
+  `GET /embed/groups/{slug}` refuses a present-but-
+  unregistered Origin (403); the CORS middleware in
+  `main.py` answers an Origin on public/embed paths ONLY
+  when some group registered it (preflight included) —
+  an unregistered origin gets nothing.
+- **B-136** Health board (`services/health_board.py`):
+  GET `/groups/{id}/integrations/health-board` (organiser+,
+  registered before `/{integration_id}`) returns every
+  integration with its recorded verdict and ONE advice
+  sentence — token refusals name the reconnect + fresh
+  token step; the board reads records and pings nothing.
+- **B-137** Reconciliation (`services/reconcile.py`): the
+  `reconcile` job compares each facebook/google link's
+  outside copy against the owning service's canonical
+  payload projection (envelope fields are not drift) and
+  reports `differs`/`missing` to organisers+ as one
+  `change.drift` notification. **It never writes
+  outward.** The chain is digest-shaped: anchored by
+  create-integration (and the manual POST
+  `/integrations/reconcile`, admin) for the next 02:30
+  group-local, each run queueing its successor. Door
+  coherence: a copy DELETED outside is restored by the
+  organiser's own press/sync; an EDITED copy stands
+  (B-132's law) until a person settles it. Settings are
+  threaded into `reconcile_group` — unsealing with the
+  wrong settings reads every config as empty (found by
+  test; the router passes the app's own settings).
+- **B-138** Gate: `tests/test_phase12_gate.py` — one
+  event's full outward life (draft → press → sync → move →
+  both doors repair → clean reconcile → approved
+  re-announce reaching a member's mailbox with the
+  Messenger leg `driver_unavailable` → cancellation
+  carried out by both doors → registered-origin embed).
+  Contract regenerated: 182 paths / 212 schemas (was
+  174 / 204). **ZIP-RC cut** (releases/, §8 anatomy):
+  Phases 9–12 fold into it, as the train promised.
+  Suite at the gate: **797 passed, 0 failed** (769 + 28
+  new Phase 12 tests, reconciled; totals from the run's
+  own report file).
+  Defects found in earlier code: NONE in Phases 0–11. One
+  latent red INSIDE the phase: the foundation commit's
+  `CHANNELS` growth outran the preference schema pattern
+  (a Phase 8 inbox test failed until B-134's schema half
+  landed — fixed in B-133's commit, noted there). Two
+  in-phase finds, both fixed: reconcile's settings
+  threading (above) and the press/sync missing-copy
+  restore split (edits stand, deletions restore).
+
 ### Later phases: NOT STARTED (per roadmap order)
-Phase 11 begins at B-123.
+Phase 13 begins at B-139.
 
 ## Decisions & deviations (from the roadmap defaults)
 

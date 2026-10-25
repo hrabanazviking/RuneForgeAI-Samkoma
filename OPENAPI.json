@@ -2256,6 +2256,40 @@
         "title": "DigestResponse",
         "type": "object"
       },
+      "DriftEntryResponse": {
+        "description": "One drifted outside copy: which event, which door, and\nhow it drifted \u2014 \"differs\" (edited outside) or \"missing\"\n(deleted outside). Reconciliation reports; it never\nrepairs.",
+        "properties": {
+          "connector": {
+            "title": "Connector",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "title",
+          "connector",
+          "kind",
+          "external_id"
+        ],
+        "title": "DriftEntryResponse",
+        "type": "object"
+      },
       "EmailChangeRequest": {
         "description": "Ask to move the account to a new email (B-020). The change\ncompletes only when the token sent to the NEW address is used.",
         "properties": {
@@ -2303,6 +2337,34 @@
           "from"
         ],
         "title": "EmailInRequest",
+        "type": "object"
+      },
+      "EmbedOriginsRequest": {
+        "description": "Replace a group's embed register whole (admin act):\nthe web origins allowed to embed its public page. An\norigin is a scheme + host \u2014 never a path.",
+        "properties": {
+          "origins": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Origins",
+            "type": "array"
+          }
+        },
+        "title": "EmbedOriginsRequest",
+        "type": "object"
+      },
+      "EmbedOriginsResponse": {
+        "properties": {
+          "origins": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Origins",
+            "type": "array"
+          }
+        },
+        "title": "EmbedOriginsResponse",
         "type": "object"
       },
       "EventAttendanceResponse": {
@@ -3194,6 +3256,58 @@
         "title": "FacebookDraftResponse",
         "type": "object"
       },
+      "FacebookPublishResponse": {
+        "description": "Where one event stands on Facebook (B-131): its copy's\nstate, the outside id and URL once created, whether the\ncopy still matches the event here \u2014 and, on a press, what\nthe press did.",
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "differs": {
+            "default": false,
+            "title": "Differs",
+            "type": "boolean"
+          },
+          "external_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FacebookPublishResponse",
+        "type": "object"
+      },
       "FailuresResponse": {
         "description": "The admin deliverability view (B-102).",
         "properties": {
@@ -3607,6 +3721,40 @@
           }
         },
         "title": "GenerateImageRequest",
+        "type": "object"
+      },
+      "GoogleSyncResponse": {
+        "description": "One Google sync run's counts: copies created, copies\nbrought back into agreement, cancellations propagated,\nand copies already current (left alone).",
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "integer"
+          },
+          "integration_id": {
+            "title": "Integration Id",
+            "type": "string"
+          },
+          "pushed": {
+            "title": "Pushed",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "integration_id",
+          "pushed",
+          "updated",
+          "cancelled",
+          "unchanged"
+        ],
+        "title": "GoogleSyncResponse",
         "type": "object"
       },
       "GroupCreateRequest": {
@@ -4112,6 +4260,69 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthBoardEntryResponse": {
+        "description": "One integration on the health board: its recorded\nverdict and the single next step, in words.",
+        "properties": {
+          "advice": {
+            "title": "Advice",
+            "type": "string"
+          },
+          "integration_id": {
+            "title": "Integration Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "default": "",
+            "title": "Last Error",
+            "type": "string"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "integration_id",
+          "kind",
+          "status",
+          "advice"
+        ],
+        "title": "HealthBoardEntryResponse",
         "type": "object"
       },
       "HealthResponse": {
@@ -5301,6 +5512,11 @@
             "title": "Last Error",
             "type": "string"
           },
+          "messenger_status": {
+            "default": "",
+            "title": "Messenger Status",
+            "type": "string"
+          },
           "read_at": {
             "anyOf": [
               {
@@ -5328,6 +5544,11 @@
           },
           "send_email": {
             "title": "Send Email",
+            "type": "boolean"
+          },
+          "send_messenger": {
+            "default": false,
+            "title": "Send Messenger",
             "type": "boolean"
           },
           "sent_at": {
@@ -6018,7 +6239,7 @@
         "description": "One channel \u00d7 kind switch (B-100).",
         "properties": {
           "channel": {
-            "pattern": "^(email|in_app)$",
+            "pattern": "^(email|in_app|messenger)$",
             "title": "Channel",
             "type": "string"
           },
@@ -6453,6 +6674,37 @@
         "title": "PublicInviteResponse",
         "type": "object"
       },
+      "PublicPageResponse": {
+        "description": "The public page payload (B-135): a public-listed\ngroup's face for its own website and for embeds \u2014 the\ngroup's public facts and its events at the PUBLIC\nprojection (B-059). Nothing member-only exists here.",
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "PublicPageResponse",
+        "type": "object"
+      },
       "QualityContradictionRef": {
         "properties": {
           "contradiction_id": {
@@ -6850,6 +7102,19 @@
           "summary"
         ],
         "title": "RecapResponse",
+        "type": "object"
+      },
+      "ReconcileResponse": {
+        "properties": {
+          "drift": {
+            "items": {
+              "$ref": "#/components/schemas/DriftEntryResponse"
+            },
+            "title": "Drift",
+            "type": "array"
+          }
+        },
+        "title": "ReconcileResponse",
         "type": "object"
       },
       "RecurrenceRequest": {
@@ -9781,6 +10046,49 @@
         ]
       }
     },
+    "/api/v1/embed/groups/{slug}": {
+      "get": {
+        "description": "The widget door (B-135): the same public page data,\nserved to EMBEDS. A browser embed always carries an\nOrigin header, and the origin must be on THIS group's\nregister \u2014 **an unregistered origin gets nothing** (403,\nand no CORS answer from the middleware either). A\nrequest with no Origin header is not a browser embed\n(server-to-server, a feed reader) and is served like the\npublic page.",
+        "operationId": "embed_page_api_v1_embed_groups__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Embed Page",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/api/v1/groups": {
       "post": {
         "description": "Create a group; the creator becomes its owner.",
@@ -12403,6 +12711,100 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/embed-origins": {
+      "get": {
+        "description": "The group's registered embed origins (organiser+).",
+        "operationId": "list_embed_origins_api_v1_groups__group_id__embed_origins_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbedOriginsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Embed Origins",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "put": {
+        "description": "Replace the embed register whole (admin+). An entry\nthat is not an origin (a path, a bare word) is refused in\nplain words and nothing is stored.",
+        "operationId": "set_embed_origins_api_v1_groups__group_id__embed_origins_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbedOriginsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbedOriginsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Embed Origins",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events": {
       "get": {
         "description": "The group's events, soonest first, at the caller's\nprojection level. Drafts appear only for organisers, and\nsub-group-scoped events only for their people (B-105).",
@@ -13610,6 +14012,158 @@
         "summary": "Add Cost Line",
         "tags": [
           "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/facebook": {
+      "delete": {
+        "description": "Remove this event's Facebook copy (organiser+): the\nreversible half of the press. The event here is\nuntouched.",
+        "operationId": "facebook_unpublish_api_v1_groups__group_id__events__event_id__facebook_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacebookPublishResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facebook Unpublish",
+        "tags": [
+          "events"
+        ]
+      },
+      "get": {
+        "description": "This event's Facebook standing (organiser+): whether\na copy exists, where it lives, and whether it still\nmatches the event here.",
+        "operationId": "facebook_state_api_v1_groups__group_id__events__event_id__facebook_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacebookPublishResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facebook State",
+        "tags": [
+          "events"
+        ]
+      },
+      "post": {
+        "description": "THE PRESS (B-131): create this event on the group's\nconnected Facebook Page, or bring its copy back into\nagreement, or carry its cancellation out.\n\nAn outward act, so it happens ONLY here, on an\norganiser's explicit call \u2014 edits made elsewhere show as\n``differs`` until this door is used, and nothing on the\nPage side is ever read back into the event. In this\nenvironment the client boundary is the recorded-fixture\ndouble (or the unavailable client): no live Page exists\nhere, and the press records that honestly.",
+        "operationId": "facebook_publish_api_v1_groups__group_id__events__event_id__facebook_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FacebookPublishResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facebook Publish",
+        "tags": [
+          "events"
         ]
       }
     },
@@ -15455,6 +16009,96 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/integrations/health-board": {
+      "get": {
+        "description": "The health board (B-136, organiser+): every integration\nwith its recorded state and ONE next step, in words. This\nroute is registered BEFORE /{integration_id} on purpose \u2014\n\"health-board\" is a board, not an integration id.",
+        "operationId": "integration_health_board_api_v1_groups__group_id__integrations_health_board_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HealthBoardEntryResponse"
+                  },
+                  "title": "Response Integration Health Board Api V1 Groups  Group Id  Integrations Health Board Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Integration Health Board",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/integrations/reconcile": {
+      "post": {
+        "description": "Run reconciliation NOW (admin+, B-137): compare the\ngroup's outside copies, notify the organisers of any\ndrift, return the drift list. Registered before\n/{integration_id} routes for the same reason as the\nhealth board. Running it also anchors the nightly chain\nif it is not anchored yet.",
+        "operationId": "reconcile_now_api_v1_groups__group_id__integrations_reconcile_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconcileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reconcile Now",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/integrations/{integration_id}": {
       "delete": {
         "description": "Remove one integration and its sealed config (admin+).",
@@ -15605,6 +16249,110 @@
           }
         },
         "summary": "Update Integration",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/integrations/{integration_id}/google-connect": {
+      "post": {
+        "description": "Verify a Google Calendar connection's credentials\nagainst the client boundary and record the verdict on\nthe row (admin+). The sealed token is what a deployment's\nOAuth consent flow issued; this door proves it answers\nbefore any sync trusts it.",
+        "operationId": "connect_google_api_v1_groups__group_id__integrations__integration_id__google_connect_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Connect Google",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/integrations/{integration_id}/google-sync": {
+      "post": {
+        "description": "Run one Google Calendar sync (organiser+): published\nevents upsert into the chosen calendar, cancellations\npropagate as cancellations. ONE-WAY OUT \u2014 edits made on\nGoogle are never read back into events here.",
+        "operationId": "sync_google_api_v1_groups__group_id__integrations__integration_id__google_sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "title": "Integration Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleSyncResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Google",
         "tags": [
           "integrations"
         ]
@@ -20783,6 +21531,49 @@
         ]
       }
     },
+    "/api/v1/public/groups/{slug}": {
+      "get": {
+        "description": "The group's public page data (B-135): its public facts\nand public events in one payload, for its own website.\nCORS answers are made for registered embed origins only\n(the middleware's rule); the data itself is public.",
+        "operationId": "public_page_api_v1_public_groups__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Page",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
     "/api/v1/public/groups/{slug}/events": {
       "get": {
         "description": "A public-listed group's events, PUBLIC projection only:\nno host, no cost, no access notes, no discussion \u2014 those\nfields do not exist in this response (B-059). A group that\nis not public-listed is a 404 here, exactly as if it did\nnot exist.",
@@ -21293,7 +22084,7 @@
     },
     "/api/v1/webhooks/mail/{provider}": {
       "post": {
-        "description": "Record a provider's bounce/complaint (stubbed\nreceiver): a bounce also marks its notification failed,\nso the address shows on the admin failure list.",
+        "description": "Record a provider's bounce/complaint: a bounce also\nmarks its notification failed, so the address shows on\nthe admin failure list.\n\nSignature (B-133): when the deployment sets\nGPA_MAIL_WEBHOOK_SECRET, the provider signs the raw body\n(HMAC-SHA256 hex in ``x-gpa-mail-signature``) and an\nunsigned or mis-signed event is refused 401 and records\nNOTHING \u2014 a provider's word about an address is only\nworth acting on when it is really the provider's.",
         "operationId": "mail_webhook_api_v1_webhooks_mail__provider__post",
         "parameters": [
           {

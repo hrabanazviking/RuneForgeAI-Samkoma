@@ -835,6 +835,82 @@ All live and tested; contract is now 160 paths /
   operator has configured one; extraction always stays on
   the process driver.
 
+## External publishing (Phase 12) — NEW in ZIP-RC
+
+Phase 12 takes the group's events OUT — to a Facebook Page,
+a Google calendar, real inboxes, and the group's own
+website — through doors a person deliberately uses. The
+standing boundary, stated once for the whole phase: **no
+live third-party action exists in this build.** No Facebook
+Page, Google account, or mail provider is connected; every
+surface below is built and proven against recorded fixtures
+and stub transports, and the live smoke tests are recorded
+as NOT RUN in TEST_REPORT — they await connected accounts
+and the project owner's word.
+
+- **Facebook Events.** `GET /groups/{id}/events/{eid}/facebook-draft`
+  is B-058's payload (unchanged). `POST …/facebook` is THE
+  PRESS (organiser + publish scope): first press creates the
+  Page copy, later presses update it, and a press on a
+  cancelled event carries the cancellation out. The response
+  (and `GET …/facebook`) is `{status, external_id, url,
+  differs, action}` — render `differs` as "the Page copy is
+  behind; press to update". `DELETE …/facebook` removes the
+  copy. Nothing travels without the press, ever.
+- **Google Calendar.** `POST /integrations/{id}/google-connect`
+  (admin) records the connection verdict on the integration;
+  `POST …/google-sync` (organiser + publish) returns
+  `{pushed, updated, cancelled, unchanged}`. The scope
+  decision, for the UI's words: **sync is one-way OUT** — a
+  Google-side edit is never read back, so never promise a
+  two-way calendar. Cancellations propagate as
+  cancellations; drafts never travel.
+- **Mail.** Outward mail now has a real SMTP driver behind
+  the B-095 boundary (deployment config; `DEPLOYMENT.md`
+  carries the provider + SPF/DKIM notes). Nothing changes
+  in the notification payloads the UI already renders —
+  except `Notification` gains `send_messenger` +
+  `messenger_status` (below).
+- **Messenger notifications.** `Notification` responses now
+  carry `send_messenger` (bool) and `messenger_status`
+  (`"" | "sent" | "driver_unavailable" | "failed" |
+  "unlinked"`). Messenger access has NOT been granted to
+  this project, so in practice the status is
+  `driver_unavailable` whenever the channel was asked for —
+  render it as "Messenger isn't connected for this group;
+  email carried this", never as a failure of the message.
+  The preference switchboard (`GET/PUT
+  /users/me/groups/{id}/notification-preferences`) now
+  includes `messenger` switches for every category; the
+  channel additionally requires the member's B-123
+  Messenger account link — a switch alone cannot send.
+- **Embed + public page.** `GET/PUT /groups/{id}/embed-origins`
+  (organiser read, admin write) manages the register of web
+  origins allowed to embed the group's page; an origin is
+  `scheme://host` — no path (a path gets a plain-words 422).
+  `GET /public/groups/{slug}` returns `{slug, name,
+  description, events}` at the B-059 public projection.
+  `GET /embed/groups/{slug}` is the widget door: it serves
+  the same payload, refuses a present-but-unregistered
+  `Origin` with 403, and CORS answers (including preflight)
+  are made ONLY for registered origins — an unregistered
+  origin gets no `Access-Control-Allow-Origin` at all.
+- **Health board.** `GET /groups/{id}/integrations/health-board`
+  (organiser+) returns one entry per integration:
+  `{integration_id, kind, name, status, last_checked_at,
+  last_success_at, last_error, advice}`. `advice` is ONE
+  next step in plain words — show it verbatim beside the
+  status; `last_error` keeps the outside system's own words
+  as the evidence under it.
+- **Reconciliation.** `POST /groups/{id}/integrations/reconcile`
+  (admin) runs the comparison now and returns `{drift:
+  [{event_id, title, connector, kind, external_id}]}` where
+  `kind` is `differs` or `missing`. It also runs nightly on
+  its own chain, notifying organisers. The UI's words
+  matter here: reconciliation REPORTS, it never repairs —
+  a missing copy returns at the next press/sync; a differing
+  copy stands until a person settles it.
+
 ## Run it
 
 ```sh

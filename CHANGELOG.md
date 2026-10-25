@@ -250,3 +250,61 @@ are the roadmap's own words; phases are grouped in build order.
   briefing, recap) in mock AND live-wire modes; contract
   regenerated (160 paths / 189 schemas); no ZIP — folds
   into ZIP-RC at B-138
+
+### Phase 12 — External publishing integrations — B-131 → B-138
+
+- **B-131** — Facebook Event creation: the B-058 draft gains
+  its living half. POST /events/{id}/facebook is THE PRESS —
+  create / update / carry-a-cancellation of the Page copy,
+  organiser + publish scope, and the only road out (edits
+  here never travel on their own; `differs` says when the
+  copy is behind). Proven against the recorded fixture
+  client; the roadmap's live smoke test is NOT RUN — no
+  Facebook Page is connected in this environment, and
+  publishing is Volmarr's word alone (see TEST_REPORT)
+- **B-132** — Google Calendar sync (one-way OUT): connect
+  (admin) + sync (organiser, publish scope); published
+  events upsert to the group's own calendar, cancellations
+  propagate as cancellations, drafts never travel; a
+  Google-side edit is NEVER read back — proven by test, not
+  just stated. OAuth + sync proven against recorded
+  fixtures/stub transport; no Google account is connected
+- **B-133** — Real mail provider: an SMTP driver (stdlib)
+  behind B-095's transport boundary, config in plain words,
+  startup refusing a half-configured deployment; the B-102
+  bounce webhook gains its HMAC signature check;
+  DEPLOYMENT.md carries provider setup + SPF/DKIM/DMARC
+  notes. The roadmap's "real digest in a real inbox"
+  acceptance is a pre-submission checklist item there —
+  NOT RUN (no provider is configured here)
+- **B-134** — Messenger notifications: ships the clean
+  `driver_unavailable` — B-125's access was never granted,
+  so a notification that asked for Messenger records that
+  state on its row while email/in-app carry the load. The
+  channel is opt-in by link + preference switch, and the
+  opt-in/quiet-hours rules are SHARED with the other
+  channels — proven by running the same scenarios across
+  channels
+- **B-135** — Embed + public page data: a group registers
+  the origins allowed to embed its page (an origin is a
+  scheme + host, never a path); GET /public/groups/{slug}
+  serves the public page payload (B-059 projection); GET
+  /embed/groups/{slug} refuses a present-but-unregistered
+  Origin outright; CORS answers are made for registered
+  origins only — an unregistered origin gets nothing
+- **B-136** — Integration health board: every integration
+  with its recorded verdict and ONE next step in plain
+  words — a refused token's advice names the reconnect +
+  fresh-token step concretely. The board reads records; it
+  pings nothing itself
+- **B-137** — Reconciliation job: nightly (02:30
+  group-local) + on admin demand, outside Facebook/Google
+  copies are compared against ours and drift (differs /
+  missing) is reported to the organisers — never auto-fixed
+  (an edited outside copy stands for a person to settle,
+  B-132's law). A copy DELETED outside is restored by the
+  organiser's own press/sync, which is the press's
+  business; overwriting an edit is not
+- **B-138** — Phase gate: one event's full outward life in
+  a single scripted test; contract regenerated (182 paths
+  / 212 schemas); **ZIP-RC cut** — Phases 9–12 fold into it
