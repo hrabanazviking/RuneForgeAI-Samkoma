@@ -96,11 +96,17 @@ def record_change(
     return row
 
 
-def get_event(db: Session, group: Group, event_id: str) -> Event:
+def get_event(
+    db: Session, group: Group, event_id: str, *, include_deleted: bool = False
+) -> Event:
     """One event of this group, or 404 (another group's event is
-    indistinguishable from a missing one)."""
+    indistinguishable from a missing one). A tombstoned event
+    (B-080) is a 404 too, unless the caller is the tombstone
+    service itself restoring or purging it."""
     event = db.get(Event, event_id)
     if event is None or event.group_id != group.id:
+        raise AppError("not_found", detail="That event could not be found.")
+    if event.deleted_at is not None and not include_deleted:
         raise AppError("not_found", detail="That event could not be found.")
     return event
 
@@ -130,7 +136,9 @@ def list_events(
     """The group's events, soonest first. Drafts ride along only
     for organisers (the bright line again); a ``status`` filter
     narrows further but can never widen visibility."""
-    query = db.query(Event).filter(Event.group_id == group.id)
+    query = db.query(Event).filter(
+        Event.group_id == group.id, Event.deleted_at.is_(None)
+    )
     rows = query.order_by(Event.starts_at, Event.id).all()
     out = []
     for event in rows:
@@ -430,6 +438,43 @@ def _parse_if_match(if_match: str | None) -> int:
         )
 
 
+def apply_changes(
+    db: Session,
+    *,
+    event: Event,
+    changes: dict,
+    actor_label: str,
+    reason: str = "",
+) -> list[str]:
+    """The one edit engine (B-050; shared since Phase 6 by
+    merges, change candidates, and contradiction resolutions):
+    apply already-validated values, writing one EventChange per
+    field that actually changes, setting ``needs_reannounce``
+    on material changes, and bumping the version once. Returns
+    the fields that changed. Never commits — the caller's
+    transaction owns the outcome, so an approval that applies
+    a change and records its decision is one atomic act."""
+    changed_fields: list[str] = []
+    for field_name in EDITABLE_FIELDS:
+        if field_name not in changes:
+            continue
+        new_value = changes[field_name]
+        old_value = getattr(event, field_name)
+        if new_value == old_value:
+            continue
+        record_change(
+            db, event=event, field=field_name, old_value=old_value,
+            new_value=new_value, actor_label=actor_label, reason=reason,
+        )
+        setattr(event, field_name, new_value)
+        changed_fields.append(field_name)
+    if changed_fields:
+        if MATERIAL_FIELDS & set(changed_fields):
+            event.needs_reannounce = True
+        event.version += 1
+    return changed_fields
+
+
 def update_event(
     db: Session,
     *,
@@ -460,24 +505,10 @@ def update_event(
         )
     if event.status == "cancelled":
         raise AppError("conflict", detail="A cancelled event cannot be edited.")
-    changed_fields: list[str] = []
-    for field_name in EDITABLE_FIELDS:
-        if field_name not in changes:
-            continue
-        new_value = changes[field_name]
-        old_value = getattr(event, field_name)
-        if new_value == old_value:
-            continue
-        record_change(
-            db, event=event, field=field_name, old_value=old_value,
-            new_value=new_value, actor_label=actor_label, reason=reason,
-        )
-        setattr(event, field_name, new_value)
-        changed_fields.append(field_name)
+    changed_fields = apply_changes(
+        db, event=event, changes=changes, actor_label=actor_label, reason=reason
+    )
     if changed_fields:
-        if MATERIAL_FIELDS & set(changed_fields):
-            event.needs_reannounce = True
-        event.version += 1
         audit.record(
             db, actor=actor_label, action="event.updated",
             group_id=group.id, entity_type="event", entity_id=event.id,
@@ -523,6 +554,26 @@ def publish_event(
     return event
 
 
+def apply_cancellation(
+    db: Session, *, event: Event, actor_label: str, reason: str = ""
+) -> None:
+    """Cancellation as a state change, without committing
+    (B-051; shared with change candidates in Phase 6, which
+    cancel inside the approval's transaction): the change row,
+    the status, the reason, the re-announce flag, the version."""
+    from gpa.models.identity import now_utc
+
+    record_change(
+        db, event=event, field="status", old_value=event.status,
+        new_value="cancelled", actor_label=actor_label, reason=reason,
+    )
+    event.status = "cancelled"
+    event.cancelled_reason = reason
+    event.cancelled_at = now_utc()
+    event.needs_reannounce = True
+    event.version += 1
+
+
 def cancel_event(
     db: Session, *, actor_label: str, group: Group, event_id: str, reason: str = ""
 ) -> Event:
@@ -536,17 +587,7 @@ def cancel_event(
     event = get_event(db, group, event_id)
     if event.status == "cancelled":
         raise AppError("conflict", detail="That event is already cancelled.")
-    from gpa.models.identity import now_utc
-
-    record_change(
-        db, event=event, field="status", old_value=event.status,
-        new_value="cancelled", actor_label=actor_label, reason=reason,
-    )
-    event.status = "cancelled"
-    event.cancelled_reason = reason
-    event.cancelled_at = now_utc()
-    event.needs_reannounce = True
-    event.version += 1
+    apply_cancellation(db, event=event, actor_label=actor_label, reason=reason)
     audit.record(
         db, actor=actor_label, action="event.cancelled",
         group_id=group.id, entity_type="event", entity_id=event.id,

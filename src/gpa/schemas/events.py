@@ -106,6 +106,15 @@ class CancelRequest(BaseModel):
     reason: str = ""
 
 
+class ResolveContradictionRequest(BaseModel):
+    """Settle a contradiction (B-079): the chosen value must be
+    one the sources actually said (the service checks); ``note``
+    rides into the change history as the reason."""
+
+    value: str = Field(min_length=1)
+    note: str = ""
+
+
 class RecurrenceRequest(BaseModel):
     """Set/replace a series rule (B-052). ``exceptions`` replaces
     the whole exception list; omit it to keep the existing ones."""
@@ -144,6 +153,41 @@ class FlyerView(BaseModel):
     generated: bool = False
 
 
+class ContradictionValueView(BaseModel):
+    """One side of a contradiction (B-079): the value (in the
+    change-history string form), the sources that said it, and
+    whether it is the value the event currently carries."""
+
+    value: str
+    source_ids: list[str] = Field(default_factory=list)
+    current: bool = False
+
+
+class ContradictionResponse(BaseModel):
+    """A disagreement an event carries (B-079) — visible until
+    a person resolves it; resolved rows keep who chose and
+    what they chose."""
+
+    id: str
+    event_id: str
+    field: str
+    values: list[ContradictionValueView] = Field(default_factory=list)
+    status: str
+    resolved_by: str | None = None
+    resolution: str = ""
+    created_at: str
+
+
+class EventSourceLinkResponse(BaseModel):
+    """One supporting source of an event, with its quote
+    (B-076's answerable provenance): "where did this field
+    come from?" is this list."""
+
+    source_id: str
+    field: str = ""
+    quote: str = ""
+
+
 class EventResponse(BaseModel):
     """One event at one projection level (B-059). Fields above a
     level's line are simply absent (None / default) below it."""
@@ -179,6 +223,10 @@ class EventResponse(BaseModel):
     candidate_id: str | None = None
     cancelled_reason: str | None = None
     links: dict | None = None
+    # Open contradictions this event carries (B-079), attached
+    # by the detail route at organiser level — a disagreement
+    # is part of the event's face until a person resolves it.
+    contradictions: list[ContradictionResponse] | None = None
 
 
 class EventChangeResponse(BaseModel):
@@ -391,6 +439,41 @@ def rsvp_view(row: "Rsvp") -> RsvpResponse:
         waitlisted=row.waitlisted,
         waitlist_position=row.waitlist_position,
         updated_at=iso_utc(row.updated_at),
+    )
+
+
+def contradiction_view(row) -> ContradictionResponse:
+    """One contradiction row → its wire shape (B-079)."""
+    import json
+
+    try:
+        values = json.loads(row.values_json or "[]")
+    except json.JSONDecodeError:
+        values = []
+    return ContradictionResponse(
+        id=row.id,
+        event_id=row.event_id,
+        field=row.field,
+        values=[
+            ContradictionValueView(
+                value=str(entry.get("value", "")),
+                source_ids=[str(s) for s in entry.get("source_ids", [])],
+                current=bool(entry.get("current")),
+            )
+            for entry in values
+            if isinstance(entry, dict)
+        ],
+        status=row.status,
+        resolved_by=row.resolved_by,
+        resolution=row.resolution,
+        created_at=iso_utc(row.created_at),
+    )
+
+
+def source_link_view(link) -> EventSourceLinkResponse:
+    """One event-source link → its wire shape (B-076)."""
+    return EventSourceLinkResponse(
+        source_id=link.source_id, field=link.field, quote=link.quote
     )
 
 

@@ -42,6 +42,34 @@ class Job(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
 
 
+class Tombstone(Base):
+    """The record of a deletion (Phase 6, B-080).
+
+    Deleting an event or a source leaves this row for 30 days:
+    what went, who removed it, and when restoration stops being
+    possible. For a SOURCE — whose chunks and provenance the
+    B-023 law removes at once — ``snapshot_json`` carries the
+    whole record (source row, chunks, flyers, provenance) so
+    undelete rebuilds it exactly; for an EVENT the row itself
+    stays (stamped ``deleted_at``), and the snapshot is just
+    the title for the recently-deleted list. After
+    ``purge_after``, the purge removes the tombstone and the
+    deletion is final — for events, the row goes with it.
+    """
+
+    __tablename__ = "tombstones"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    group_id: Mapped[str] = mapped_column(ForeignKey("groups.id"), index=True)
+    entity_type: Mapped[str] = mapped_column(String(16))  # "event" | "source"
+    entity_id: Mapped[str] = mapped_column(String(36), index=True)
+    title: Mapped[str] = mapped_column(String(240), default="")
+    snapshot_json: Mapped[str] = mapped_column(Text, default="{}")
+    deleted_by: Mapped[str] = mapped_column(String(80))  # audit label
+    deleted_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    purge_after: Mapped[datetime] = mapped_column(DateTime)
+
+
 class AuditLog(Base):
     """Append-only audit record (B-019).
 

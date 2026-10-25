@@ -130,6 +130,12 @@ class Event(Base):
     # it all.
     cancelled_reason: Mapped[str] = mapped_column(Text, default="")
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # The tombstone stamp (Phase 6, B-080): a deleted event keeps
+    # its row for 30 days, hidden from every surface, so an
+    # organiser's undelete restores it whole — links, history,
+    # RSVPs and all. After the window a purge removes the row
+    # for good (services/tombstones.py owns both ends).
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=now_utc, onupdate=now_utc
@@ -157,6 +163,63 @@ class EventSourceLink(Base):
     # empty for a whole-event link (the manual-entry source).
     field: Mapped[str] = mapped_column(String(64), default="")
     quote: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+
+
+class EventContradiction(Base):
+    """A disagreement an event carries until a person resolves
+    it (Phase 6, B-079).
+
+    Two sources said different things about one field — 7pm
+    versus 8pm — and neither superseded the other. The event
+    keeps the value it has and carries this row: the field, and
+    every competing value with the sources that said it
+    (``values_json``: ``[{value, source_ids, current}]``, values
+    in the change-history string form). Silence is the only
+    forbidden outcome — a disagreement is displayed, never
+    averaged away. Resolution is a person's act, recorded with
+    who chose, when, and the value chosen.
+    """
+
+    __tablename__ = "event_contradictions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    event_id: Mapped[str] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), index=True
+    )
+    group_id: Mapped[str] = mapped_column(ForeignKey("groups.id"), index=True)
+    # The EVENT field in dispute ("starts_at", "place_name", …).
+    field: Mapped[str] = mapped_column(String(64))
+    values_json: Mapped[str] = mapped_column(Text, default="[]")
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    resolved_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # The chosen value (change-history string form) + any note.
+    resolution: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+
+
+class AnnouncementDraft(Base):
+    """A drafted re-announcement (Phase 6, B-078).
+
+    For a materially changed event: what changed, old → new, in
+    plain words a group member can read cold. Drafting only —
+    approving and sending belong to Phase 10's channels; this
+    row is the artefact those phases approve. ``changes_json``
+    lists the EventChange ids the draft was built from, so what
+    it announced is auditable against the history it read.
+    """
+
+    __tablename__ = "announcement_drafts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    event_id: Mapped[str] = mapped_column(
+        ForeignKey("events.id", ondelete="CASCADE"), index=True
+    )
+    group_id: Mapped[str] = mapped_column(ForeignKey("groups.id"), index=True)
+    body: Mapped[str] = mapped_column(Text, default="")
+    changes_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_by: Mapped[str] = mapped_column(String(80))  # audit label
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 

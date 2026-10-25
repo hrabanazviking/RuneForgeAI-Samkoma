@@ -24,6 +24,8 @@ from gpa.schemas.candidates import (
     CandidateMergeRequest,
     ExtractAcceptedResponse,
     ExtractRequest,
+    MergeEventRequest,
+    MergeEventResponse,
     QueueStatusResponse,
     candidate_detail,
     candidate_row,
@@ -160,6 +162,45 @@ def merge_candidate(
         candidate_id=candidate_id, into_candidate_id=body.into_candidate_id,
     )
     return candidate_row(survivor)
+
+
+@router.post(
+    "/{group_id}/candidates/{candidate_id}/merge-event",
+    response_model=MergeEventResponse,
+)
+def merge_candidate_into_event(
+    candidate_id: str,
+    body: MergeEventRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Merge this candidate into an existing event (B-076):
+    the field-level merge — better-sourced values win, all
+    sources link to the event, and a genuine disagreement the
+    merge cannot settle becomes a contradiction on the event
+    (B-079). This is the merge action beside the queue's
+    "likely the same event" proposal (B-075)."""
+    from gpa.schemas.events import project_event
+    from gpa.services import calendar_views
+    from gpa.services import merging as merging_service
+
+    result = merging_service.merge_candidate_into_event(
+        db, actor_label=principal.label, group=context.group,
+        candidate_id=candidate_id, event_id=body.event_id,
+    )
+    event = result["event"]
+    return MergeEventResponse(
+        event=project_event(
+            event, "organiser", flyer=calendar_views.flyer_view(db, event)
+        ),
+        filled_fields=result["filled"],
+        applied_fields=result["applied"],
+        agreed_fields=result["agreed"],
+        kept_fields=result["kept"],
+        skipped_fields=result["skipped"],
+        contradiction_ids=[row.id for row in result["contradictions"]],
+    )
 
 
 @router.post(

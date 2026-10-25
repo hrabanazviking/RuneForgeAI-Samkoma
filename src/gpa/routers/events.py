@@ -18,16 +18,21 @@ from gpa.deps import GroupContext, Principal, require_group_role, require_scope
 from gpa.models.groups import role_at_least
 from gpa.schemas.events import (
     CancelRequest,
+    ContradictionResponse,
     EventChangeResponse,
     EventCreateRequest,
     EventPatchRequest,
     EventResponse,
+    EventSourceLinkResponse,
     ExceptionRequest,
     OccurrenceResponse,
     RecurrenceRequest,
     RecurrenceResponse,
+    ResolveContradictionRequest,
     change_row,
+    contradiction_view,
     project_event,
+    source_link_view,
     to_utc_naive,
 )
 from gpa.services import events as event_service
@@ -108,9 +113,90 @@ def get_event(
         )
     from gpa.services import calendar_views
 
-    return project_event(
+    projected = project_event(
         event, level, links=links, flyer=calendar_views.flyer_view(db, event)
     )
+    if level == "organiser":
+        from gpa.services import merging as merging_service
+
+        projected.contradictions = [
+            contradiction_view(row)
+            for row in merging_service.list_contradictions(db, event)
+        ]
+    return projected
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/sources",
+    response_model=list[EventSourceLinkResponse],
+)
+def list_event_sources(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """Every source behind this event, with the field each
+    quote supports (B-076): the event's answer to "where did
+    this come from?", field by field."""
+    from gpa.models.events import EventSourceLink
+
+    event_service.get_visible_event(db, context.group, event_id, context.role)
+    rows = (
+        db.query(EventSourceLink)
+        .filter(EventSourceLink.event_id == event_id)
+        .order_by(EventSourceLink.created_at, EventSourceLink.id)
+        .all()
+    )
+    return [source_link_view(row) for row in rows]
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/contradictions",
+    response_model=list[ContradictionResponse],
+)
+def list_contradictions(
+    event_id: str,
+    include_resolved: bool = False,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """The disagreements this event carries (B-079): open
+    ones by default — a visible flag until a person resolves
+    it; ``include_resolved`` shows the settled history too."""
+    from gpa.services import merging as merging_service
+
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role
+    )
+    rows = merging_service.list_contradictions(
+        db, event, include_resolved=include_resolved
+    )
+    return [contradiction_view(row) for row in rows]
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/contradictions/{contradiction_id}/resolve",
+    response_model=ContradictionResponse,
+)
+def resolve_contradiction(
+    event_id: str,
+    contradiction_id: str,
+    body: ResolveContradictionRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("publish")),
+    db: Session = Depends(get_db),
+):
+    """Settle a contradiction (B-079): the chosen value — one
+    the sources actually said — is applied to the event, and
+    the resolution is recorded with who chose it."""
+    from gpa.services import merging as merging_service
+
+    row = merging_service.resolve_contradiction(
+        db, actor_label=principal.label, group=context.group,
+        event_id=event_id, contradiction_id=contradiction_id,
+        chosen_value=body.value, note=body.note,
+    )
+    return contradiction_view(row)
 
 
 @router.patch("/{group_id}/events/{event_id}", response_model=EventResponse)

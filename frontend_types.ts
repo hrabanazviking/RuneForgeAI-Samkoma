@@ -147,6 +147,23 @@ export interface ConflictsResponse {
   resource_note?: string;
 }
 
+export interface ContradictionResponse {
+  created_at: string;
+  event_id: string;
+  field: string;
+  id: string;
+  resolution?: string;
+  resolved_by?: string | unknown | null | null;
+  status: string;
+  values?: ContradictionValueView[];
+}
+
+export interface ContradictionValueView {
+  current?: boolean;
+  source_ids?: string[];
+  value: string;
+}
+
 export interface EmailChangeRequest {
   new_email: string;
 }
@@ -222,6 +239,7 @@ export interface EventResponse {
   cancelled_reason?: string | unknown | null | null;
   candidate_id?: string | unknown | null | null;
   capacity?: number | unknown | null | null;
+  contradictions?: ContradictionResponse[] | unknown | null | null;
   cost_cents?: number | unknown | null | null;
   cost_text?: string | unknown | null | null;
   created_by?: string | unknown | null | null;
@@ -245,6 +263,12 @@ export interface EventResponse {
   sub_group?: string | unknown | null | null;
   timezone: string;
   title: string;
+}
+
+export interface EventSourceLinkResponse {
+  field?: string;
+  quote?: string;
+  source_id: string;
 }
 
 export interface ExceptionRequest {
@@ -445,6 +469,20 @@ export interface MembershipResponse {
   user_id: string;
 }
 
+export interface MergeEventRequest {
+  event_id: string;
+}
+
+export interface MergeEventResponse {
+  agreed_fields?: string[];
+  applied_fields?: string[];
+  contradiction_ids?: string[];
+  event: EventResponse;
+  filled_fields?: string[];
+  kept_fields?: string[];
+  skipped_fields?: string[];
+}
+
 export interface MetaResponse {
   api: string;
   name: string;
@@ -557,6 +595,11 @@ export interface RegisterRequest {
   name?: string;
   password: string;
   timezone?: string;
+}
+
+export interface ResolveContradictionRequest {
+  note?: string;
+  value: string;
 }
 
 export interface RoleChangeRequest {

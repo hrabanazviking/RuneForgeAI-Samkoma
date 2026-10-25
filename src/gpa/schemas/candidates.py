@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from gpa.schemas.events import EventResponse
+
 if TYPE_CHECKING:  # annotations only
     from gpa.models.groups import Candidate
 
@@ -94,6 +96,30 @@ class CandidateMergeRequest(BaseModel):
     """Merge this candidate INTO the named survivor."""
 
     into_candidate_id: str
+
+
+class MergeEventRequest(BaseModel):
+    """Merge this candidate into the named existing EVENT
+    (B-076): the field-level merge — better-sourced values
+    win, provenance becomes the event's links."""
+
+    event_id: str
+
+
+class MergeEventResponse(BaseModel):
+    """What a merge did, field by field (B-076): the event as
+    it now stands, which fields were filled / applied (won) /
+    agreed without moving / kept (the event's value stood),
+    which were skipped as unsupported or unresolved, and the
+    contradictions the merge opened (B-079)."""
+
+    event: "EventResponse"
+    filled_fields: list[str] = Field(default_factory=list)
+    applied_fields: list[str] = Field(default_factory=list)
+    agreed_fields: list[str] = Field(default_factory=list)
+    kept_fields: list[str] = Field(default_factory=list)
+    skipped_fields: list[str] = Field(default_factory=list)
+    contradiction_ids: list[str] = Field(default_factory=list)
 
 
 class ExtractRequest(BaseModel):

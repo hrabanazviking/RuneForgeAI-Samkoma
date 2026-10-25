@@ -822,6 +822,89 @@
         "title": "ConflictsResponse",
         "type": "object"
       },
+      "ContradictionResponse": {
+        "description": "A disagreement an event carries (B-079) \u2014 visible until\na person resolves it; resolved rows keep who chose and\nwhat they chose.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "resolution": {
+            "default": "",
+            "title": "Resolution",
+            "type": "string"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/ContradictionValueView"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "event_id",
+          "field",
+          "status",
+          "created_at"
+        ],
+        "title": "ContradictionResponse",
+        "type": "object"
+      },
+      "ContradictionValueView": {
+        "description": "One side of a contradiction (B-079): the value (in the\nchange-history string form), the sources that said it, and\nwhether it is the value the event currently carries.",
+        "properties": {
+          "current": {
+            "default": false,
+            "title": "Current",
+            "type": "boolean"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Ids",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "ContradictionValueView",
+        "type": "object"
+      },
       "EmailChangeRequest": {
         "description": "Ask to move the account to a new email (B-020). The change\ncompletes only when the token sent to the NEW address is used.",
         "properties": {
@@ -1359,6 +1442,20 @@
             ],
             "title": "Capacity"
           },
+          "contradictions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ContradictionResponse"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contradictions"
+          },
           "cost_cents": {
             "anyOf": [
               {
@@ -1557,6 +1654,30 @@
           "status"
         ],
         "title": "EventResponse",
+        "type": "object"
+      },
+      "EventSourceLinkResponse": {
+        "description": "One supporting source of an event, with its quote\n(B-076's answerable provenance): \"where did this field\ncome from?\" is this list.",
+        "properties": {
+          "field": {
+            "default": "",
+            "title": "Field",
+            "type": "string"
+          },
+          "quote": {
+            "default": "",
+            "title": "Quote",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id"
+        ],
+        "title": "EventSourceLinkResponse",
         "type": "object"
       },
       "ExceptionRequest": {
@@ -2525,6 +2646,75 @@
         "title": "MembershipResponse",
         "type": "object"
       },
+      "MergeEventRequest": {
+        "description": "Merge this candidate into the named existing EVENT\n(B-076): the field-level merge \u2014 better-sourced values\nwin, provenance becomes the event's links.",
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id"
+        ],
+        "title": "MergeEventRequest",
+        "type": "object"
+      },
+      "MergeEventResponse": {
+        "description": "What a merge did, field by field (B-076): the event as\nit now stands, which fields were filled / applied (won) /\nagreed without moving / kept (the event's value stood),\nwhich were skipped as unsupported or unresolved, and the\ncontradictions the merge opened (B-079).",
+        "properties": {
+          "agreed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Agreed Fields",
+            "type": "array"
+          },
+          "applied_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applied Fields",
+            "type": "array"
+          },
+          "contradiction_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contradiction Ids",
+            "type": "array"
+          },
+          "event": {
+            "$ref": "#/components/schemas/EventResponse"
+          },
+          "filled_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Filled Fields",
+            "type": "array"
+          },
+          "kept_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kept Fields",
+            "type": "array"
+          },
+          "skipped_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skipped Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event"
+        ],
+        "title": "MergeEventResponse",
+        "type": "object"
+      },
       "MetaResponse": {
         "description": "Public facts about this deployment: name, version, contract.",
         "properties": {
@@ -3101,6 +3291,26 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "ResolveContradictionRequest": {
+        "description": "Settle a contradiction (B-079): the chosen value must be\none the sources actually said (the service checks); ``note``\nrides into the change history as the reason.",
+        "properties": {
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "value": {
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "ResolveContradictionRequest",
         "type": "object"
       },
       "RoleChangeRequest": {
@@ -5200,6 +5410,68 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/candidates/{candidate_id}/merge-event": {
+      "post": {
+        "description": "Merge this candidate into an existing event (B-076):\nthe field-level merge \u2014 better-sourced values win, all\nsources link to the event, and a genuine disagreement the\nmerge cannot settle becomes a contradiction on the event\n(B-079). This is the merge action beside the queue's\n\"likely the same event\" proposal (B-075).",
+        "operationId": "merge_candidate_into_event_api_v1_groups__group_id__candidates__candidate_id__merge_event_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergeEventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge Candidate Into Event",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/candidates/{candidate_id}/reject": {
       "post": {
         "description": "Reject a draft (organiser+). The draft and its provenance\nstay \u2014 rejection is a decision, not an erasure.",
@@ -6071,6 +6343,143 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/contradictions": {
+      "get": {
+        "description": "The disagreements this event carries (B-079): open\nones by default \u2014 a visible flag until a person resolves\nit; ``include_resolved`` shows the settled history too.",
+        "operationId": "list_contradictions_api_v1_groups__group_id__events__event_id__contradictions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_resolved",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Resolved",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContradictionResponse"
+                  },
+                  "title": "Response List Contradictions Api V1 Groups  Group Id  Events  Event Id  Contradictions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Contradictions",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/contradictions/{contradiction_id}/resolve": {
+      "post": {
+        "description": "Settle a contradiction (B-079): the chosen value \u2014 one\nthe sources actually said \u2014 is applied to the event, and\nthe resolution is recorded with who chose it.",
+        "operationId": "resolve_contradiction_api_v1_groups__group_id__events__event_id__contradictions__contradiction_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contradiction_id",
+            "required": true,
+            "schema": {
+              "title": "Contradiction Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveContradictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContradictionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Contradiction",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/facebook-draft": {
       "get": {
         "description": "Build the Facebook Event DRAFT for a published event\n(B-058). Nothing is created on Facebook \u2014 creating the real\nevent is the Phase 12 integration with a human pressing the\nbutton, because posting as a person/page is an outward act.",
@@ -6746,6 +7155,62 @@
         "summary": "List Rsvps",
         "tags": [
           "rsvps"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/sources": {
+      "get": {
+        "description": "Every source behind this event, with the field each\nquote supports (B-076): the event's answer to \"where did\nthis come from?\", field by field.",
+        "operationId": "list_event_sources_api_v1_groups__group_id__events__event_id__sources_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EventSourceLinkResponse"
+                  },
+                  "title": "Response List Event Sources Api V1 Groups  Group Id  Events  Event Id  Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Event Sources",
+        "tags": [
+          "events"
         ]
       }
     },

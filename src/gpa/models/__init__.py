@@ -14,12 +14,14 @@ Alembic and the test fixtures both rely on that. Domain files:
 """
 
 from gpa.models.ai import AiUsage
-from gpa.models.core import AuditLog, FileAsset, Job
+from gpa.models.core import AuditLog, FileAsset, Job, Tombstone
 from gpa.models.events import (
+    AnnouncementDraft,
     CalendarFeed,
     Comment,
     Event,
     EventChange,
+    EventContradiction,
     EventSourceLink,
     Recurrence,
     Rsvp,
@@ -31,6 +33,7 @@ from gpa.models.sources import Flyer, InboundAddress, Provenance, Source, Source
 
 __all__ = [
     "AiUsage",
+    "AnnouncementDraft",
     "ApiKey",
     "AgentSeat",
     "AuditLog",
@@ -39,6 +42,7 @@ __all__ = [
     "Comment",
     "Event",
     "EventChange",
+    "EventContradiction",
     "EventSourceLink",
     "FileAsset",
     "Flyer",
@@ -54,5 +58,6 @@ __all__ = [
     "Source",
     "SourceChunk",
     "Thread",
+    "Tombstone",
     "User",
 ]
