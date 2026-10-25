@@ -56,6 +56,23 @@ def main() -> None:
     set_storage(build_storage(settings))
     db = Database(settings.database_url)
     db.create_all()
+    # B-172: startup recovery — assess and repair before the
+    # first job is touched; a "refuse" verdict stops the
+    # worker with the repair named rather than working on
+    # damaged ground.
+    from gpa.services import recovery as _recovery
+
+    _session = db.session()
+    try:
+        report = _recovery.assess_and_repair(_session, settings)
+    finally:
+        _session.close()
+    for line in report["actions"] + report["notes"]:
+        print(f"recovery: {line}")
+    if report["verdict"] == "refuse":
+        for problem in report["problems"]:
+            print(f"recovery REFUSES to start: {problem}")
+        raise SystemExit(2)
     worker_id = f"worker-{uuid.uuid4().hex[:8]}"
     session = db.session()
     try:

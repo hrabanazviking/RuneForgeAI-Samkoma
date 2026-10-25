@@ -1887,6 +1887,29 @@ Phase 16 begins at B-157.
   audit, keymgmt → crypto, uploads → sources, autosaves →
   platform) + the keymgmt→jobs handler-registration pin —
   architecture suite green.
+- **B-172 startup recovery & self-healing** ✅:
+  `gpa/services/recovery.py` assess_and_repair — verdicts
+  serve / repaired / refuse(with the manual repair named).
+  Repairs: WAL checkpoint (frames brought home are
+  reported), stuck jobs (running past the 900 s lease →
+  requeued with attempt counted or failed when spent, each
+  audited as system:recovery), orphan upload parts (open
+  sessions' parts are the resume contract — never swept;
+  completed/ghost sessions' parts are), migration state
+  (an alembic_version naming an unknown revision refuses;
+  an unstamped create_all database is noted, not refused).
+  The worker runs it before its first job and exits 2 on
+  refuse. Acceptance (tests/test_startup_recovery.py, 5
+  passed): the DOUBLE-VERDICT GUARD (healthy ground scores
+  serve twice, zero actions), stuck-job requeue exactly
+  once then serve, spent-job failure, orphan sweep bounds,
+  unknown-revision refusal naming the repair.
+- **STOPPED after B-172** (this builder's run): B-173 →
+  B-180 remain for the timer crew, in order. Phase papers
+  NOT written (B-180 not reached). Full-suite gate for
+  B-169→B-172 stands on their affected batches (all green,
+  named in the entries above); the next full gate + PG
+  parity belong with the B-180 drill.
 
 ## Standing laws in force here
 
