@@ -16,8 +16,9 @@ The generator polls the group's jobs and speaks two event kinds:
 - ``job.progress`` — whenever a job's status or progress
   changes: id, kind, status, progress, and the source it serves.
 - ``comment.created`` — whenever a comment lands in one of the
-  group's event threads (B-060): the comment id, its event, its
-  author, and its words. Polled from the Comment table like
+  group's discussion threads (B-060; any parent since B-084):
+  the comment id, its parent, its author, and its words.
+  Polled from the Comment table like
   everything else here — a comment hidden or deleted later is
   a moderation act the REST views show; the stream announces
   arrivals, it does not rewrite them.
@@ -102,6 +103,8 @@ def _comment_frame(comment: Comment, thread: Thread) -> dict:
         "comment_id": comment.id,
         "thread_id": thread.id,
         "event_id": thread.parent_id if thread.parent_type == "event" else None,
+        "parent_type": thread.parent_type,
+        "parent_id": thread.parent_id,
         "author": comment.author_label,
         "body": comment.body,
         "created_at": comment.created_at.isoformat() + "Z",

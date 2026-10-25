@@ -78,8 +78,15 @@ def load_seed_data(db: Session, data: dict) -> dict:
                 db.add(
                     Membership(user_id=owner.id, group_id=group.id, role="owner", status="active")
                 )
+    # Phase 7 (B-091): every seeded database also carries the
+    # global starter templates (group_id NULL), idempotent like
+    # everything else here. Their counts ride under their own
+    # key so the users/groups counts stay the shape B-009 set.
+    from gpa.services.templates import seed_starter_templates
+
+    templates = seed_starter_templates(db)
     db.commit()
-    return {"created": created, "already_present": present}
+    return {"created": created, "already_present": present, "templates": templates}
 
 
 def load_seed_file(db: Session, path: Path | str) -> dict:

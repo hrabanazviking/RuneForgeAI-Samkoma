@@ -412,11 +412,18 @@ class CommentResponse(BaseModel):
     """One comment as a viewer at some level sees it: hidden and
     deleted are organiser-visible flags; to members a hidden or
     deleted comment is simply absent from the list (the service
-    filters it before this shape is built)."""
+    filters it before this shape is built).
+
+    The parent is named honestly since B-084 generalised the
+    thread system: ``parent_type`` + ``parent_id`` always;
+    ``event_id`` remains, populated for event parents (the
+    B-060 shape), null for task/decision/poll parents."""
 
     id: str
     thread_id: str
-    event_id: str
+    event_id: str | None = None
+    parent_type: str = "event"
+    parent_id: str = ""
     author_label: str
     body: str
     edited_at: str | None = None
@@ -430,7 +437,9 @@ def comment_view(comment, thread) -> CommentResponse:
     return CommentResponse(
         id=comment.id,
         thread_id=comment.thread_id,
-        event_id=thread.parent_id,
+        event_id=thread.parent_id if thread.parent_type == "event" else None,
+        parent_type=thread.parent_type,
+        parent_id=thread.parent_id,
         author_label=comment.author_label,
         body=comment.body,
         edited_at=iso_utc(comment.edited_at),

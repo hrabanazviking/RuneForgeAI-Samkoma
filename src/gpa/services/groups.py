@@ -369,6 +369,23 @@ def approve_candidate(
     event_service.mint_from_candidate(
         db, group=group, candidate=candidate, actor_label=actor_label
     )
+    # Phase 7 (B-083/B-085/B-086): approval of a task, decision,
+    # or question candidate MINTS its planning entity in the
+    # same transaction, the way events mint — the planning
+    # mints fill resulting_entity_* and refuse in plain words
+    # (an empty draft, an owner who is not a member) so the
+    # approval rolls back and the candidate stays pending.
+    from gpa.services import planning as planning_service
+
+    planning_service.mint_task_from_candidate(
+        db, group=group, candidate=candidate, actor_label=actor_label
+    )
+    planning_service.mint_decision_from_candidate(
+        db, group=group, candidate=candidate, actor_label=actor_label
+    )
+    planning_service.mint_question_from_candidate(
+        db, group=group, candidate=candidate, actor_label=actor_label
+    )
     # Phase 6 (B-077): approval of a change candidate APPLIES
     # it to its event, in this same transaction — a refused
     # application (no target, an unbacked claim, an unresolved

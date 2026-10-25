@@ -1,18 +1,21 @@
-"""Event discussion — threads v1 (roadmap B-060).
+"""Discussion — one thread system for every parent (roadmap
+B-060, generalised by B-084).
 
-Threads and comments under an event: post, edit your own,
-delete your own; organisers moderate by HIDING, with the audit
-trail saying who hid what and when. Moderation is state, never
-erasure: a hidden comment keeps its body for organisers; an
-author's delete is a tombstone that keeps the thread's shape.
+Threads and comments live under a *parent*: an event (B-060),
+or — since Phase 7 — a task, a decision, or a poll. There is
+ONE implementation: the same tables (``Thread.parent_*`` was
+polymorphic from the start), the same rules (post, edit your
+own, delete your own; organisers moderate by HIDING, with the
+audit trail saying who hid what and when), and the same
+visibility discipline — a parent a caller cannot see has no
+visible discussion either.
 
-The machinery is deliberately polymorphic (``Thread.parent_*``)
-— Phase 7 generalises the same tables to tasks, decisions, and
-polls (Doc 04 §6); this phase wires the event parent only.
-
-New comments also speak on the group's SSE stream as
-``comment.created`` frames (services/stream.py polls the same
-durable tables — there is no in-memory bus to lose them).
+Moderation is state, never erasure: a hidden comment keeps its
+body for organisers; an author's delete is a tombstone that
+keeps the thread's shape. New comments also speak on the
+group's SSE stream as ``comment.created`` frames
+(services/stream.py polls the same durable tables — there is
+no in-memory bus to lose them).
 """
 
 from sqlalchemy.orm import Session
@@ -24,30 +27,69 @@ from gpa.models.identity import now_utc
 from gpa.services import audit
 from gpa.services import events as event_service
 
+# The parents a thread may hang under. Events are the original
+# (B-060); tasks, decisions, and polls joined in Phase 7
+# (B-084) — one system, four parents, all tested.
+PARENT_TYPES: tuple[str, ...] = ("event", "task", "decision", "poll")
+
+
+def resolve_parent(
+    db: Session, *, group: Group, parent_type: str, parent_id: str, viewer_role: str | None
+):
+    """The parent row a thread would hang under, or 404.
+
+    Visibility is the parent's own: an event keeps its bright
+    line (a draft's discussion is organiser-only, like the
+    draft); planning parents are member-visible planning
+    objects, so existence in this group is the whole test."""
+    if parent_type == "event":
+        return event_service.get_visible_event(db, group, parent_id, viewer_role)
+    if parent_type in ("task", "decision", "poll"):
+        from gpa.services import planning as planning_service
+        from gpa.services import polls as poll_service
+
+        if parent_type == "task":
+            return planning_service.get_task(db, group, parent_id)
+        if parent_type == "decision":
+            return planning_service.get_decision(db, group, parent_id)
+        return poll_service.get_poll(db, group, parent_id)
+    raise AppError("not_found", detail="That discussion could not be found.")
+
 
 def get_or_create_thread(
-    db: Session, *, group: Group, event, actor_label: str
+    db: Session,
+    *,
+    group: Group,
+    parent_type: str,
+    parent_id: str,
+    actor_label: str,
 ) -> Thread:
-    """The event's discussion thread (one per event in v1),
+    """The parent's discussion thread (one per parent),
     created by the first poster."""
     thread = (
         db.query(Thread)
         .filter(
             Thread.group_id == group.id,
-            Thread.parent_type == "event",
-            Thread.parent_id == event.id,
+            Thread.parent_type == parent_type,
+            Thread.parent_id == parent_id,
         )
         .order_by(Thread.created_at, Thread.id)
         .first()
     )
     if thread is None:
         thread = Thread(
-            group_id=group.id, parent_type="event", parent_id=event.id,
+            group_id=group.id, parent_type=parent_type, parent_id=parent_id,
             title="", created_by=actor_label,
         )
         db.add(thread)
         db.flush()
     return thread
+
+
+def thread_of_comment(db: Session, comment: Comment) -> Thread:
+    """The thread a comment hangs in (routers render a comment
+    with its thread, and routers never touch models — B-017)."""
+    return db.get(Thread, comment.thread_id)
 
 
 def _get_comment(db: Session, group: Group, comment_id: str) -> Comment:
@@ -68,17 +110,23 @@ def post_comment(
     author_user_id: str | None,
     author_seat_id: str | None,
     group: Group,
-    event_id: str,
+    parent_type: str,
+    parent_id: str,
     viewer_role: str | None,
     body: str,
 ) -> Comment:
-    """Post to the event's thread. The event must be visible to
-    the poster (a draft's discussion is organiser-only, like the
-    draft itself)."""
+    """Post to a parent's thread. The parent must be visible to
+    the poster (resolve_parent holds each parent's own rule)."""
     if not body or not body.strip():
         raise AppError("validation_error", detail="A comment needs words.")
-    event = event_service.get_visible_event(db, group, event_id, viewer_role)
-    thread = get_or_create_thread(db, group=group, event=event, actor_label=author_label)
+    parent = resolve_parent(
+        db, group=group, parent_type=parent_type,
+        parent_id=parent_id, viewer_role=viewer_role,
+    )
+    thread = get_or_create_thread(
+        db, group=group, parent_type=parent_type,
+        parent_id=parent.id, actor_label=author_label,
+    )
     comment = Comment(
         thread_id=thread.id,
         author_label=author_label,
@@ -90,7 +138,7 @@ def post_comment(
     db.flush()
     audit.record(
         db, actor=author_label, action="comment.created",
-        group_id=group.id, entity_type="event", entity_id=event.id,
+        group_id=group.id, entity_type=parent_type, entity_id=parent.id,
         detail={"comment_id": comment.id},
     )
     db.commit()
@@ -98,22 +146,30 @@ def post_comment(
 
 
 def list_comments(
-    db: Session, *, group: Group, event_id: str, viewer_role: str | None
+    db: Session,
+    *,
+    group: Group,
+    parent_type: str,
+    parent_id: str,
+    viewer_role: str | None,
 ) -> list[Comment]:
-    """The event's discussion, oldest first.
+    """A parent's discussion, oldest first.
 
     What a viewer sees is role-shaped: members see live comments
     only — hidden ones are simply absent, deleted ones too.
     Organisers see everything, flagged: the hidden body (their
     moderation may need it) and the tombstones."""
-    event = event_service.get_visible_event(db, group, event_id, viewer_role)
+    parent = resolve_parent(
+        db, group=group, parent_type=parent_type,
+        parent_id=parent_id, viewer_role=viewer_role,
+    )
     thread_ids = [
         row.id
         for row in db.query(Thread)
         .filter(
             Thread.group_id == group.id,
-            Thread.parent_type == "event",
-            Thread.parent_id == event.id,
+            Thread.parent_type == parent_type,
+            Thread.parent_id == parent.id,
         )
         .all()
     ]

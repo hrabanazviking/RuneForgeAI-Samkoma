@@ -26,14 +26,18 @@ from gpa.routers import (
     auth,
     calendar,
     candidates,
+    checklists,
     discussion,
     events,
     flyers,
     groups,
     jobs,
     meta,
+    planning,
+    polls,
     rsvps,
     sources,
+    templates,
     truth,
     users,
 )
@@ -132,4 +136,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(sources.email_router)
     app.include_router(truth.router)
     app.include_router(jobs.router)
+    app.include_router(planning.router)
+    app.include_router(polls.router)
+    app.include_router(checklists.router)
+    app.include_router(templates.router)
     return app

@@ -42,6 +42,10 @@ export interface ApiKeyResponse {
   scopes: string[];
 }
 
+export interface ApplyWinnerRequest {
+  title?: string | unknown | null | null;
+}
+
 export interface AuditEntryResponse {
   action: string;
   actor: string;
@@ -50,6 +54,44 @@ export interface AuditEntryResponse {
   entity_id: string;
   entity_type: string;
   id: string;
+}
+
+export interface AvailabilityMarkRequest {
+  can: boolean;
+}
+
+export interface AvailabilitySlotCreateRequest {
+  ends_at: string;
+  event_id?: string | unknown | null | null;
+  label?: string;
+  starts_at: string;
+}
+
+export interface AvailabilitySlotResponse {
+  can_count?: number;
+  can_members?: string[];
+  cant_count?: number;
+  cant_members?: string[];
+  created_at: string;
+  ends_at: string;
+  event_id?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  label?: string;
+  starts_at: string;
+}
+
+export interface BalanceResponse {
+  member_id?: string | unknown | null | null;
+  member_label?: string;
+  paid_cents: number;
+}
+
+export interface BudgetResponse {
+  balances: BalanceResponse[];
+  event_id: string;
+  lines: CostLineResponse[];
+  total_cents: number;
 }
 
 export interface CancelRequest {
@@ -111,6 +153,35 @@ export interface CandidateResponse {
   title: string;
 }
 
+export interface ChecklistItemCreateRequest {
+  label: string;
+  note?: string;
+  quantity?: number;
+  section?: string;
+}
+
+export interface ChecklistItemPatchRequest {
+  done?: boolean | unknown | null | null;
+  label?: string | unknown | null | null;
+  note?: string | unknown | null | null;
+  quantity?: number | unknown | null | null;
+}
+
+export interface ChecklistItemResponse {
+  claimed?: boolean;
+  claimed_by_id?: string | unknown | null | null;
+  claimed_by_label?: string;
+  created_at: string;
+  done?: boolean;
+  event_id: string;
+  group_id: string;
+  id: string;
+  label: string;
+  note?: string;
+  quantity: number;
+  section: string;
+}
+
 export interface ChunkIn {
   sender?: string | unknown | null | null;
   text?: string;
@@ -141,9 +212,11 @@ export interface CommentResponse {
   created_at: string;
   deleted?: boolean;
   edited_at?: string | unknown | null | null;
-  event_id: string;
+  event_id?: string | unknown | null | null;
   hidden?: boolean;
   id: string;
+  parent_id?: string;
+  parent_type?: string;
   thread_id: string;
 }
 
@@ -179,6 +252,54 @@ export interface ContradictionValueView {
   current?: boolean;
   source_ids?: string[];
   value: string;
+}
+
+export interface CostLineCreateRequest {
+  amount_cents: number;
+  label: string;
+  paid_by_id?: string | unknown | null | null;
+  paid_by_label?: string;
+}
+
+export interface CostLineResponse {
+  amount_cents: number;
+  created_at: string;
+  created_by: string;
+  event_id: string;
+  group_id: string;
+  id: string;
+  label: string;
+  paid_by_id?: string | unknown | null | null;
+  paid_by_label?: string;
+}
+
+export interface DecisionCreateRequest {
+  event_id?: string | unknown | null | null;
+  supersedes_id?: string | unknown | null | null;
+  text: string;
+}
+
+export interface DecisionResponse {
+  candidate_id?: string | unknown | null | null;
+  created_at: string;
+  created_by: string;
+  event_id?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  status: string;
+  superseded_by_id?: string | unknown | null | null;
+  supersedes_id?: string | unknown | null | null;
+  text: string;
+}
+
+export interface DigestEventResponse {
+  ends_at: string;
+  id: string;
+  place_name?: string;
+  starts_at: string;
+  status: string;
+  timezone: string;
+  title: string;
 }
 
 export interface EmailChangeRequest {
@@ -376,6 +497,15 @@ export interface FlyerWallResponse {
   period: string;
 }
 
+export interface GapsResponse {
+  event_id: string;
+  gaps: Record<string, unknown>[];
+  missing_fields: string[];
+  open_questions: QuestionResponse[];
+  unclaimed_roles: RoleSlotResponse[];
+  unclaimed_tasks: TaskResponse[];
+}
+
 export interface GenerateImageRequest {
   description?: string;
 }
@@ -425,6 +555,14 @@ export interface InboundAddressResponse {
   id: string;
   token?: string | unknown | null | null;
   token_prefix: string;
+}
+
+export interface InstantiationResponse {
+  checklist_item_ids: string[];
+  event_id: string;
+  role_slot_ids: string[];
+  task_ids: string[];
+  template_id: string;
 }
 
 export interface InviteRequest {
@@ -548,6 +686,66 @@ export interface PasteIngestRequest {
   title?: string;
 }
 
+export interface PlanningDigestResponse {
+  events_this_week: DigestEventResponse[];
+  open_questions: QuestionResponse[];
+  unclaimed_tasks: TaskResponse[];
+  undecided_polls: PollResponse[];
+  week_end: string;
+  week_start: string;
+}
+
+export interface PollCreateRequest {
+  closes_at?: string | unknown | null | null;
+  event_id?: string | unknown | null | null;
+  kind?: string;
+  options: PollOptionRequest[];
+  question: string;
+}
+
+export interface PollOptionRequest {
+  ends_at?: string | unknown | null | null;
+  label?: string;
+  starts_at?: string | unknown | null | null;
+}
+
+export interface PollOptionResponse {
+  ends_at?: string | unknown | null | null;
+  id: string;
+  label: string;
+  starts_at?: string | unknown | null | null;
+  votes?: number;
+}
+
+export interface PollResponse {
+  applied_event_id?: string | unknown | null | null;
+  closes_at?: string | unknown | null | null;
+  created_at: string;
+  created_by: string;
+  event_id?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  kind: string;
+  my_option_id?: string | unknown | null | null;
+  options?: PollOptionResponse[];
+  question: string;
+  status: string;
+  total_votes?: number;
+}
+
+export interface PollResultsResponse {
+  leader_option_ids: string[];
+  my_option_id?: string | unknown | null | null;
+  options: PollOptionResponse[];
+  poll_id: string;
+  status: string;
+  total_votes: number;
+}
+
+export interface PollVoteRequest {
+  option_id: string;
+}
+
 export interface PrintEventRow {
   bring?: string;
   cost?: string;
@@ -610,6 +808,37 @@ export interface QualityReportResponse {
   unresolved_contradictions: QualityContradictionRef[];
 }
 
+export interface QuestionCreateRequest {
+  asked_of_id?: string | unknown | null | null;
+  event_id?: string | unknown | null | null;
+  text: string;
+}
+
+export interface QuestionPatchRequest {
+  asked_of_id?: string | unknown | null | null;
+  drop?: boolean;
+  text?: string | unknown | null | null;
+}
+
+export interface QuestionResolveRequest {
+  decision_text?: string | unknown | null | null;
+}
+
+export interface QuestionResponse {
+  asked_of_id?: string | unknown | null | null;
+  asked_of_label?: string;
+  candidate_id?: string | unknown | null | null;
+  created_at: string;
+  created_by: string;
+  event_id?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  resolution_decision_id?: string | unknown | null | null;
+  resolved_at?: string | unknown | null | null;
+  status: string;
+  text: string;
+}
+
 export interface QueueStatusResponse {
   budget_micros?: number | unknown | null | null;
   pause_reason?: string | unknown | null | null;
@@ -650,6 +879,22 @@ export interface RoleChangeRequest {
   role: string;
 }
 
+export interface RoleSlotResponse {
+  claimed?: boolean;
+  claimed_by_id?: string | unknown | null | null;
+  claimed_by_label?: string;
+  created_at: string;
+  event_id: string;
+  group_id: string;
+  id: string;
+  role_name: string;
+}
+
+export interface RoleSlotsCreateRequest {
+  role_name: string;
+  slots?: number;
+}
+
 export interface RsvpListResponse {
   rsvps: RsvpResponse[];
   summary: Record<string, unknown>;
@@ -671,6 +916,22 @@ export interface RsvpResponse {
   updated_at: string;
   waitlist_position?: number | unknown | null | null;
   waitlisted?: boolean;
+}
+
+export interface SearchHitResponse {
+  candidate_id?: string | unknown | null | null;
+  event_id?: string | unknown | null | null;
+  id: string;
+  score: number;
+  snippet?: string;
+  source_id?: string | unknown | null | null;
+  title: string;
+  type: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchHitResponse[];
 }
 
 export interface SeatCreateRequest {
@@ -740,6 +1001,81 @@ export interface SourceResponse {
   storage_key?: string | unknown | null | null;
   title: string;
   url?: string;
+}
+
+export interface SupplyEventResponse {
+  claimed?: boolean;
+  event_id: string;
+  event_title: string;
+  quantity: number;
+}
+
+export interface SupplyLineResponse {
+  events: SupplyEventResponse[];
+  label: string;
+  total_quantity: number;
+}
+
+export interface TaskCreateRequest {
+  due_at?: string | unknown | null | null;
+  event_id?: string | unknown | null | null;
+  notes?: string;
+  owner_id?: string | unknown | null | null;
+  title: string;
+}
+
+export interface TaskPatchRequest {
+  due_at?: string | unknown | null | null;
+  notes?: string | unknown | null | null;
+  owner_id?: string | unknown | null | null;
+  status?: string | unknown | null | null;
+  title?: string | unknown | null | null;
+}
+
+export interface TaskResponse {
+  candidate_id?: string | unknown | null | null;
+  completed_at?: string | unknown | null | null;
+  created_at: string;
+  created_by: string;
+  due_at?: string | unknown | null | null;
+  event_id?: string | unknown | null | null;
+  group_id: string;
+  id: string;
+  notes?: string;
+  overdue?: boolean;
+  owner_id?: string | unknown | null | null;
+  owner_label?: string;
+  status: string;
+  suggested_owner_label?: string;
+  title: string;
+  unclaimed?: boolean;
+  updated_at: string;
+}
+
+export interface TemplateCreateRequest {
+  description?: string;
+  name: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TemplateFromEventRequest {
+  name: string;
+}
+
+export interface TemplateInstantiateRequest {
+  starts_at: string;
+  title?: string | unknown | null | null;
+}
+
+export interface TemplateResponse {
+  created_at: string;
+  created_by?: string;
+  description?: string;
+  group_id?: string | unknown | null | null;
+  id: string;
+  is_starter?: boolean;
+  name: string;
+  payload?: Record<string, unknown>;
 }
 
 export interface TokenConsumeRequest {

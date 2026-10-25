@@ -1,10 +1,18 @@
-"""Discussion routes (roadmap B-060).
+"""Discussion routes (B-060, generalised by B-084).
 
-Threads v1 under events: list, post, edit/delete your own, and
-organiser moderation (hide/unhide — audited in the service).
-Reads and posts are member+; posting rides the draft scope for
-key callers (writing words is a draft-class act); hiding is
-organiser+ behind the publish scope.
+ONE thread system, four parents: events, tasks, decisions,
+polls. Reading a thread is member+; posting is a member draft
+act; editing is the author's own draft act; hiding is an
+organiser publish act. The event routes keep their B-060 paths
+(``/events/{event_id}/comments`` reads the same rows as the
+generic ``/comments/event/{event_id}`` — one implementation,
+one truth). Every rule lives in services/discussion.py.
+
+Ordering law in this file: the comment-act routes register
+BEFORE the generic parent routes — ``POST
+/comments/{id}/hide`` must win over ``POST
+/comments/{parent_type}/{parent_id}``, or moderation calls
+would be read as posts to a parent named "hide".
 """
 
 from fastapi import APIRouter, Depends
@@ -12,7 +20,6 @@ from sqlalchemy.orm import Session
 
 from gpa.db import get_db
 from gpa.deps import GroupContext, Principal, require_group_role, require_scope
-from gpa.models.events import Thread
 from gpa.schemas.events import (
     CommentCreateRequest,
     CommentEditRequest,
@@ -24,39 +31,26 @@ from gpa.services import discussion as discussion_service
 router = APIRouter(prefix="/api/v1/groups", tags=["discussion"])
 
 
-def _thread_of(db: Session, comment) -> Thread:
-    return db.get(Thread, comment.thread_id)
+def _view(db: Session, comment) -> CommentResponse:
+    """One comment rendered with its thread."""
+    return comment_view(comment, discussion_service.thread_of_comment(db, comment))
 
 
-@router.get(
-    "/{group_id}/events/{event_id}/comments", response_model=list[CommentResponse]
-)
-def list_comments(
-    event_id: str,
-    context: GroupContext = Depends(require_group_role("member")),
-    db: Session = Depends(get_db),
-):
-    """The event's discussion. Members see live comments only;
+def _list(db: Session, context: GroupContext, parent_type: str, parent_id: str):
+    """A parent's discussion. Members see live comments only;
     organisers see the hidden and the tombstones too, flagged."""
     rows = discussion_service.list_comments(
-        db, group=context.group, event_id=event_id, viewer_role=context.role
+        db, group=context.group, parent_type=parent_type,
+        parent_id=parent_id, viewer_role=context.role,
     )
-    return [comment_view(row, _thread_of(db, row)) for row in rows]
+    return [_view(db, row) for row in rows]
 
 
-@router.post(
-    "/{group_id}/events/{event_id}/comments",
-    response_model=CommentResponse,
-    status_code=201,
-)
-def post_comment(
-    event_id: str,
-    body: CommentCreateRequest,
-    context: GroupContext = Depends(require_group_role("member")),
-    principal: Principal = Depends(require_scope("draft")),
-    db: Session = Depends(get_db),
-):
-    """Post to the event's thread, as yourself — a seat's words
+def _post(
+    db: Session, context: GroupContext, principal: Principal,
+    parent_type: str, parent_id: str, body: CommentCreateRequest,
+) -> CommentResponse:
+    """Post to a parent's thread, as yourself — a seat's words
     are the seat's (B-018), a person's are theirs."""
     comment = discussion_service.post_comment(
         db,
@@ -64,14 +58,55 @@ def post_comment(
         author_user_id=principal.user_id,
         author_seat_id=principal.seat_id,
         group=context.group,
-        event_id=event_id,
+        parent_type=parent_type,
+        parent_id=parent_id,
         viewer_role=context.role,
         body=body.body,
     )
-    return comment_view(comment, _thread_of(db, comment))
+    return _view(db, comment)
 
 
-@router.patch("/{group_id}/comments/{comment_id}", response_model=CommentResponse)
+# ------------------------------------------------------------------
+# Event parents (the B-060 paths, unchanged)
+# ------------------------------------------------------------------
+
+
+@router.get(
+    "/{group_id}/events/{event_id}/comments", response_model=list[CommentResponse]
+)
+def list_event_comments(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """An event's discussion thread."""
+    return _list(db, context, "event", event_id)
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/comments",
+    response_model=CommentResponse,
+    status_code=201,
+)
+def post_event_comment(
+    event_id: str,
+    body: CommentCreateRequest,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Say something on an event."""
+    return _post(db, context, principal, "event", event_id, body)
+
+
+# ------------------------------------------------------------------
+# Comment acts (parent-independent, as before)
+# ------------------------------------------------------------------
+
+
+@router.patch(
+    "/{group_id}/comments/{comment_id}", response_model=CommentResponse
+)
 def edit_comment(
     comment_id: str,
     body: CommentEditRequest,
@@ -89,7 +124,7 @@ def edit_comment(
         comment_id=comment_id,
         body=body.body,
     )
-    return comment_view(comment, _thread_of(db, comment))
+    return _view(db, comment)
 
 
 @router.delete("/{group_id}/comments/{comment_id}", response_model=CommentResponse)
@@ -108,7 +143,7 @@ def delete_comment(
         group=context.group,
         comment_id=comment_id,
     )
-    return comment_view(comment, _thread_of(db, comment))
+    return _view(db, comment)
 
 
 @router.post(
@@ -125,7 +160,7 @@ def hide_comment(
         db, actor_label=principal.label, group=context.group,
         comment_id=comment_id, hidden=True,
     )
-    return comment_view(comment, _thread_of(db, comment))
+    return _view(db, comment)
 
 
 @router.post(
@@ -142,4 +177,42 @@ def unhide_comment(
         db, actor_label=principal.label, group=context.group,
         comment_id=comment_id, hidden=False,
     )
-    return comment_view(comment, _thread_of(db, comment))
+    return _view(db, comment)
+
+
+# ------------------------------------------------------------------
+# Any parent (B-084): tasks, decisions, polls — and events too
+# ------------------------------------------------------------------
+
+
+@router.get(
+    "/{group_id}/comments/{parent_type}/{parent_id}",
+    response_model=list[CommentResponse],
+)
+def list_parent_comments(
+    parent_type: str,
+    parent_id: str,
+    context: GroupContext = Depends(require_group_role("member")),
+    db: Session = Depends(get_db),
+):
+    """Any planning parent's thread through the same door."""
+    return _list(db, context, parent_type, parent_id)
+
+
+@router.post(
+    "/{group_id}/comments/{parent_type}/{parent_id}",
+    response_model=CommentResponse,
+    status_code=201,
+)
+def post_parent_comment(
+    parent_type: str,
+    parent_id: str,
+    body: CommentCreateRequest,
+    context: GroupContext = Depends(require_group_role("member")),
+    principal: Principal = Depends(require_scope("draft")),
+    db: Session = Depends(get_db),
+):
+    """Say something on a task, a decision, or a poll."""
+    return _post(db, context, principal, parent_type, parent_id, body)
+
+

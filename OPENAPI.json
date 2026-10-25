@@ -201,6 +201,25 @@
         "title": "ApiKeyResponse",
         "type": "object"
       },
+      "ApplyWinnerRequest": {
+        "description": "Mint path only: the new event's title (defaults to the\npoll's question).",
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ApplyWinnerRequest",
+        "type": "object"
+      },
       "AuditEntryResponse": {
         "description": "One audit row (B-019).",
         "properties": {
@@ -244,6 +263,194 @@
           "created_at"
         ],
         "title": "AuditEntryResponse",
+        "type": "object"
+      },
+      "AvailabilityMarkRequest": {
+        "properties": {
+          "can": {
+            "title": "Can",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "can"
+        ],
+        "title": "AvailabilityMarkRequest",
+        "type": "object"
+      },
+      "AvailabilitySlotCreateRequest": {
+        "properties": {
+          "ends_at": {
+            "format": "date-time",
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "AvailabilitySlotCreateRequest",
+        "type": "object"
+      },
+      "AvailabilitySlotResponse": {
+        "description": "One proposed slot with its marks and its rank inputs \u2014\ncan/can't counts and who said which (the group's own marks,\nnothing else; B-090's privacy boundary is this shape).",
+        "properties": {
+          "can_count": {
+            "default": 0,
+            "title": "Can Count",
+            "type": "integer"
+          },
+          "can_members": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Can Members",
+            "type": "array"
+          },
+          "cant_count": {
+            "default": 0,
+            "title": "Cant Count",
+            "type": "integer"
+          },
+          "cant_members": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Cant Members",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "starts_at",
+          "ends_at",
+          "created_at"
+        ],
+        "title": "AvailabilitySlotResponse",
+        "type": "object"
+      },
+      "BalanceResponse": {
+        "properties": {
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "member_label": {
+            "default": "",
+            "title": "Member Label",
+            "type": "string"
+          },
+          "paid_cents": {
+            "title": "Paid Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "paid_cents"
+        ],
+        "title": "BalanceResponse",
+        "type": "object"
+      },
+      "BudgetResponse": {
+        "properties": {
+          "balances": {
+            "items": {
+              "$ref": "#/components/schemas/BalanceResponse"
+            },
+            "title": "Balances",
+            "type": "array"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CostLineResponse"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "total_cents": {
+            "title": "Total Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "total_cents",
+          "lines",
+          "balances"
+        ],
+        "title": "BudgetResponse",
         "type": "object"
       },
       "CancelRequest": {
@@ -611,6 +818,164 @@
         "title": "CandidateResponse",
         "type": "object"
       },
+      "ChecklistItemCreateRequest": {
+        "properties": {
+          "label": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "section": {
+            "default": "bring",
+            "title": "Section",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "ChecklistItemCreateRequest",
+        "type": "object"
+      },
+      "ChecklistItemPatchRequest": {
+        "properties": {
+          "done": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Done"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "title": "ChecklistItemPatchRequest",
+        "type": "object"
+      },
+      "ChecklistItemResponse": {
+        "properties": {
+          "claimed": {
+            "default": false,
+            "title": "Claimed",
+            "type": "boolean"
+          },
+          "claimed_by_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By Id"
+          },
+          "claimed_by_label": {
+            "default": "",
+            "title": "Claimed By Label",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "done": {
+            "default": false,
+            "title": "Done",
+            "type": "boolean"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "event_id",
+          "section",
+          "label",
+          "quantity",
+          "created_at"
+        ],
+        "title": "ChecklistItemResponse",
+        "type": "object"
+      },
       "ChunkIn": {
         "description": "One chunk of content handed to the sources core.",
         "properties": {
@@ -748,7 +1113,7 @@
         "type": "object"
       },
       "CommentResponse": {
-        "description": "One comment as a viewer at some level sees it: hidden and\ndeleted are organiser-visible flags; to members a hidden or\ndeleted comment is simply absent from the list (the service\nfilters it before this shape is built).",
+        "description": "One comment as a viewer at some level sees it: hidden and\ndeleted are organiser-visible flags; to members a hidden or\ndeleted comment is simply absent from the list (the service\nfilters it before this shape is built).\n\nThe parent is named honestly since B-084 generalised the\nthread system: ``parent_type`` + ``parent_id`` always;\n``event_id`` remains, populated for event parents (the\nB-060 shape), null for task/decision/poll parents.",
         "properties": {
           "author_label": {
             "title": "Author Label",
@@ -779,8 +1144,15 @@
             "title": "Edited At"
           },
           "event_id": {
-            "title": "Event Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
           },
           "hidden": {
             "default": false,
@@ -791,6 +1163,16 @@
             "title": "Id",
             "type": "string"
           },
+          "parent_id": {
+            "default": "",
+            "title": "Parent Id",
+            "type": "string"
+          },
+          "parent_type": {
+            "default": "event",
+            "title": "Parent Type",
+            "type": "string"
+          },
           "thread_id": {
             "title": "Thread Id",
             "type": "string"
@@ -799,7 +1181,6 @@
         "required": [
           "id",
           "thread_id",
-          "event_id",
           "author_label",
           "body",
           "created_at"
@@ -980,6 +1361,264 @@
           "value"
         ],
         "title": "ContradictionValueView",
+        "type": "object"
+      },
+      "CostLineCreateRequest": {
+        "description": "``amount_cents`` is an int \u2014 a float body is refused by\nthis schema before any service runs (B-089's law).",
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "label": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "paid_by_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid By Id"
+          },
+          "paid_by_label": {
+            "default": "",
+            "title": "Paid By Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "amount_cents"
+        ],
+        "title": "CostLineCreateRequest",
+        "type": "object"
+      },
+      "CostLineResponse": {
+        "properties": {
+          "amount_cents": {
+            "title": "Amount Cents",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "paid_by_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid By Id"
+          },
+          "paid_by_label": {
+            "default": "",
+            "title": "Paid By Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "event_id",
+          "label",
+          "amount_cents",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CostLineResponse",
+        "type": "object"
+      },
+      "DecisionCreateRequest": {
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "DecisionCreateRequest",
+        "type": "object"
+      },
+      "DecisionResponse": {
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "superseded_by_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By Id"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "text",
+          "status",
+          "created_by",
+          "created_at"
+        ],
+        "title": "DecisionResponse",
+        "type": "object"
+      },
+      "DigestEventResponse": {
+        "properties": {
+          "ends_at": {
+            "title": "Ends At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "place_name": {
+            "default": "",
+            "title": "Place Name",
+            "type": "string"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "starts_at",
+          "ends_at",
+          "timezone",
+          "status"
+        ],
+        "title": "DigestEventResponse",
         "type": "object"
       },
       "EmailChangeRequest": {
@@ -2191,6 +2830,61 @@
         "title": "FlyerWallResponse",
         "type": "object"
       },
+      "GapsResponse": {
+        "description": "\"What is still missing?\" for one event (B-086): one flat\ngaps list (badge-shaped) plus the sections behind it.",
+        "properties": {
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "open_questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionResponse"
+            },
+            "title": "Open Questions",
+            "type": "array"
+          },
+          "unclaimed_roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleSlotResponse"
+            },
+            "title": "Unclaimed Roles",
+            "type": "array"
+          },
+          "unclaimed_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskResponse"
+            },
+            "title": "Unclaimed Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "event_id",
+          "gaps",
+          "missing_fields",
+          "open_questions",
+          "unclaimed_roles",
+          "unclaimed_tasks"
+        ],
+        "title": "GapsResponse",
+        "type": "object"
+      },
       "GenerateImageRequest": {
         "description": "Ask for a generated event image (B-067). ``description``\nis the organiser's own words for the picture \u2014 they steer\nthe generation and, when they are a genuine description,\nbecome its alt text (B-065's human road).",
         "properties": {
@@ -2462,6 +3156,49 @@
           "created_at"
         ],
         "title": "InboundAddressResponse",
+        "type": "object"
+      },
+      "InstantiationResponse": {
+        "description": "What instantiating built: the event (full event view\nrides in ``event`` as a plain dict from the events schema)\nand the ids of the plan built around it.",
+        "properties": {
+          "checklist_item_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Checklist Item Ids",
+            "type": "array"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "role_slot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Role Slot Ids",
+            "type": "array"
+          },
+          "task_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Ids",
+            "type": "array"
+          },
+          "template_id": {
+            "title": "Template Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "event_id",
+          "task_ids",
+          "checklist_item_ids",
+          "role_slot_ids"
+        ],
+        "title": "InstantiationResponse",
         "type": "object"
       },
       "InviteRequest": {
@@ -3013,6 +3750,354 @@
         "title": "PasteIngestRequest",
         "type": "object"
       },
+      "PlanningDigestResponse": {
+        "description": "\"State of the plan\" (B-093): the week's events, what is\nunclaimed, what is unanswered, what is undecided.",
+        "properties": {
+          "events_this_week": {
+            "items": {
+              "$ref": "#/components/schemas/DigestEventResponse"
+            },
+            "title": "Events This Week",
+            "type": "array"
+          },
+          "open_questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionResponse"
+            },
+            "title": "Open Questions",
+            "type": "array"
+          },
+          "unclaimed_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskResponse"
+            },
+            "title": "Unclaimed Tasks",
+            "type": "array"
+          },
+          "undecided_polls": {
+            "items": {
+              "$ref": "#/components/schemas/PollResponse"
+            },
+            "title": "Undecided Polls",
+            "type": "array"
+          },
+          "week_end": {
+            "title": "Week End",
+            "type": "string"
+          },
+          "week_start": {
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "week_end",
+          "events_this_week",
+          "unclaimed_tasks",
+          "open_questions",
+          "undecided_polls"
+        ],
+        "title": "PlanningDigestResponse",
+        "type": "object"
+      },
+      "PollCreateRequest": {
+        "properties": {
+          "closes_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes At"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "kind": {
+            "default": "choice",
+            "title": "Kind",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/PollOptionRequest"
+            },
+            "maxItems": 50,
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "options"
+        ],
+        "title": "PollCreateRequest",
+        "type": "object"
+      },
+      "PollOptionRequest": {
+        "properties": {
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          }
+        },
+        "title": "PollOptionRequest",
+        "type": "object"
+      },
+      "PollOptionResponse": {
+        "properties": {
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "votes": {
+            "default": 0,
+            "title": "Votes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "PollOptionResponse",
+        "type": "object"
+      },
+      "PollResponse": {
+        "properties": {
+          "applied_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Event Id"
+          },
+          "closes_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes At"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "my_option_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Option Id"
+          },
+          "options": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PollOptionResponse"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_votes": {
+            "default": 0,
+            "title": "Total Votes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "question",
+          "kind",
+          "status",
+          "created_by",
+          "created_at"
+        ],
+        "title": "PollResponse",
+        "type": "object"
+      },
+      "PollResultsResponse": {
+        "description": "The tally as answered AFTER the vote commits (B-087):\nevery option's count, the total, and the leader(s) \u2014 a tie\nreturns two leaders and says so by shape.",
+        "properties": {
+          "leader_option_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Leader Option Ids",
+            "type": "array"
+          },
+          "my_option_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Option Id"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/PollOptionResponse"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "poll_id": {
+            "title": "Poll Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_votes": {
+            "title": "Total Votes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "poll_id",
+          "status",
+          "total_votes",
+          "options",
+          "leader_option_ids"
+        ],
+        "title": "PollResultsResponse",
+        "type": "object"
+      },
+      "PollVoteRequest": {
+        "properties": {
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id"
+        ],
+        "title": "PollVoteRequest",
+        "type": "object"
+      },
       "PrintEventRow": {
         "description": "One event as the noticeboard needs it: every fact present\nas text (B-072). ``when`` is words (\"Saturday 24 October\n2026, 7:00 PM \u2013 9:00 PM\"), not an instant \u2014 paper has no\ntimezone conversions.",
         "properties": {
@@ -3331,6 +4416,195 @@
         "title": "QualityReportResponse",
         "type": "object"
       },
+      "QuestionCreateRequest": {
+        "properties": {
+          "asked_of_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asked Of Id"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "QuestionCreateRequest",
+        "type": "object"
+      },
+      "QuestionPatchRequest": {
+        "properties": {
+          "asked_of_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asked Of Id"
+          },
+          "drop": {
+            "default": false,
+            "title": "Drop",
+            "type": "boolean"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "title": "QuestionPatchRequest",
+        "type": "object"
+      },
+      "QuestionResolveRequest": {
+        "description": "Resolve, optionally minting the answer as a decision in\nthe same call (B-086).",
+        "properties": {
+          "decision_text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Text"
+          }
+        },
+        "title": "QuestionResolveRequest",
+        "type": "object"
+      },
+      "QuestionResponse": {
+        "properties": {
+          "asked_of_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asked Of Id"
+          },
+          "asked_of_label": {
+            "default": "",
+            "title": "Asked Of Label",
+            "type": "string"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "resolution_decision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Decision Id"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "text",
+          "status",
+          "created_by",
+          "created_at"
+        ],
+        "title": "QuestionResponse",
+        "type": "object"
+      },
       "QueueStatusResponse": {
         "description": "The queue's plain-words state (B-047): how much waits, and\n\u2014 when the group's daily AI budget is spent \u2014 that extraction\nis \"paused \u2014 budget\", said exactly that plainly.",
         "properties": {
@@ -3523,6 +4797,82 @@
         "title": "RoleChangeRequest",
         "type": "object"
       },
+      "RoleSlotResponse": {
+        "properties": {
+          "claimed": {
+            "default": false,
+            "title": "Claimed",
+            "type": "boolean"
+          },
+          "claimed_by_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Claimed By Id"
+          },
+          "claimed_by_label": {
+            "default": "",
+            "title": "Claimed By Label",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role_name": {
+            "title": "Role Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "event_id",
+          "role_name",
+          "created_at"
+        ],
+        "title": "RoleSlotResponse",
+        "type": "object"
+      },
+      "RoleSlotsCreateRequest": {
+        "properties": {
+          "role_name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Role Name",
+            "type": "string"
+          },
+          "slots": {
+            "default": 1,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Slots",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "role_name"
+        ],
+        "title": "RoleSlotsCreateRequest",
+        "type": "object"
+      },
       "RsvpListResponse": {
         "description": "Every answer plus the summary counts (B-061).",
         "properties": {
@@ -3628,6 +4978,93 @@
           "updated_at"
         ],
         "title": "RsvpResponse",
+        "type": "object"
+      },
+      "SearchHitResponse": {
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "snippet": {
+            "default": "",
+            "title": "Snippet",
+            "type": "string"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "title",
+          "score"
+        ],
+        "title": "SearchHitResponse",
+        "type": "object"
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchHitResponse"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "query",
+          "results"
+        ],
+        "title": "SearchResponse",
         "type": "object"
       },
       "SeatCreateRequest": {
@@ -3989,6 +5426,426 @@
           "created_at"
         ],
         "title": "SourceResponse",
+        "type": "object"
+      },
+      "SupplyEventResponse": {
+        "properties": {
+          "claimed": {
+            "default": false,
+            "title": "Claimed",
+            "type": "boolean"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_title": {
+            "title": "Event Title",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_title",
+          "quantity"
+        ],
+        "title": "SupplyEventResponse",
+        "type": "object"
+      },
+      "SupplyLineResponse": {
+        "description": "One folded shopping line of the merged view (B-088).",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SupplyEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "total_quantity": {
+            "title": "Total Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "total_quantity",
+          "events"
+        ],
+        "title": "SupplyLineResponse",
+        "type": "object"
+      },
+      "TaskCreateRequest": {
+        "description": "Direct human entry. Naming ``owner_id`` here IS the\nassignment \u2014 a person's act, validated against membership\nin the service.",
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          },
+          "title": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "TaskCreateRequest",
+        "type": "object"
+      },
+      "TaskPatchRequest": {
+        "description": "Any subset; ``owner_id: null`` explicitly unassigns.",
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "TaskPatchRequest",
+        "type": "object"
+      },
+      "TaskResponse": {
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "group_id": {
+            "title": "Group Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "overdue": {
+            "default": false,
+            "title": "Overdue",
+            "type": "boolean"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          },
+          "owner_label": {
+            "default": "",
+            "title": "Owner Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "suggested_owner_label": {
+            "default": "",
+            "title": "Suggested Owner Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unclaimed": {
+            "default": true,
+            "title": "Unclaimed",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "group_id",
+          "title",
+          "status",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskResponse",
+        "type": "object"
+      },
+      "TemplateCreateRequest": {
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "payload"
+        ],
+        "title": "TemplateCreateRequest",
+        "type": "object"
+      },
+      "TemplateFromEventRequest": {
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "TemplateFromEventRequest",
+        "type": "object"
+      },
+      "TemplateInstantiateRequest": {
+        "properties": {
+          "starts_at": {
+            "format": "date-time",
+            "title": "Starts At",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "starts_at"
+        ],
+        "title": "TemplateInstantiateRequest",
+        "type": "object"
+      },
+      "TemplateResponse": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "default": "",
+            "title": "Created By",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "group_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_starter": {
+            "default": false,
+            "title": "Is Starter",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "TemplateResponse",
         "type": "object"
       },
       "TokenConsumeRequest": {
@@ -5089,6 +6946,168 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/availability": {
+      "get": {
+        "description": "Every proposed slot, ranked: most can first. The marks\nshown are the group's own, against the group's own slots \u2014\nnothing from any private calendar exists here to show.",
+        "operationId": "ranked_availability_api_v1_groups__group_id__availability_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilitySlotResponse"
+                  },
+                  "title": "Response Ranked Availability Api V1 Groups  Group Id  Availability Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ranked Availability",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/availability/slots": {
+      "post": {
+        "description": "Propose a moment for members to mark can/can't.",
+        "operationId": "propose_slot_api_v1_groups__group_id__availability_slots_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilitySlotCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilitySlotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose Slot",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/availability/slots/{slot_id}/mark": {
+      "post": {
+        "description": "Mark can or can't \u2014 re-marking updates your one mark.",
+        "operationId": "mark_slot_api_v1_groups__group_id__availability_slots__slot_id__mark_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot_id",
+            "required": true,
+            "schema": {
+              "title": "Slot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityMarkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilitySlotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Slot",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/calendar/feeds": {
       "get": {
         "description": "The group's feeds, prefixes only (B-053).",
@@ -5770,6 +7789,171 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/checklist/{item_id}": {
+      "patch": {
+        "operationId": "update_checklist_item_api_v1_groups__group_id__checklist__item_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistItemPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Checklist Item",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/checklist/{item_id}/claim": {
+      "post": {
+        "description": "Promise this line yourself.",
+        "operationId": "claim_checklist_item_api_v1_groups__group_id__checklist__item_id__claim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Claim Checklist Item",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/checklist/{item_id}/unclaim": {
+      "post": {
+        "description": "Release a line you claimed.",
+        "operationId": "unclaim_checklist_item_api_v1_groups__group_id__checklist__item_id__unclaim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unclaim Checklist Item",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/comments/{comment_id}": {
       "delete": {
         "description": "Delete your own comment: a tombstone, returned flagged.",
@@ -5986,6 +8170,140 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/comments/{parent_type}/{parent_id}": {
+      "get": {
+        "description": "Any planning parent's thread through the same door.",
+        "operationId": "list_parent_comments_api_v1_groups__group_id__comments__parent_type___parent_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "parent_type",
+            "required": true,
+            "schema": {
+              "title": "Parent Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "parent_id",
+            "required": true,
+            "schema": {
+              "title": "Parent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentResponse"
+                  },
+                  "title": "Response List Parent Comments Api V1 Groups  Group Id  Comments  Parent Type   Parent Id  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Parent Comments",
+        "tags": [
+          "discussion"
+        ]
+      },
+      "post": {
+        "description": "Say something on a task, a decision, or a poll.",
+        "operationId": "post_parent_comment_api_v1_groups__group_id__comments__parent_type___parent_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "parent_type",
+            "required": true,
+            "schema": {
+              "title": "Parent Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "parent_id",
+            "required": true,
+            "schema": {
+              "title": "Parent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Parent Comment",
+        "tags": [
+          "discussion"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/conflicts": {
       "get": {
         "description": "Conflict flags over a window (B-057): double-booked\nhosts and rooms, travel-impossible hops. Flags, never\nblocks \u2014 reading them changes nothing.",
@@ -6058,6 +8376,237 @@
         "summary": "Conflicts",
         "tags": [
           "calendar"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/decisions": {
+      "get": {
+        "description": "The decisions log, newest first. ``?current=true`` is\nthe group's settled truth \u2014 superseded rows step aside.",
+        "operationId": "list_decisions_api_v1_groups__group_id__decisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "current",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Current",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionResponse"
+                  },
+                  "title": "Response List Decisions Api V1 Groups  Group Id  Decisions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Decisions",
+        "tags": [
+          "planning"
+        ]
+      },
+      "post": {
+        "description": "Record a decision, optionally superseding an earlier\ncurrent one (both rows are kept; the chain is the story).",
+        "operationId": "create_decision_api_v1_groups__group_id__decisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Decision",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/decisions/{decision_id}": {
+      "get": {
+        "operationId": "get_decision_api_v1_groups__group_id__decisions__decision_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "decision_id",
+            "required": true,
+            "schema": {
+              "title": "Decision Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Decision",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/decisions/{decision_id}/chain": {
+      "get": {
+        "description": "The whole supersede chain containing one decision,\noldest first \u2014 how the group's mind changed, in order.",
+        "operationId": "get_decision_chain_api_v1_groups__group_id__decisions__decision_id__chain_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "decision_id",
+            "required": true,
+            "schema": {
+              "title": "Decision Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DecisionResponse"
+                  },
+                  "title": "Response Get Decision Chain Api V1 Groups  Group Id  Decisions  Decision Id  Chain Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Decision Chain",
+        "tags": [
+          "planning"
         ]
       }
     },
@@ -6346,6 +8895,58 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/budget": {
+      "get": {
+        "description": "The balance summary: total + per-member paid totals,\nevery number exact integer cents (B-089).",
+        "operationId": "get_budget_api_v1_groups__group_id__events__event_id__budget_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Budget",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/cancel": {
       "post": {
         "description": "Cancel with a reason (B-051): the event stays, marked\ncancelled everywhere it was ever shown.",
@@ -6464,6 +9065,121 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/checklist": {
+      "get": {
+        "operationId": "list_checklist_items_api_v1_groups__group_id__events__event_id__checklist_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChecklistItemResponse"
+                  },
+                  "title": "Response List Checklist Items Api V1 Groups  Group Id  Events  Event Id  Checklist Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Checklist Items",
+        "tags": [
+          "checklists"
+        ]
+      },
+      "post": {
+        "description": "Add a bring/prepare line to an event's list.",
+        "operationId": "add_checklist_item_api_v1_groups__group_id__events__event_id__checklist_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChecklistItemCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Checklist Item",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/clone": {
       "post": {
         "description": "Clone last time's event (B-051): structure copies, RSVPs\nand discussion never do; the clone is born a draft.",
@@ -6518,8 +9234,8 @@
     },
     "/api/v1/groups/{group_id}/events/{event_id}/comments": {
       "get": {
-        "description": "The event's discussion. Members see live comments only;\norganisers see the hidden and the tombstones too, flagged.",
-        "operationId": "list_comments_api_v1_groups__group_id__events__event_id__comments_get",
+        "description": "An event's discussion thread.",
+        "operationId": "list_event_comments_api_v1_groups__group_id__events__event_id__comments_get",
         "parameters": [
           {
             "in": "path",
@@ -6548,7 +9264,7 @@
                   "items": {
                     "$ref": "#/components/schemas/CommentResponse"
                   },
-                  "title": "Response List Comments Api V1 Groups  Group Id  Events  Event Id  Comments Get",
+                  "title": "Response List Event Comments Api V1 Groups  Group Id  Events  Event Id  Comments Get",
                   "type": "array"
                 }
               }
@@ -6566,14 +9282,14 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Comments",
+        "summary": "List Event Comments",
         "tags": [
           "discussion"
         ]
       },
       "post": {
-        "description": "Post to the event's thread, as yourself \u2014 a seat's words\nare the seat's (B-018), a person's are theirs.",
-        "operationId": "post_comment_api_v1_groups__group_id__events__event_id__comments_post",
+        "description": "Say something on an event.",
+        "operationId": "post_event_comment_api_v1_groups__group_id__events__event_id__comments_post",
         "parameters": [
           {
             "in": "path",
@@ -6626,7 +9342,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Post Comment",
+        "summary": "Post Event Comment",
         "tags": [
           "discussion"
         ]
@@ -6769,6 +9485,121 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/costs": {
+      "get": {
+        "operationId": "list_cost_lines_api_v1_groups__group_id__events__event_id__costs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CostLineResponse"
+                  },
+                  "title": "Response List Cost Lines Api V1 Groups  Group Id  Events  Event Id  Costs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cost Lines",
+        "tags": [
+          "checklists"
+        ]
+      },
+      "post": {
+        "description": "Record one line of what the event cost (integer cents;\nthe payer defaults to you).",
+        "operationId": "add_cost_line_api_v1_groups__group_id__events__event_id__costs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostLineCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostLineResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Cost Line",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/facebook-draft": {
       "get": {
         "description": "Build the Facebook Event DRAFT for a published event\n(B-058). Nothing is created on Facebook \u2014 creating the real\nevent is the Phase 12 integration with a human pressing the\nbutton, because posting as a person/page is an outward act.",
@@ -6818,6 +9649,58 @@
         "summary": "Facebook Draft",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/gaps": {
+      "get": {
+        "description": "\"What is still missing?\" \u2014 missing fields, open\nquestions, unclaimed roles, unclaimed tasks, in one list.",
+        "operationId": "get_event_gaps_api_v1_groups__group_id__events__event_id__gaps_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GapsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Event Gaps",
+        "tags": [
+          "planning"
         ]
       }
     },
@@ -7448,6 +10331,125 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/events/{event_id}/roles": {
+      "get": {
+        "operationId": "list_role_slots_api_v1_groups__group_id__events__event_id__roles_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleSlotResponse"
+                  },
+                  "title": "Response List Role Slots Api V1 Groups  Group Id  Events  Event Id  Roles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Role Slots",
+        "tags": [
+          "checklists"
+        ]
+      },
+      "post": {
+        "description": "Open one or more slots of a named job on an event.",
+        "operationId": "open_role_slots_api_v1_groups__group_id__events__event_id__roles_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleSlotsCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleSlotResponse"
+                  },
+                  "title": "Response Open Role Slots Api V1 Groups  Group Id  Events  Event Id  Roles Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Role Slots",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/events/{event_id}/rsvp": {
       "delete": {
         "description": "Withdraw your answer. A freed seat promotes the next in\nline, with their notification job, in the same act.",
@@ -7658,6 +10660,62 @@
         "summary": "List Event Sources",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/events/{event_id}/tasks": {
+      "get": {
+        "description": "One event's tasks.",
+        "operationId": "list_event_tasks_api_v1_groups__group_id__events__event_id__tasks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskResponse"
+                  },
+                  "title": "Response List Event Tasks Api V1 Groups  Group Id  Events  Event Id  Tasks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Event Tasks",
+        "tags": [
+          "planning"
         ]
       }
     },
@@ -8212,6 +11270,406 @@
         ]
       }
     },
+    "/api/v1/groups/{group_id}/planning-digest": {
+      "get": {
+        "description": "\"State of the plan\": this week's events, unclaimed\ntasks, open questions, undecided polls \u2014 the frontend's\ngroup home and Phase 10's digest read this one truth.",
+        "operationId": "planning_digest_api_v1_groups__group_id__planning_digest_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningDigestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Planning Digest",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/polls": {
+      "get": {
+        "description": "The group's polls with their tallies and the caller's\ncurrent vote marked.",
+        "operationId": "list_polls_api_v1_groups__group_id__polls_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PollResponse"
+                  },
+                  "title": "Response List Polls Api V1 Groups  Group Id  Polls Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Polls",
+        "tags": [
+          "polls"
+        ]
+      },
+      "post": {
+        "description": "Ask the group something, with votable options.",
+        "operationId": "create_poll_api_v1_groups__group_id__polls_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PollCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Poll",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/polls/{poll_id}": {
+      "get": {
+        "operationId": "get_poll_api_v1_groups__group_id__polls__poll_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poll_id",
+            "required": true,
+            "schema": {
+              "title": "Poll Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Poll",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/polls/{poll_id}/apply-winner": {
+      "post": {
+        "description": "Apply a date poll's winner: move the attached event, or\nmint a new one at the winning moment (organiser+).",
+        "operationId": "apply_winner_api_v1_groups__group_id__polls__poll_id__apply_winner_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poll_id",
+            "required": true,
+            "schema": {
+              "title": "Poll Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyWinnerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apply Winner",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/polls/{poll_id}/close": {
+      "post": {
+        "description": "Freeze the tally (organiser+).",
+        "operationId": "close_poll_api_v1_groups__group_id__polls__poll_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poll_id",
+            "required": true,
+            "schema": {
+              "title": "Poll Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close Poll",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/polls/{poll_id}/vote": {
+      "post": {
+        "description": "Vote \u2014 or change your vote; one member holds one current\nvote, by the table's own constraint. The service COMMITS\nthe vote before this handler reads any tally: the results\nbelow are computed from committed rows only.",
+        "operationId": "cast_vote_api_v1_groups__group_id__polls__poll_id__vote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "poll_id",
+            "required": true,
+            "schema": {
+              "title": "Poll Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PollVoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollResultsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cast Vote",
+        "tags": [
+          "polls"
+        ]
+      }
+    },
     "/api/v1/groups/{group_id}/print/month": {
       "get": {
         "description": "A month's listing for a real noticeboard (B-072): every\nevent's facts present as text, in the structured rows and in\nthe rendered plain-text document alike.",
@@ -8311,6 +11769,464 @@
         "summary": "Quality Report",
         "tags": [
           "truth"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/questions": {
+      "get": {
+        "operationId": "list_questions_api_v1_groups__group_id__questions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionResponse"
+                  },
+                  "title": "Response List Questions Api V1 Groups  Group Id  Questions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Questions",
+        "tags": [
+          "planning"
+        ]
+      },
+      "post": {
+        "description": "Ask a question of the group, or of one named member.",
+        "operationId": "create_question_api_v1_groups__group_id__questions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Question",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/questions/{question_id}": {
+      "get": {
+        "operationId": "get_question_api_v1_groups__group_id__questions__question_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Question",
+        "tags": [
+          "planning"
+        ]
+      },
+      "patch": {
+        "description": "Edit a question: its words, who it is asked of, or drop\nit (a settled state, never a deletion).",
+        "operationId": "update_question_api_v1_groups__group_id__questions__question_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Question",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/questions/{question_id}/resolve": {
+      "post": {
+        "description": "Resolve a question. With ``decision_text``, the answer\nis recorded as a decision in the same act and the question\nlinks to it \u2014 resolution and truth land together.",
+        "operationId": "resolve_question_api_v1_groups__group_id__questions__question_id__resolve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "question_id",
+            "required": true,
+            "schema": {
+              "title": "Question Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionResolveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Question",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/roles/{slot_id}/claim": {
+      "post": {
+        "description": "Take one of the event's named jobs yourself.",
+        "operationId": "claim_role_slot_api_v1_groups__group_id__roles__slot_id__claim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot_id",
+            "required": true,
+            "schema": {
+              "title": "Slot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleSlotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Claim Role Slot",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/roles/{slot_id}/unclaim": {
+      "post": {
+        "operationId": "unclaim_role_slot_api_v1_groups__group_id__roles__slot_id__unclaim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slot_id",
+            "required": true,
+            "schema": {
+              "title": "Slot Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleSlotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unclaim Role Slot",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/search": {
+      "get": {
+        "description": "One search over events, tasks, decisions, questions \u2014\nranked, and every hit linked back to its source.",
+        "operationId": "search_api_v1_groups__group_id__search_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "planning"
         ]
       }
     },
@@ -9268,6 +13184,627 @@
         "summary": "Group Stream",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/supplies": {
+      "get": {
+        "description": "The \"buy once\" view: checklist lines folded across the\nwindow's events. Without a window the group gets this\nweek (Monday \u2192 Monday, group-local) \u2014 the shopping trip's\nnatural span.",
+        "operationId": "merged_supplies_api_v1_groups__group_id__supplies_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SupplyLineResponse"
+                  },
+                  "title": "Response Merged Supplies Api V1 Groups  Group Id  Supplies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merged Supplies",
+        "tags": [
+          "checklists"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/tasks": {
+      "get": {
+        "description": "The group's tasks, soonest-due first, filterable.",
+        "operationId": "list_tasks_api_v1_groups__group_id__tasks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unclaimed",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unclaimed",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "owner_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Owner Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaskResponse"
+                  },
+                  "title": "Response List Tasks Api V1 Groups  Group Id  Tasks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tasks",
+        "tags": [
+          "planning"
+        ]
+      },
+      "post": {
+        "description": "Create a task directly. Naming an owner here is a\nperson's assignment \u2014 the only way a task is born owned.",
+        "operationId": "create_task_api_v1_groups__group_id__tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Task",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/tasks/{task_id}": {
+      "get": {
+        "operationId": "get_task_api_v1_groups__group_id__tasks__task_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Task",
+        "tags": [
+          "planning"
+        ]
+      },
+      "patch": {
+        "description": "Edit a task \u2014 including assigning or unassigning its\nowner (a person's act, either way).",
+        "operationId": "update_task_api_v1_groups__group_id__tasks__task_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Task",
+        "tags": [
+          "planning"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/templates": {
+      "get": {
+        "description": "The global starters plus this group's own templates.",
+        "operationId": "list_templates_api_v1_groups__group_id__templates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateResponse"
+                  },
+                  "title": "Response List Templates Api V1 Groups  Group Id  Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Templates",
+        "tags": [
+          "templates"
+        ]
+      },
+      "post": {
+        "description": "Save a plan shape as one of the group's own templates.",
+        "operationId": "create_template_api_v1_groups__group_id__templates_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Template",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/templates/from-event/{event_id}": {
+      "post": {
+        "description": "Snapshot an event and its plan as a reusable template \u2014\ndue moments become day-offsets; claims become open slots.",
+        "operationId": "template_from_event_api_v1_groups__group_id__templates_from_event__event_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateFromEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Template From Event",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/templates/{template_id}": {
+      "get": {
+        "operationId": "get_template_api_v1_groups__group_id__templates__template_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Template",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/v1/groups/{group_id}/templates/{template_id}/instantiate": {
+      "post": {
+        "description": "Build the real plan at a new start moment: a published\nevent plus its tasks, checklist, and open role slots.",
+        "operationId": "instantiate_template_api_v1_groups__group_id__templates__template_id__instantiate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateInstantiateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstantiationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Instantiate Template",
+        "tags": [
+          "templates"
         ]
       }
     },
