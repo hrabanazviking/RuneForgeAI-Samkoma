@@ -499,6 +499,22 @@ def list_summaries(
     return query.order_by(Summary.created_at.desc(), Summary.id.desc()).all()
 
 
+def get_summary(db: Session, group: Group, summary_id: str) -> Summary:
+    """One of the group's summaries, or the platform's
+    missing-object answer — another group's summary is
+    indistinguishable from no summary (the privacy grain)."""
+    from gpa.errors import AppError
+
+    row = (
+        db.query(Summary)
+        .filter(Summary.id == summary_id, Summary.group_id == group.id)
+        .first()
+    )
+    if row is None:
+        raise AppError("not_found", status=404)
+    return row
+
+
 # --- Discussion summaries (B-116) ----------------------------------
 
 SUMMARY_AUTHOR = "system:summary"
@@ -832,3 +848,283 @@ def brief_event(
         "role_gaps": role_gaps,
         "prune_run_id": run.id,
     }
+
+
+# --- Recaps, approval, and the newsletter loop (B-118) -------------
+
+
+def recap_event(
+    db: Session,
+    settings: Settings | None = None,
+    *,
+    actor_label: str,
+    group: Group,
+    event,
+    client=None,
+) -> Summary:
+    """Draft one event's recap (B-118) — a DRAFT, always.
+
+    The material is the event's own: its live discussion,
+    the attendance count (a count, from the attendance
+    service — never a name list), and the group's flyers and
+    photos whose alt text is COMPLETE — an image enters the
+    group's memory only through its finished description
+    (the alt-text law, both ways: write it, and read only
+    what was written). A person approves the draft before it
+    becomes memory the engine can use.
+    """
+    from gpa.ai import promptlib
+    from gpa.ai.client import ModelError
+    from gpa.errors import AppError
+    from gpa.models.sources import Flyer
+    from gpa.services import attendance as attendance_service
+    from gpa.services import discussion as discussion_service
+
+    settings = settings or get_settings()
+    client = client if client is not None else resolve_client(settings, group)
+
+    # The recap door is organiser-only, so the discussion is
+    # read at that role (a viewer-less read sees no events at
+    # all under the visibility bright line); hidden/deleted
+    # words are then filtered out below regardless — they are
+    # moderation material, not memory.
+    comments = discussion_service.list_comments(
+        db, group=group, parent_type="event", parent_id=event.id,
+        viewer_role="organiser",
+    )
+    live = [c for c in comments if c.hidden_at is None and c.deleted_at is None]
+    chunks = [
+        pruning.MemoryChunk(
+            chunk_id=f"comment:{comment.id}",
+            position=index,
+            text=comment.body,
+            sender=comment.author_label,
+            sent_at=comment.created_at,
+            origin="comment",
+        )
+        for index, comment in enumerate(live)
+    ]
+    headcount = attendance_service.event_headcount(db, event)
+    flyers = (
+        db.query(Flyer)
+        .filter(
+            Flyer.group_id == group.id,
+            Flyer.alt_text_status == "complete",
+            Flyer.alt_text != "",
+        )
+        .order_by(Flyer.created_at)
+        .all()
+    )
+    if not chunks and headcount == 0 and not flyers:
+        raise AppError(
+            "validation_error",
+            detail="There is nothing to recap yet — no discussion, "
+            "no attendance, no described photos.",
+        )
+
+    template = promptlib.load_prompt("recap")
+    schema = template.schema or {}
+    prompt = template.render(
+        EVENT=(
+            f"{event.title} — {event.starts_at.isoformat()} "
+            f"({event.timezone})"
+            + (f" at {event.place_name}" if event.place_name else "")
+        ),
+        ATTENDANCE=f"{headcount} people were marked present.",
+        DISCUSSION=(
+            pruning.render_chunks(chunks)
+            if chunks
+            else "(nothing was said in the event's discussion)"
+        ),
+        PHOTOS=(
+            "\n".join(f"- {flyer.alt_text}" for flyer in flyers)
+            if flyers
+            else "(no photos with completed descriptions)"
+        ),
+    )
+    result = client.complete_json(prompt=prompt, schema=schema, tier="wonder")
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, operation="recap:recap",
+        prompt_name="recap", prompt_version=template.version,
+    )
+    if not isinstance(result.data, dict) or not isinstance(
+        result.data.get("text"), str
+    ):
+        raise ModelError(
+            "The recap answer was malformed (no 'text'); refusing to store it."
+        )
+    summary = Summary(
+        group_id=group.id,
+        kind="recap",
+        title=f"Recap — {event.title}",
+        body=result.data["text"],
+        status="draft",
+        verified=True,
+        citations_json="[]",
+        range_json=json.dumps(
+            {"chunk_ids": [c.chunk_id for c in chunks], "event_id": event.id}
+        ),
+        event_id=event.id,
+        created_by=actor_label,
+    )
+    db.add(summary)
+    db.flush()
+    audit.record(
+        db, actor=actor_label, action="memory.recap_created",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={"event_id": event.id},
+    )
+    db.commit()
+    return summary
+
+
+def approve_summary(
+    db: Session,
+    *,
+    actor_label: str,
+    group: Group,
+    summary: Summary,
+) -> Summary:
+    """Approve a draft summary — the moment a draft becomes
+    group memory (B-118).
+
+    Approving a NEWSLETTER closes the loop the roadmap draws:
+    the approved letter becomes a Source of kind ``newsletter``
+    in the group's own history, its paragraphs as chunks —
+    so next month's pruning and extraction read this month's
+    letter like anything else the group said. Approval of any
+    other kind simply admits the summary to the corpus
+    (discussion and recap summaries join the approved corpus
+    by their status alone).
+    """
+    from gpa.errors import AppError
+    from gpa.services import sources as source_service
+
+    if summary.status != "draft":
+        raise AppError(
+            "conflict",
+            detail="That summary is not a draft — it has already been settled.",
+        )
+    summary.status = "approved"
+    db.flush()
+
+    source_id: str | None = None
+    if summary.kind == "newsletter":
+        paragraphs = [
+            part.strip()
+            for part in summary.body.split("\n\n")
+            if part.strip()
+        ] or [summary.body]
+        # create_source commits — the approval above rides
+        # that commit, which is the honest order anyway: the
+        # letter exists as a source BECAUSE it was approved.
+        source = source_service.create_source(
+            db, actor_label=actor_label, group=group,
+            kind="newsletter", title=summary.title,
+            granted_scope="group-history",
+            chunks=[
+                {
+                    "text": paragraph,
+                    "sender": "newsletter",
+                    "sent_at": summary.created_at,
+                }
+                for paragraph in paragraphs
+            ],
+        )
+        source_id = source.id
+
+    audit.record(
+        db, actor=actor_label, action="memory.summary_approved",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={"kind": summary.kind, "source_id": source_id},
+    )
+    db.commit()
+    return summary
+
+
+def draft_newsletter(
+    db: Session,
+    settings: Settings | None = None,
+    *,
+    actor_label: str,
+    group: Group,
+    year: int,
+    month: int,
+    client=None,
+) -> Summary:
+    """Weave one month's APPROVED recaps into a newsletter
+    draft (B-118). Drafts only — the letter becomes memory
+    when a person approves it (see approve_summary)."""
+    import calendar as calendar_module
+    from datetime import datetime
+
+    from gpa.ai import promptlib
+    from gpa.ai.client import ModelError
+    from gpa.errors import AppError
+
+    settings = settings or get_settings()
+    client = client if client is not None else resolve_client(settings, group)
+
+    start = datetime(year, month, 1)
+    end = (
+        datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+    )
+    recaps = (
+        db.query(Summary)
+        .filter(
+            Summary.group_id == group.id, Summary.kind == "recap",
+            Summary.status == "approved",
+            Summary.created_at >= start, Summary.created_at < end,
+        )
+        .order_by(Summary.created_at)
+        .all()
+    )
+    if not recaps:
+        raise AppError(
+            "validation_error",
+            detail="No approved recaps for that month yet — a "
+            "newsletter is woven from approved recaps.",
+        )
+
+    template = promptlib.load_prompt("newsletter")
+    schema = template.schema or {}
+    prompt = template.render(
+        MONTH=f"{calendar_module.month_name[month]} {year}",
+        RECAPS="\n\n".join(
+            f"## {recap.title}\n{recap.body}" for recap in recaps
+        ),
+    )
+    result = client.complete_json(prompt=prompt, schema=schema, tier="wonder")
+    usage_service.record_usage(
+        db, result=result, group_id=group.id, operation="newsletter:newsletter",
+        prompt_name="newsletter", prompt_version=template.version,
+    )
+    if (
+        not isinstance(result.data, dict)
+        or not isinstance(result.data.get("subject"), str)
+        or not isinstance(result.data.get("body"), str)
+    ):
+        raise ModelError(
+            "The newsletter answer was malformed (no 'subject'/'body'); "
+            "refusing to store it."
+        )
+    summary = Summary(
+        group_id=group.id,
+        kind="newsletter",
+        title=result.data["subject"],
+        body=result.data["body"],
+        status="draft",
+        verified=True,
+        citations_json="[]",
+        range_json=json.dumps({"recap_ids": [r.id for r in recaps]}),
+        created_by=actor_label,
+    )
+    db.add(summary)
+    db.flush()
+    audit.record(
+        db, actor=actor_label, action="memory.newsletter_drafted",
+        group_id=group.id, entity_type="summary", entity_id=summary.id,
+        detail={"year": year, "month": month, "recaps": len(recaps)},
+    )
+    db.commit()
+    return summary

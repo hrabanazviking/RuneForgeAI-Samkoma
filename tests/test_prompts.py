@@ -32,6 +32,10 @@ EXPECTED_PROMPTS = {
     # prompts — pass 1, and the second-look reconsider pass.
     "prune",
     "prune_reconsider",
+    # Phase 10 (B-118): the recap drafter and the newsletter
+    # weaver — the two ends of the memory loop.
+    "recap",
+    "newsletter",
 }
 
 # Current versions, per prompt. Superseded by Phase 5 (B-063):

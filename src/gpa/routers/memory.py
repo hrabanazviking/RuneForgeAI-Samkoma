@@ -27,7 +27,9 @@ from gpa.schemas.memory import (
     AskResponse,
     BriefingResponse,
     CitationResponse,
+    NewsletterDraftRequest,
     PruneRunResponse,
+    RecapResponse,
     SummariseRequest,
     SummariseResponse,
     SummaryResponse,
@@ -181,3 +183,66 @@ def brief_event(
         role_gaps=result["role_gaps"],
         prune_run_id=result["prune_run_id"],
     )
+
+
+# --- Recaps, approval, newsletters (B-118) ---------------------------
+
+
+@router.post(
+    "/{group_id}/events/{event_id}/recap",
+    response_model=RecapResponse, status_code=201,
+)
+def recap_event(
+    event_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Draft the event's recap from its discussion, its
+    attendance count, and its photos' completed alt text.
+    A draft — it becomes memory only on approval."""
+    event = event_service.get_visible_event(
+        db, context.group, event_id, context.role
+    )
+    summary = memory_service.recap_event(
+        db, actor_label=context.principal.label, group=context.group,
+        event=event,
+    )
+    return RecapResponse(summary=_summary_response(summary))
+
+
+@router.post(
+    "/{group_id}/newsletters/draft",
+    response_model=RecapResponse, status_code=201,
+)
+def draft_newsletter(
+    body: NewsletterDraftRequest,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Weave a month's approved recaps into a newsletter
+    draft. Drafts only."""
+    summary = memory_service.draft_newsletter(
+        db, actor_label=context.principal.label, group=context.group,
+        year=body.year, month=body.month,
+    )
+    return RecapResponse(summary=_summary_response(summary))
+
+
+@router.post(
+    "/{group_id}/summaries/{summary_id}/approve",
+    response_model=SummaryResponse,
+)
+def approve_summary(
+    summary_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """Approve a draft summary into group memory. Approving a
+    newsletter also files it as a source — the loop closes:
+    next month's memory reads this month's letter."""
+    summary = memory_service.get_summary(db, context.group, summary_id)
+    settled = memory_service.approve_summary(
+        db, actor_label=context.principal.label, group=context.group,
+        summary=summary,
+    )
+    return _summary_response(settled)
