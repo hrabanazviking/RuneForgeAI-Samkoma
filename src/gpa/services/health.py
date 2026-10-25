@@ -58,6 +58,35 @@ def _age_seconds(moment: datetime | None, now: datetime) -> int | None:
     return max(0, int((now - moment).total_seconds()))
 
 
+def _jobs_check(db: Session, now: datetime) -> dict:
+    """The queue's shape: counts by status, the oldest queued
+    job's age, and how many running jobs look stuck (claimed
+    longer ago than STUCK_RUNNING_AFTER and never touched
+    since — the signature of a worker that died mid-job)."""
+    counts = {
+        row_status: count
+        for row_status, count in db.execute(
+            select(Job.status, func.count()).group_by(Job.status)
+        ).all()
+    }
+    oldest_queued = db.execute(
+        select(func.min(Job.created_at)).where(Job.status == "queued")
+    ).scalar()
+    stuck = db.execute(
+        select(func.count())
+        .select_from(Job)
+        .where(Job.status == "running", Job.updated_at < now - STUCK_RUNNING_AFTER)
+    ).scalar_one()
+    return {
+        "queued": counts.get("queued", 0),
+        "running": counts.get("running", 0),
+        "done": counts.get("done", 0),
+        "dead": counts.get("dead", 0),
+        "oldest_queued_age_seconds": _age_seconds(oldest_queued, now),
+        "stuck_running": stuck,
+    }
+
+
 def deep_health(db: Session, *, database, settings: Settings, storage) -> dict:
     """The checks behind GET /health. Returns
     ``{"status": ..., "checks": {...}}``; never raises for a
@@ -80,33 +109,20 @@ def deep_health(db: Session, *, database, settings: Settings, storage) -> dict:
         status = "down"
 
     # --- the job queue ------------------------------------
+    # Guarded separately from the SELECT 1 above: a database
+    # that answers a ping but has no schema (the moment
+    # mid-migration, a wrong file) is DOWN for every useful
+    # purpose, and /health must say so — never 500 while
+    # reporting health. (The B-155 tests found this shape.)
     if database_ok:
-        counts = {
-            row_status: count
-            for row_status, count in db.execute(
-                select(Job.status, func.count()).group_by(Job.status)
-            ).all()
-        }
-        oldest_queued = db.execute(
-            select(func.min(Job.created_at)).where(Job.status == "queued")
-        ).scalar()
-        stuck_cutoff = now - STUCK_RUNNING_AFTER
-        stuck = db.execute(
-            select(func.count())
-            .select_from(Job)
-            .where(Job.status == "running", Job.updated_at < stuck_cutoff)
-        ).scalar_one()
-        dead = counts.get("dead", 0)
-        checks["jobs"] = {
-            "queued": counts.get("queued", 0),
-            "running": counts.get("running", 0),
-            "done": counts.get("done", 0),
-            "dead": dead,
-            "oldest_queued_age_seconds": _age_seconds(oldest_queued, now),
-            "stuck_running": stuck,
-        }
-        if dead or stuck:
-            status = "degraded"
+        try:
+            checks["jobs"] = _jobs_check(db, now)
+        except Exception as error:  # noqa: BLE001 — reported, not raised
+            checks["jobs"] = {"status": "error", "detail": str(error)[:200]}
+            status = "down"
+        else:
+            if checks["jobs"]["dead"] or checks["jobs"]["stuck_running"]:
+                status = "degraded"
 
     # --- configured drivers (facts, not probes) ------------
     checks["ai"] = {"driver": settings.ai_driver}
