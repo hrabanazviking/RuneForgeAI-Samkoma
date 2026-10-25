@@ -148,6 +148,14 @@ class WebhookEndpointResponse(BaseModel):
     url_path: str | None = None
 
 
+class WebhookDeliveryResponse(BaseModel):
+    """One accepted inbound delivery (B-126): the source it
+    fed and how many chunks it archived."""
+
+    source_id: str
+    chunks_added: int
+
+
 # --- Outbound webhooks + deliveries (B-128) --------------------------
 
 

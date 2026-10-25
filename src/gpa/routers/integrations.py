@@ -28,6 +28,9 @@ from gpa.schemas.integrations import (
     SamtalCalendarSyncResponse,
     SpeakerMember,
     SpeakerResponse,
+    WebhookDeliveryResponse,
+    WebhookEndpointCreateRequest,
+    WebhookEndpointResponse,
 )
 from gpa.services import livechat as livechat_service
 from gpa.services import sources as source_service
@@ -202,3 +205,108 @@ def sync_samtal_calendar(
         pushed=result["pushed"],
         candidates_created=result["candidates_created"],
     )
+
+
+# --- Inbound webhook endpoints (B-126) -----------------------------------
+
+
+def _endpoint_response(endpoint, *, token=None, secret=None) -> WebhookEndpointResponse:
+    return WebhookEndpointResponse(
+        id=endpoint.id, group_id=endpoint.group_id,
+        source_id=endpoint.source_id, token_prefix=endpoint.token_prefix,
+        created_at=endpoint.created_at.isoformat(),
+        revoked_at=endpoint.revoked_at.isoformat() if endpoint.revoked_at else None,
+        token=token, signing_secret=secret,
+        url_path=f"/api/v1/webhooks/source/{token}" if token else None,
+    )
+
+
+@router.post(
+    "/{group_id}/webhook-endpoints",
+    response_model=WebhookEndpointResponse,
+    status_code=201,
+)
+def create_webhook_endpoint(
+    body: WebhookEndpointCreateRequest,
+    request: Request,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Open a signed webhook door onto one source (organiser+).
+
+    The response carries the full URL token and the signing
+    secret ONCE — the token is stored hashed and the secret
+    is derived, never stored, so neither can be read back."""
+    from gpa.services import webhooks_in as webhook_service
+
+    endpoint, token, secret = webhook_service.create_endpoint(
+        db, request.app.state.settings,
+        actor_label=principal.label, group=context.group,
+        source_id=body.source_id,
+    )
+    return _endpoint_response(endpoint, token=token, secret=secret)
+
+
+@router.get(
+    "/{group_id}/webhook-endpoints",
+    response_model=list[WebhookEndpointResponse],
+)
+def list_webhook_endpoints(
+    context: GroupContext = Depends(require_group_role("organiser")),
+    db: Session = Depends(get_db),
+):
+    """A group's webhook endpoints (organiser+) — prefixes
+    only; the secrets were shown once, at creation."""
+    from gpa.services import webhooks_in as webhook_service
+
+    return [
+        _endpoint_response(endpoint)
+        for endpoint in webhook_service.list_endpoints(db, context.group)
+    ]
+
+
+@router.delete("/{group_id}/webhook-endpoints/{endpoint_id}", status_code=204)
+def revoke_webhook_endpoint(
+    endpoint_id: str,
+    context: GroupContext = Depends(require_group_role("organiser")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Revoke one endpoint (organiser+): its URL dies at
+    once, and every later delivery is refused and logged."""
+    from gpa.services import webhooks_in as webhook_service
+
+    webhook_service.revoke_endpoint(
+        db, actor_label=principal.label, group=context.group,
+        endpoint_id=endpoint_id,
+    )
+    return None
+
+
+@webhook_router.post(
+    "/source/{token}", response_model=WebhookDeliveryResponse, status_code=201
+)
+async def receive_webhook_delivery(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """The receiver: one signed delivery → chunks on its source.
+
+    The credential is the token in the path plus the
+    ``x-gpa-signature`` HMAC over ``x-gpa-timestamp`` and the
+    raw body. Verification — token, window, signature,
+    replay receipt — happens inside services/webhooks_in.py
+    before a single chunk is written; refusals are logged
+    there too."""
+    from gpa.services import webhooks_in as webhook_service
+
+    raw_body = await request.body()
+    source, added = webhook_service.receive_delivery(
+        db, request.app.state.settings,
+        token=token, raw_body=raw_body,
+        signature=request.headers.get("x-gpa-signature"),
+        timestamp=request.headers.get("x-gpa-timestamp"),
+    )
+    return WebhookDeliveryResponse(source_id=source.id, chunks_added=added)
