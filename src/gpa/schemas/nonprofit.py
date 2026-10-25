@@ -305,6 +305,46 @@ def resource_booking_view(booking, resource_name: str = "", conflicts=()) -> Res
 
 
 # ------------------------------------------------------------------
+# Member import/export (B-110)
+# ------------------------------------------------------------------
+
+
+class ImportRowIssue(BaseModel):
+    """One row of the spreadsheet, named by its row number,
+    with the plain reason it was skipped or failed (B-110)."""
+
+    row: int
+    reason: str
+
+
+class MemberImportReportResponse(BaseModel):
+    """What an import did — or, on a dry run, exactly what it
+    WOULD do (the report is computed, then rolled back)."""
+
+    dry_run: bool
+    rows_total: int
+    created_users: int
+    memberships_created: int
+    enrolments: int
+    already_members: int
+    blank_rows: int
+    subgroups_created: list[str]
+    skipped: list[ImportRowIssue]
+    errors: list[ImportRowIssue]
+
+
+class MemberExportRow(BaseModel):
+    """One exported membership: the roster row, with the
+    person's sub-group names (B-110)."""
+
+    name: str
+    email: str
+    role: str
+    status: str
+    subgroups: list[str]
+
+
+# ------------------------------------------------------------------
 # Attendance (B-109) — aggregates only, by design
 # ------------------------------------------------------------------
 

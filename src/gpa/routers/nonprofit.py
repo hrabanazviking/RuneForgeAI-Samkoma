@@ -7,7 +7,7 @@ one door (B-017) — and the permission each route needs is named
 in its dependency, never hand-rolled in the handler.
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
@@ -26,6 +26,8 @@ from gpa.schemas.nonprofit import (
     AttendanceMarkResponse,
     AttendanceSummaryResponse,
     EventAttendanceResponse,
+    MemberExportRow,
+    MemberImportReportResponse,
     ResourceBookingCreateRequest,
     ResourceBookingResponse,
     ResourceCreateRequest,
@@ -48,6 +50,7 @@ from gpa.schemas.nonprofit import (
 )
 from gpa.services import announcements as announcement_service
 from gpa.services import attendance as attendance_service
+from gpa.services import member_io as member_io_service
 from gpa.services import resources as resource_service
 from gpa.services import shifts as shift_service
 from gpa.services import subgroups as subgroup_service
@@ -633,3 +636,56 @@ def unenroll_member(
         actor_role=context.role, group=context.group,
         subgroup_id=subgroup_id, user_id=user_id,
     )
+
+
+members_io_router = APIRouter(prefix="/api/v1/groups", tags=["members-io"])
+
+
+@members_io_router.post(
+    "/{group_id}/members/import", response_model=MemberImportReportResponse
+)
+def import_members(
+    csv_text: str = Body(media_type="text/plain"),
+    dry_run: bool = Query(default=False),
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """Import a membership spreadsheet (admin+): CSV of name,
+    email, sub-group, posted as the raw body.
+
+    The answer is a report — what was created, counted,
+    skipped, and refused, row by spreadsheet row number. With
+    ``?dry_run=true`` the same report is computed and the work
+    rolled back: what WOULD happen, truthfully.
+    """
+    report = member_io_service.import_members(
+        db, actor_label=principal.label, group=context.group,
+        csv_text=csv_text, dry_run=dry_run,
+    )
+    return MemberImportReportResponse(**report)
+
+
+@members_io_router.get(
+    "/{group_id}/members/export", response_model=list[MemberExportRow]
+)
+def export_members(
+    format: str = Query(default="json"),
+    context: GroupContext = Depends(require_group_role("admin")),
+    principal: Principal = Depends(require_scope("admin")),
+    db: Session = Depends(get_db),
+):
+    """The roster out (admin+): JSON by default, or
+    ``?format=csv`` for the spreadsheet the group keeps."""
+    if format == "csv":
+        return Response(
+            content=member_io_service.export_csv(db, context.group),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": 'attachment; filename="members.csv"'
+            },
+        )
+    return [
+        MemberExportRow(**row)
+        for row in member_io_service.export_rows(db, context.group)
+    ]
