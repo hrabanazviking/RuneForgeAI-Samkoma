@@ -3927,6 +3927,26 @@ parses the model so it cannot drift from the code.
   Contract: **201 paths / 229 schemas**. Progress:
   **180/350, Phases 0–17 complete.**
 
+## HALT — build stopped at Volmarr's order (2026-10-26 ~17:28 EDT)
+
+- Volmarr ordered all work on the hackathon app stopped and the
+  current state pushed to the team repo: the team waits for the
+  event's proper setup — Volmarr able to join the correct Discord,
+  and the needed API keys in hand — with Henry, as team lead,
+  responsible for organising the event-provided resources for his
+  teammates. No further slices are built until Volmarr resumes it.
+- State at the halt: **220/350 slices built** (B-220, the Phase 19
+  gate, is built: gate tests 3 passed standalone; docs restated;
+  atlas 429 files). The gate's FULL-SUITE proof is deferred, not
+  waived: three full attempts ended without summary, showing a
+  failure cluster that appears only in full-run order (the band's
+  files pass standalone, 130/130 in a clean copy). Last proven
+  full suite: Phase 18 gate, 1,056 passed / 7 skipped (SQLite);
+  PostgreSQL proof stands at the Phase 17 gate (1,013 on-engine).
+- The 10-minute forge cron (`gpa-backend-forge-10min`) is DISABLED
+  at this order. The read-only Hackathon Discussion chat watch
+  keeps running so Henry's setup progress stays visible.
+
 ## Standing laws in force here
 
 - No Docker, anywhere, ever (native installs + uv only).

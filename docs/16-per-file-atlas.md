@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **428 Python code files**: migrations 23, scripts 22, src 203, tests 180. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **429 Python code files**: migrations 23, scripts 22, src 203, tests 181. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -575,7 +575,7 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
 - **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_conformance.py`, `tests/test_mcp_core.py`, `tests/test_mcp_prompts.py`, `tests/test_mcp_registry.py`, `tests/test_mcp_security.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-219 — B-219 MCP conformance + client pack: generated tool catalogue (every tool's credential + i
 
 ### `src/gpa/mcp/conformance.py`
 
@@ -587,7 +587,7 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
 - **Tests that name it:** `tests/test_mcp_conformance.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-219 — B-219 MCP conformance + client pack: generated tool catalogue (every tool's credential + i
 
 ### `src/gpa/mcp/elicitation.py`
 
@@ -2074,7 +2074,7 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
-- **Tests that name it:** `tests/conftest.py`, `tests/test_internal_profiles.py`, `tests/test_job_race.py`, `tests/test_mcp_registry.py`, `tests/test_parity.py`, `tests/test_postgres_parity.py`
+- **Tests that name it:** `tests/conftest.py`, `tests/test_internal_profiles.py`, `tests/test_job_race.py`, `tests/test_mcp_registry.py`, `tests/test_parity.py`, `tests/test_phase19_gate.py`
 - **Created by:** B-201 — B-201 API parity audit + checker: 256-action register (route + internal operation per acti
 
 ### `src/gpa/services/paste.py`
@@ -2873,7 +2873,7 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
 - **Tests that name it:** `tests/test_mcp_conformance.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-219 — B-219 MCP conformance + client pack: generated tool catalogue (every tool's credential + i
 
 ### `scripts/generate_sdk.py`
 
@@ -3992,7 +3992,7 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-219 — B-219 MCP conformance + client pack: generated tool catalogue (every tool's credential + i
 
 ### `tests/test_mcp_core.py`
 
@@ -4497,6 +4497,18 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-200 — B-200 Documentation proof — Phase 18 gate: three cold reads as executable/audit legs (guid
+
+### `tests/test_phase19_gate.py`
+
+- **Purpose:** Phase 19 gate (roadmap B-220): the parity proof.
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `NY`, `RED`, `test_human_story_via_api`, `test_agent_story_via_mcp_only`, `test_mcp_surface_gaps_are_named`
+- **Dependencies (imports):** `__future__`, `asyncio`, `conftest`, `datetime`, `gpa.ai`, `gpa.ai.drivers_fixture`, `gpa.ai.extraction`, `gpa.ai.vision`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.catalogue`, `gpa.mcp.server`, `gpa.models.core`, `gpa.models.groups`, `gpa.models.sources`, `gpa.services`, `json`, `test_groups`, `vision_world`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
 
 ### `tests/test_phase3_gate.py`
 
@@ -5215,5 +5227,5 @@ The tree at generation time holds **428 Python code files**: migrations 23, scri
 - **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
-- **Tests that name it:** `tests/test_flyer_wall.py`, `tests/test_phase17_gate.py`, `tests/test_phase5_gate.py`, `tests/test_phase9_gate.py`, `tests/test_transcription.py`, `tests/test_vision_api.py`
+- **Tests that name it:** `tests/test_flyer_wall.py`, `tests/test_phase17_gate.py`, `tests/test_phase19_gate.py`, `tests/test_phase5_gate.py`, `tests/test_phase9_gate.py`, `tests/test_transcription.py`
 - **Created by:** B-063 — Phase 5 (part 2): vision service, boards, wall, print, generated images (B-063..B-067, B-0

@@ -65,10 +65,13 @@ anyone create pages about anyone — no permission step. Every
 abuse case is checked against that shape of failure:
 unauthenticated or unapproved content becoming public truth.
 In this system it cannot happen by that road: nothing is
-published except through the review queue, where a person
-approves; an agent seat is refused the approve door in the
-service itself (`seat_cannot_approve`, B-018), whatever its
-scopes say; and the public surfaces serve only the public
+published except through the review queue, where an
+approver approves under the one approval law; an agent
+seat below the group's review floor is refused the approve
+door in the service itself (`seat_cannot_approve`, B-018
+as restated by B-203), while an organiser seat holding
+publish approves through the same door as a person of that
+role, audited as itself; and the public surfaces serve only the public
 projection of published events for public-listed groups,
 where member-only fields are absent, not blanked.
 
@@ -80,8 +83,8 @@ flowchart TD
   D -->|not a member| E[404 for a private group]
   D -->|member| F[Service act in the caller's transaction]
   F --> G[Draft candidate in the review queue]
-  G --> H{A person approves?}
-  H -->|seat tries| I[seat_cannot_approve: refused in the service]
+  G --> H{An approver at the review floor approves?}
+  H -->|seat below the floor tries| I[seat_cannot_approve: refused in the service]
   H -->|no| J[Nothing is published]
   H -->|yes| K[Published fact, with audit row in the same transaction]
 ```
@@ -96,9 +99,11 @@ existence itself does not leak. A member's act runs as a
 **service act in the caller's transaction** and, where AI or
 ingest is involved, lands as a **draft candidate in the
 review queue**, not as truth. The approval question is where
-Case #1 is decided: a seat that tries is refused with
-`seat_cannot_approve` in the service, a missing approval
-publishes nothing, and only a person's yes mints a
+Case #1 is decided: a seat below the review floor that
+tries is refused with `seat_cannot_approve` in the
+service, a missing approval publishes nothing, and only
+an approver's yes — a person's, or an organiser seat's
+under the same law (B-203) — mints a
 **published fact, with its audit row in the same
 transaction** — act and story commit together or neither does.
 
@@ -318,9 +323,12 @@ bucket on auth routes is a separate, earlier wall.
 
 **Keys.** API keys and seat keys are hashed at rest, carry
 scopes (read / draft / publish / admin), and pass the one
-deps door like any credential. A seat holds a role but can
-never approve — that refusal lives in the service, below
-the door, so no scope combination can buy it.
+deps door like any credential. A seat holds a role and
+stands under the one approval law (B-203): below the
+group's review floor its approval is refused in the
+service, below the door (`seat_cannot_approve`), so no
+scope combination can buy past the floor — and at the
+floor, holding publish, it approves as itself.
 
 ```mermaid
 sequenceDiagram

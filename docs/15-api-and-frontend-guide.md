@@ -58,10 +58,13 @@ was refused `token_invalid` until it was fixed at the root.
 API keys travel in the **`X-API-Key`** header, never as a
 Bearer token. Session tokens travel as Bearer, never in
 `X-API-Key`. Scopes gate what a key may do; a seat's key can
-draft but can **never approve** — approval is refused
-in-service with `seat_cannot_approve` (403) even if the key
-holds the `publish` scope, because the law lives in the
-service, not in the scope check.
+draft, and stands under the one approval law exactly as a
+person of its role does (B-203): a seat below the group's
+review floor is refused in-service with
+`seat_cannot_approve` (403), a draft-scoped seat stops at
+`insufficient_scope`, and an organiser seat holding the
+`publish` scope approves through the same door — because
+the law lives in the service, not in the scope check.
 
 ## Auth flow 1 — password sign-in, with and without MFA
 
@@ -278,7 +281,7 @@ omission without them.
 | `token_reused` | 401 | Token already used; for refresh, the family is revoked — sign in again |
 | `forbidden` | 403 | This principal may not do that; hide or disable the act |
 | `insufficient_scope` | 403 | The API key lacks the needed scope; a person must use a stronger key or a session |
-| `seat_cannot_approve` | 403 | Seats draft, a person approves; route the draft to a person |
+| `seat_cannot_approve` | 403 | This seat is below the group's review floor; route the draft to an approver at the floor (person or organiser seat) |
 | `not_found` | 404 | Not found — private groups also answer 404, so 404 never proves non-existence |
 | `conflict` | 409 | Conflicts with current state; reload and reconcile |
 | `stale_version` | 409 | `If-Match` version is behind; reload, show the newer state, let the person re-apply |

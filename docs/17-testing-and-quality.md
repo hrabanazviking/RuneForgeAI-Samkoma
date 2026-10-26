@@ -352,6 +352,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_phase11_gate.py` | Phase 11 gate (roadmap B-130): the bridge, walked end to end. |
 | `tests/test_phase12_gate.py` | Phase 12 gate (roadmap B-138). |
 | `tests/test_phase17_gate.py` | Phase 17 gate — the addendum proof (roadmap B-180). |
+| `tests/test_phase19_gate.py` | Phase 19 gate — the parity proof (roadmap B-220, Phase 19). |
 | `tests/test_phase3_gate.py` | The Phase 3 gate (roadmap B-048). |
 | `tests/test_phase4_gate.py` | The Phase 4 gate (roadmap B-062). |
 | `tests/test_phase5_gate.py` | Phase 5 gate (roadmap B-074). |
