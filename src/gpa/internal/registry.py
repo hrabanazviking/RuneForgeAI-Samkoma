@@ -107,6 +107,14 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             "jobs:write",
             "ai:submit",
             "integrations:write",
+            # B-207: the groups/members/profile family's scopes —
+            # the gateway carries the family's reads and edits
+            # for an authorised principal, under the same
+            # per-principal check as every scope above.
+            "groups:read",
+            "groups:write",
+            "profile:read",
+            "profile:write",
         }
     ),
 }

@@ -79,7 +79,9 @@ def test_parity_report_counts_and_pending_surfaces(app):
     # its leg of this checker landed and the report counts it as
     # covered (9 tools, 7 operations). The terminal surface is
     # still reported pending, never passed.
-    assert report["mcp_tools"] == 9
-    assert report["mcp_operations_covered"] == 7
+    # Grown by B-207: the groups/members/profile family brought
+    # the surface to 14 tools covering 12 operations.
+    assert report["mcp_tools"] == 14
+    assert report["mcp_operations_covered"] == 12
     assert "MCP tool registry (B-206)" in text
     assert "Pending surface, not yet built: terminal (B-221)" in text

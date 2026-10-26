@@ -2383,6 +2383,69 @@ parses the model so it cannot drift from the code.
   train ZIP carries the tool manifest by construction).
   Progress: **206/350. Next: B-207 (MCP tools — groups,
   members, profile).**
+- **B-207 MCP tools — groups, members, profile** ✅ (timer
+  crew, 2026-10-26): the first domain family on the B-206
+  generated catalogue. Five new internal operations registered
+  in `gpa.internal.handlers` (the composition root — the MCP
+  package still imports no service/router/model, the B-204
+  import scan passes unchanged): `groups.get` +
+  `groups.list_members` (`groups:read`), `groups.update`
+  (`groups:write`), `profile.get` (`profile:read`),
+  `profile.update` (`profile:write`) — the registry's first
+  READ scopes, granted to the `mcp` caller beside the six
+  write scopes. The roster is ONE answer with both principal
+  kinds labelled as themselves (persons by membership —
+  role + invite status; seats by seat row — role + B-202
+  profile). The edits are closed vocabularies at the
+  operation door: group settings carry only the five plain
+  fields (name, description, visibility, home_timezone,
+  default_place) and a profile carries only its kind's set
+  (person: name/timezone/locale; seat: name/description/
+  avatar_url) — an out-of-family field is refused BY NAME as
+  `internal_bad_payload`, a profile payload naming both
+  principals (or neither) likewise. Both edits delegate to
+  the owning services (groups.update_group /
+  groups.update_seat_profile / identity.update_profile), are
+  audited under the payload's actor label (a seat's face is
+  the seat's act, B-202), and commit on their services'
+  discipline. B-205's mapping widened honestly with the new
+  scopes: read → {groups:read, profile:read} (before B-207 a
+  read credential could carry NO operation), draft adds
+  profile:write, publish keeps its cumulative shape, admin =
+  all ten; `groups:write` maps only from admin, so
+  `gpa_update_group` is admin-scoped while `gpa_update_profile`
+  is draft-scoped (a seat's default read+draft key maintains
+  its own face — the least-scope judgement, recorded in
+  tools.py beside the annotations). The server serves 14
+  tools; the five typed family tools follow the B-206 thin
+  shape (presence-built payloads, registry descriptions).
+  Superseded assertions updated in place (core tool set,
+  bridge operations/grants, operations_count 7→12, registry
+  counts 7→12 operations / 9→14 manifest entries, auth scope
+  set, parity counts 9/7→14/12, parity.py's bus-backed note).
+  Tests: tests/test_mcp_groups.py **7 passed** (group read +
+  not_found, one-roster persons+seats, settings edit
+  committed + visibility validation, person and seat profiles
+  read/edited — seat in another group is not_found, the three
+  closed-vocabulary refusals by name, call-time scope
+  re-check across the family's read/draft/admin rungs);
+  groups+registry+auth+parity batch **29 passed**; core +
+  internal (api/audit/identity/profiles/transport) **44
+  passed**; gates batch (comment — mcp density repaired to
+  45.1% by documentation, as at B-205 — docs, architecture,
+  signed releases, release-zip, registry, parity) **55
+  passed**; a wider batch (seat equality + groups + member
+  io + gates) ran 98 passed with only the three then-stale
+  gate assertions failing, each fixed at its root and
+  re-run green. Ruff E9+F clean on every touched file except
+  the pre-existing F841 in tests/test_mcp_core.py (B-204
+  code, noted at B-205/B-206, left as found). Atlas
+  regenerated (407 files), B-198 inventory row added.
+  Contract unchanged: **202 paths / 230 schemas** (OpenAPI
+  snapshot green). Full suite NOT re-run — a full Phase 19
+  green is the B-220 gate's to prove. No ZIP at this slice.
+  Progress: **207/350. Next: B-208 (MCP tools — candidates
+  and the review queue).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

@@ -191,6 +191,52 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "operation's own law (draft state, the service's permission "
         "checks) applies unchanged.",
     ),
+    # B-207's family (groups / members / profile), annotated by
+    # the same rules as every line here, with its scope choices
+    # stated for the reviewer: the two reads take "read"
+    # because their operations' internal scopes (groups:read,
+    # profile:read) are exactly the read rung's mapping — a
+    # read credential can finally travel an operation, where
+    # before B-207 it could only read the meta tools. The
+    # profile edit takes "draft" rather than "admin" by a
+    # deliberate least-scope judgement: editing a principal's
+    # own face is the lightest write in the product, and a
+    # seat's default key is born carrying read+draft, so the
+    # seat the profile belongs to can maintain it without an
+    # operator widening its key. The group-settings edit takes
+    # "admin" because groups:write maps from no lesser rung:
+    # renaming a group or changing its visibility is an
+    # organiser-grade act at the human doors too, and the
+    # checker would refuse a lesser annotation here by name.
+    "groups.get": (
+        "gpa_get_group",
+        "read",
+        "Read one group's plain facts — name, slug, description, "
+        "visibility, home timezone, default place — through the "
+        "internal groups.get operation. Facts only: no member "
+        "content, no settings internals, and a group id that does "
+        "not exist is refused not_found, exactly as at the API door.",
+    ),
+    "groups.list_members": (
+        "gpa_list_members",
+        "read",
+        "List one group's full roster through the internal "
+        "groups.list_members operation: its person memberships "
+        "(role and invite status) and its agent seats (role and "
+        "profile) in one answer, each kind labelled as itself — "
+        "humans and seats are equal principals here (B-202), and "
+        "the roster is how an agent learns who it is planning with.",
+    ),
+    "groups.update": (
+        "gpa_update_group",
+        "admin",
+        "Edit one group's plain settings — name, description, "
+        "visibility, home timezone, default place — through the "
+        "internal groups.update operation. Only those five fields "
+        "travel this road: roles, scopes, and membership are "
+        "administration acts at their own doors, never settings, "
+        "and the edit is audited under the acting principal's label.",
+    ),
     "notify.request": (
         "gpa_request_notification",
         "admin",
@@ -232,6 +278,25 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "endpoints through the internal integrations.emit operation, "
         "in the caller's transaction — either an event's own wire "
         "data, built from its row, or an explicit data payload.",
+    ),
+    "profile.get": (
+        "gpa_get_profile",
+        "read",
+        "Read one principal's profile through the internal "
+        "profile.get operation: a person's (name, timezone, locale) "
+        "by user id, or a seat's (name, description, avatar URL) by "
+        "seat id inside its group. Profile only — never credentials, "
+        "never a seat's role or scopes, which are administration.",
+    ),
+    "profile.update": (
+        "gpa_update_profile",
+        "draft",
+        "Edit one principal's profile through the internal "
+        "profile.update operation: a person's name, timezone, or "
+        "locale, or a seat's name, description, or avatar URL. "
+        "The edit is audited under the acting principal's own label "
+        "— a seat's face is the seat's to maintain (B-202) — and "
+        "fields outside the kind's profile set are refused by name.",
     ),
 }
 

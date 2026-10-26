@@ -50,7 +50,8 @@ MCP_PACKAGE = ROOT / "src" / "gpa" / "mcp"
 # stays CORE_TOOLS in these B-204 tests because what they pin
 # (both transports serve the SAME set) is unchanged; the set
 # itself is the registry's, asserted exactly in
-# tests/test_mcp_registry.py.
+# tests/test_mcp_registry.py. Grown again by B-207: the
+# groups/members/profile family's five tools join the set.
 CORE_TOOLS = {
     "gpa_server_info",
     "gpa_list_internal_operations",
@@ -61,6 +62,11 @@ CORE_TOOLS = {
     "gpa_enqueue_job",
     "gpa_submit_ai_job",
     "gpa_emit_integration_event",
+    "gpa_get_group",
+    "gpa_list_members",
+    "gpa_update_group",
+    "gpa_get_profile",
+    "gpa_update_profile",
 }
 
 
@@ -116,6 +122,11 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "jobs:write",
         "ai:submit",
         "integrations:write",
+        # B-207: the groups/members/profile family's scopes.
+        "groups:read",
+        "groups:write",
+        "profile:read",
+        "profile:write",
     ):
         assert registry.caller_may("mcp", scope), scope
     operations = {op["name"] for op in bridge.operations()}
@@ -127,6 +138,12 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "jobs.enqueue",
         "ai.submit_job",
         "integrations.emit",
+        # B-207: the first domain family's operations.
+        "groups.get",
+        "groups.list_members",
+        "groups.update",
+        "profile.get",
+        "profile.update",
     }
 
 
@@ -182,7 +199,8 @@ def test_server_builds_with_the_core_tools(app, settings):
     tools = asyncio.run(server.list_tools())
     assert {tool.name for tool in tools} == CORE_TOOLS
     info = bridge.info()
-    assert info["caller"] == "mcp" and info["operations_count"] == 7
+    # B-207 grew the registry to twelve operations.
+    assert info["caller"] == "mcp" and info["operations_count"] == 12
 
 
 # --- structured logging: no payloads, ever ---------------------------------

@@ -10,7 +10,12 @@ The operations are the five families the roadmap names —
 candidate creation, event publication, notification request,
 AI job submission, integration call — plus the two supporting
 operations the same families need (general job submission,
-RSVP-promotion notification). Every handler:
+RSVP-promotion notification). Phase 19 (B-207) adds the first
+READ-and-profile family — group reads, the member roster, a
+group-settings edit, and person/seat profile reads and edits —
+registered so the MCP surface's domain tools (and any future
+surface) travel this same door instead of reaching around it.
+Every handler:
 
 * takes ids and values from the envelope payload — never ORM
   rows (the wire shape is the in-process shape, B-166);
@@ -36,6 +41,8 @@ from gpa.models.groups import Group
 from gpa.models.identity import User
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
+from gpa.services import groups as group_service
+from gpa.services import identity as identity_service
 from gpa.services import jobs as job_service
 from gpa.services import notifications as notify_service
 from gpa.services import outbound as outbound_service
@@ -254,6 +261,228 @@ def _integrations_emit(db: Session, payload: dict, ctx: CallContext) -> dict:
     return {"deliveries": len(deliveries)}
 
 
+# --- groups.get / groups.list_members / groups.update (B-207) -------------
+#
+# The group family the MCP domain tools stand on. Reads return
+# plain serialised facts — the same fields the HTTP API's group
+# and roster responses carry — never rows, and never a field the
+# API itself withholds (no budget internals, no digest wiring:
+# those are operator settings screens, not a roster's business).
+# The settings edit is deliberately NARROWER than the HTTP
+# door's: only the five plain fields below travel this
+# operation, and an unknown field is refused by name rather
+# than silently set — a surface that can set any attribute by
+# string is a surface that can set role ladders by typo.
+
+# The group-settings fields the groups.update operation carries.
+_GROUP_EDITABLE_FIELDS = frozenset(
+    {"name", "description", "visibility", "home_timezone", "default_place"}
+)
+
+
+def _group_data(group: Group) -> dict:
+    """One group as plain data: the fields every surface shows."""
+    return {
+        "group_id": group.id,
+        "name": group.name,
+        "slug": group.slug,
+        "description": group.description,
+        "visibility": group.visibility,
+        "home_timezone": group.home_timezone,
+        "default_place": group.default_place,
+    }
+
+
+def _seat_data(seat) -> dict:
+    """One agent seat as plain data, profile included (B-202)."""
+    return {
+        "seat_id": seat.id,
+        "group_id": seat.group_id,
+        "name": seat.name,
+        "role": seat.role,
+        "description": seat.description,
+        "avatar_url": seat.avatar_url,
+    }
+
+
+def _groups_get(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Read one group by id (the groups service's own fetch,
+    whose not_found is the answer for a dangling id)."""
+    _need(payload, "group_id")
+    return _group_data(group_service.get_group(db, payload["group_id"]))
+
+
+def _groups_list_members(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """The group's full roster: person memberships AND seats.
+
+    One roster, both principal kinds (the seat-equality law,
+    B-202): a caller planning with a group needs its people and
+    its seats in one answer, each kind labelled as itself —
+    persons by membership (role + invite status), seats by
+    their seat rows (role + profile).
+    """
+    _need(payload, "group_id")
+    group = group_service.get_group(db, payload["group_id"])
+    members = [
+        {
+            "user_id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "role": membership.role,
+            "status": membership.status,
+        }
+        for membership, user in group_service.list_members(db, group)
+    ]
+    seats = [_seat_data(seat) for seat in group_service.list_seats(db, group)]
+    return {
+        "group_id": group.id,
+        "members": members,
+        "seats": seats,
+        "count": len(members) + len(seats),
+    }
+
+
+def _groups_update(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Edit a group's plain settings through the groups service.
+
+    The service owns the edit, its validation (visibility is
+    the closed vocabulary), and its audit line — attributed to
+    the payload's ``actor`` label, so a surface's act is
+    recorded as that surface's principal, never as the gateway.
+    The service commits, as its direct form does.
+    """
+    _need(payload, "group_id", "actor")
+    changes = payload.get("changes") or {}
+    unknown = sorted(set(changes) - _GROUP_EDITABLE_FIELDS)
+    if unknown:
+        raise AppError(
+            "internal_bad_payload",
+            detail=(
+                "groups.update carries only "
+                f"{', '.join(sorted(_GROUP_EDITABLE_FIELDS))}; "
+                f"refused: {', '.join(unknown)}."
+            ),
+        )
+    if not changes:
+        raise AppError(
+            "internal_bad_payload", detail="groups.update needs at least one change."
+        )
+    group = group_service.get_group(db, payload["group_id"])
+    updated = group_service.update_group(
+        db, actor_label=payload["actor"], group=group, changes=changes
+    )
+    return _group_data(updated)
+
+
+# --- profile.get / profile.update (B-207) ----------------------------------
+#
+# One profile concept, two principal kinds (B-202's law): a
+# person's profile is identity's fields (name, timezone,
+# locale — never the email, never credentials), and a seat's
+# profile is its display face (name, description, avatar URL —
+# never its role or scopes, which are administration, not
+# profile). The payload names exactly one principal: user_id
+# for a person, seat_id + group_id for a seat (a seat exists
+# only inside its one group, and another group's seat id is a
+# not_found, exactly as at the HTTP door).
+
+
+def _user_profile(user: User) -> dict:
+    """One person's profile as plain data (no credential fields)."""
+    return {
+        "kind": "user",
+        "user_id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "timezone": user.timezone,
+        "locale": user.locale,
+    }
+
+
+def _seat_profile(seat) -> dict:
+    """One seat's profile as plain data (no role/scope admin)."""
+    return {"kind": "seat", **_seat_data(seat)}
+
+
+def _profile_target(payload: dict) -> str:
+    """Which principal a profile payload names: user | seat.
+
+    Both ids or neither is a malformed call, refused as such —
+    a profile operation that guessed its target could edit the
+    wrong principal's face, which is precisely the failure this
+    family's shape exists to prevent.
+    """
+    has_user = bool(payload.get("user_id"))
+    has_seat = bool(payload.get("seat_id"))
+    if has_user == has_seat:
+        raise AppError(
+            "internal_bad_payload",
+            detail="A profile payload names exactly one of user_id or seat_id.",
+        )
+    return "seat" if has_seat else "user"
+
+
+def _profile_get(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Read one principal's profile (person or seat, see above)."""
+    if _profile_target(payload) == "seat":
+        _need(payload, "group_id")
+        group = group_service.get_group(db, payload["group_id"])
+        return _seat_profile(group_service.get_seat(db, group, payload["seat_id"]))
+    return _user_profile(identity_service.get_user(db, payload["user_id"]))
+
+
+# The per-kind profile fields a profile.update payload may set.
+_PROFILE_USER_FIELDS = frozenset({"name", "timezone", "locale"})
+_PROFILE_SEAT_FIELDS = frozenset({"name", "description", "avatar_url"})
+
+
+def _profile_update(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Edit one principal's profile through its owning service.
+
+    Persons: identity.update_profile (only the fields given).
+    Seats: groups.update_seat_profile, whose audit line carries
+    the payload's ``actor`` label — a seat editing its own face
+    is audited as the seat (B-202), and the service refuses an
+    emptied name. Fields outside the kind's own set are refused
+    by name, for the same reason groups.update refuses its
+    unknown fields: profile is a closed vocabulary per kind.
+    """
+    _need(payload, "actor")
+    changes = payload.get("changes") or {}
+    if _profile_target(payload) == "seat":
+        _need(payload, "group_id")
+        unknown = sorted(set(changes) - _PROFILE_SEAT_FIELDS)
+        if unknown:
+            raise AppError(
+                "internal_bad_payload",
+                detail=f"A seat profile has no fields: {', '.join(unknown)}.",
+            )
+        group = group_service.get_group(db, payload["group_id"])
+        seat = group_service.update_seat_profile(
+            db,
+            actor_label=payload["actor"],
+            group=group,
+            seat_id=payload["seat_id"],
+            changes=changes,
+        )
+        return _seat_profile(seat)
+    unknown = sorted(set(changes) - _PROFILE_USER_FIELDS)
+    if unknown:
+        raise AppError(
+            "internal_bad_payload",
+            detail=f"A person profile has no fields: {', '.join(unknown)}.",
+        )
+    user = identity_service.get_user(db, payload["user_id"])
+    updated = identity_service.update_profile(
+        db,
+        user,
+        name=changes.get("name"),
+        timezone=changes.get("timezone"),
+        locale=changes.get("locale"),
+    )
+    return _user_profile(updated)
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -319,4 +548,49 @@ def register_all() -> None:
             "Announce one act to the group's subscribed endpoints.",
         ),
         _integrations_emit,
+    )
+    registry.register(
+        Operation(
+            "groups.get",
+            "groups",
+            "groups:read",
+            "Read one group's plain facts by id.",
+        ),
+        _groups_get,
+    )
+    registry.register(
+        Operation(
+            "groups.list_members",
+            "groups",
+            "groups:read",
+            "List a group's full roster: person memberships and seats.",
+        ),
+        _groups_list_members,
+    )
+    registry.register(
+        Operation(
+            "groups.update",
+            "groups",
+            "groups:write",
+            "Edit a group's plain settings (name, description, visibility, timezone, place).",
+        ),
+        _groups_update,
+    )
+    registry.register(
+        Operation(
+            "profile.get",
+            "identity",
+            "profile:read",
+            "Read one principal's profile (a person's or a seat's).",
+        ),
+        _profile_get,
+    )
+    registry.register(
+        Operation(
+            "profile.update",
+            "identity",
+            "profile:write",
+            "Edit one principal's profile through its owning service.",
+        ),
+        _profile_update,
     )

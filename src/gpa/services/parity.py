@@ -36,6 +36,11 @@ Honest boundaries, stated at the point of use
   actions are module-internal service operations behind their
   handlers; this register does NOT claim they travel the
   encrypted bus -- claiming that would be inventing coverage.
+  B-207 registered five more operations (``groups.get``,
+  ``groups.list_members``, ``groups.update``, ``profile.get``,
+  ``profile.update``) for the MCP surface's domain tools; they
+  back no action in this register and are counted by the MCP
+  leg below, not by the ``internal_api`` field here.
 * MCP and the terminal (Phase 20) are the other surfaces.
   B-206 extended this same checker with its MCP leg (below):
   the generated tool registry in ``gpa.mcp.tools`` is checked

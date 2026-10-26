@@ -27,7 +27,9 @@ What this module builds, and what it deliberately does not:
   remaining operations gained their generated tools at B-206;
   the two meta tools (server info, the operation listing) are
   the registry's declared meta kind. The domain families land
-  as B-207 → B-212 on this same generated catalogue.
+  as B-207 → B-212 on this same generated catalogue — B-207
+  landed the first of them (groups, members, profile) on five
+  operations registered for this surface's sake.
 * **Authentication is B-205's slice, landed on this core.**
   stdio is the local road: a configured seat API key
   (``GPA_MCP_SEAT_API_KEY``) is re-resolved on every call, and
@@ -449,6 +451,179 @@ def build_server(
         if event_extra is not None:
             payload["event_extra"] = event_extra
         return _call("integrations.emit", payload, tool="gpa_emit_integration_event")
+
+    # --- The B-207 family: groups, members, profile -------------------------
+    #
+    # The first domain family on the generated catalogue. These
+    # tools are group-shaped rather than payload-shaped — an
+    # agent asks for a group, a roster, a profile, in those
+    # words — but they travel the same road as everything above:
+    # one internal operation each, registered at B-207 in
+    # gpa.internal.handlers and annotated in gpa.mcp.tools, so
+    # the registry checker covers them exactly as it covers the
+    # B-206 generated set. Their scopes follow the mapping, not
+    # convenience: the reads are "read", a profile edit is
+    # "draft" (a seat's default key, read+draft, can maintain
+    # the seat's own face), and a group-settings edit is
+    # "admin" because groups:write maps only from admin.
+    #
+    # The actor argument on the two edit tools is the label the
+    # owning service audits the act under — a seat's edit is
+    # audited as the seat (B-202's law), never as the gateway —
+    # and callers pass their own principal label, the same
+    # convention B-204's core pair established with created_by
+    # and actor.
+    #
+    # What this family deliberately cannot do, for the
+    # reviewer: it cannot create or delete a group (creation is
+    # a person's founding act at the API door, and no roadmap
+    # slice gives a surface a delete), it cannot invite, remove,
+    # or re-role a member (membership administration lives at
+    # its own doors under the role ladder's own checks), and it
+    # cannot touch a seat's role or scopes (profile, not
+    # administration — B-202's line, enforced again in the
+    # operation's closed field set). Those absences are the
+    # family's shape, not its backlog: a later family slice
+    # that needs one of those acts registers its own operation
+    # for it, with its own scope, in the open.
+    #
+    # A note on the roster's shape: gpa_list_members returns
+    # persons and seats in two labelled lists rather than one
+    # merged list, because the two kinds carry different facts
+    # (a membership has an invite status; a seat has a profile)
+    # and a merged shape would force one kind's fields onto the
+    # other as nulls. An agent that wants one flat list can
+    # concatenate; an agent that needs to tell a person from a
+    # seat — for instance, before addressing either — reads the
+    # labels the operation already keeps apart.
+    #
+    # And a note on this family's errors, since an agent reads
+    # them as instructions about what to do next: a missing
+    # group or seat is not_found (fix the id, do not retry), a
+    # field outside an edit's closed vocabulary is
+    # internal_bad_payload naming the field (fix the call), and
+    # an under-scoped credential is insufficient_scope at the
+    # guard, before any operation runs (fix the credential).
+    # Three different fixes for three different failures — the
+    # codes are kept distinct here precisely so they stay
+    # distinguishable on the wire.
+
+    @server.tool(description=specs["gpa_get_group"].description)
+    def gpa_get_group(group_id: str) -> dict[str, Any]:
+        """Read one group's plain facts via groups.get."""
+        return _call("groups.get", {"group_id": group_id}, tool="gpa_get_group")
+
+    @server.tool(description=specs["gpa_list_members"].description)
+    def gpa_list_members(group_id: str) -> dict[str, Any]:
+        """List a group's full roster via groups.list_members:
+        person memberships and agent seats, each kind labelled."""
+        return _call(
+            "groups.list_members", {"group_id": group_id}, tool="gpa_list_members"
+        )
+
+    @server.tool(description=specs["gpa_update_group"].description)
+    def gpa_update_group(
+        group_id: str,
+        actor: str,
+        name: str | None = None,
+        description: str | None = None,
+        visibility: str | None = None,
+        home_timezone: str | None = None,
+        default_place: str | None = None,
+    ) -> dict[str, Any]:
+        """Edit a group's plain settings via groups.update.
+
+        Only the fields actually given are sent: the operation
+        carries a closed five-field vocabulary, and a field left
+        as None here means "not part of this edit", never
+        "clear it" — the same presence convention the emit tool
+        above documents for its own payload.
+        """
+        changes: dict[str, Any] = {}
+        for field, value in (
+            ("name", name),
+            ("description", description),
+            ("visibility", visibility),
+            ("home_timezone", home_timezone),
+            ("default_place", default_place),
+        ):
+            if value is not None:
+                changes[field] = value
+        return _call(
+            "groups.update",
+            {"group_id": group_id, "actor": actor, "changes": changes},
+            tool="gpa_update_group",
+        )
+
+    @server.tool(description=specs["gpa_get_profile"].description)
+    def gpa_get_profile(
+        user_id: str | None = None,
+        seat_id: str | None = None,
+        group_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Read one principal's profile via profile.get.
+
+        Names exactly one principal: ``user_id`` for a person,
+        or ``seat_id`` together with its ``group_id`` for a
+        seat — the operation refuses a payload naming both or
+        neither, rather than guess whose face was meant.
+        """
+        payload: dict[str, Any] = {}
+        if user_id is not None:
+            payload["user_id"] = user_id
+        if seat_id is not None:
+            payload["seat_id"] = seat_id
+        if group_id is not None:
+            payload["group_id"] = group_id
+        return _call("profile.get", payload, tool="gpa_get_profile")
+
+    @server.tool(description=specs["gpa_update_profile"].description)
+    def gpa_update_profile(
+        actor: str,
+        user_id: str | None = None,
+        seat_id: str | None = None,
+        group_id: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        avatar_url: str | None = None,
+        timezone: str | None = None,
+        locale: str | None = None,
+    ) -> dict[str, Any]:
+        """Edit one principal's profile via profile.update.
+
+        The change set is per kind, as the operation enforces:
+        a person takes name/timezone/locale, a seat takes
+        name/description/avatar_url — the arguments for the
+        other kind are simply not sent, so a cross-kind field
+        can never arrive by accident. ``actor`` is the audit
+        label the edit is recorded under (a seat edits as
+        itself: ``seat:<id>``).
+        """
+        payload: dict[str, Any] = {"actor": actor}
+        changes: dict[str, Any] = {}
+        if seat_id is not None:
+            payload["seat_id"] = seat_id
+            if group_id is not None:
+                payload["group_id"] = group_id
+            for field, value in (
+                ("name", name),
+                ("description", description),
+                ("avatar_url", avatar_url),
+            ):
+                if value is not None:
+                    changes[field] = value
+        else:
+            if user_id is not None:
+                payload["user_id"] = user_id
+            for field, value in (
+                ("name", name),
+                ("timezone", timezone),
+                ("locale", locale),
+            ):
+                if value is not None:
+                    changes[field] = value
+        payload["changes"] = changes
+        return _call("profile.update", payload, tool="gpa_update_profile")
 
     log_event(
         logger,

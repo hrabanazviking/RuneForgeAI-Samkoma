@@ -39,6 +39,15 @@ Scopes, and the mapping onto internal scopes:
   (B-162) — the layer beneath this one. The bridge's gateway
   grants (B-204) carry the call; THIS table is what a given
   principal may ask the gateway to carry for them.
+* B-207 widened that table's world, not its law: the internal
+  registry gained its first READ scopes (``groups:read``,
+  ``profile:read``) and a profile write, so the read rung now
+  maps onto real operations instead of onto nothing — before
+  B-207 a read credential could be checked at the meta tools
+  and could carry no operation at all. Each rung still carries
+  the rungs below it, and ``groups:write`` still maps only
+  from ``admin``, which is why the family slice's settings
+  tool is admin-scoped while its profile tool is draft-scoped.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -88,6 +97,8 @@ KNOWN_SCOPES = ("read", "draft", "publish", "admin")
 
 # The internal API's scopes (B-162 registry), for the mapping
 # table below: the complete set an ``admin`` credential maps to.
+# B-207 added the first read scopes (groups/profile reads) and
+# the profile write beside B-162's original six write scopes.
 INTERNAL_SCOPES = (
     "candidates:write",
     "events:publish",
@@ -95,20 +106,28 @@ INTERNAL_SCOPES = (
     "jobs:write",
     "ai:submit",
     "integrations:write",
+    "groups:read",
+    "groups:write",
+    "profile:read",
+    "profile:write",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
 # the "mapped onto internal scopes" sentence of B-205 made into
-# one table a reviewer can read whole: reading maps to no
-# internal write at all (the read tools travel operations whose
-# scope the gateway already holds), drafting maps to the queue,
-# publishing adds the publish door, and admin maps to the full
-# internal set — mirroring how a person's session (scopes=None
-# in deps.py) carries every scope.
+# one table a reviewer can read whole: reading maps onto the
+# read operations (B-207's group and profile reads) and onto no
+# internal WRITE at all, drafting adds the queue and a
+# principal's own profile edit, publishing adds the publish
+# door, and admin maps to the full internal set — mirroring how
+# a person's session (scopes=None in deps.py) carries every
+# scope. Each rung carries the rungs below it, as the ladder
+# always has (publish already carried draft's candidates:write).
+_READ_INTERNAL = frozenset({"groups:read", "profile:read"})
+_DRAFT_INTERNAL = _READ_INTERNAL | {"candidates:write", "profile:write"}
 EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
-    "read": frozenset(),
-    "draft": frozenset({"candidates:write"}),
-    "publish": frozenset({"candidates:write", "events:publish"}),
+    "read": _READ_INTERNAL,
+    "draft": _DRAFT_INTERNAL,
+    "publish": _DRAFT_INTERNAL | {"events:publish"},
     "admin": frozenset(INTERNAL_SCOPES),
 }
 
@@ -135,6 +154,17 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_enqueue_job": "admin",
     "gpa_submit_ai_job": "admin",
     "gpa_emit_integration_event": "admin",
+    # B-207's family: the reads are "read" (their internal
+    # scopes are exactly the read rung's mapping), a profile
+    # edit is "draft" (a seat's default key carries read+draft,
+    # so a seat can maintain its own face with the key it was
+    # born holding), and a group-settings edit is "admin":
+    # groups:write maps only from admin, as the checker proves.
+    "gpa_get_group": "read",
+    "gpa_list_members": "read",
+    "gpa_update_group": "admin",
+    "gpa_get_profile": "read",
+    "gpa_update_profile": "draft",
 }
 
 
