@@ -484,6 +484,110 @@ transaction; gateway refusals (scope, consent, rate) are
 recorded in the server's structured log with their error
 code, the honest record for an act that did not happen.
 
+## MCP conformance + client pack (B-219)
+
+The MCP surface is proven, documented, and reachable from
+worked code. **The tool catalogue** (`gpa.mcp.catalogue`)
+is generated from the same registry the tools are served
+from: for every one of the 44 tools it joins the spec to
+its credential scope, the internal scope its operation
+requires, its truthful B-218 annotations, its description
+hash, and one curated worked example call (placeholder ids
+only; consent-gated tools' examples state `consent=true`,
+because an example that omitted the gate would teach a
+refused call). The catalogue's digest — the manifest's
+canonical hashing, restated for these entries — is printed
+in the generated table below, and the full catalogue is
+served as the MCP resource `gpa://tool-catalogue.json`
+(application/json) on B-213's shelf, so an agent can read
+the manual through the same connection it works through.
+The table below is a GENERATED section: it is regenerated
+by `scripts/generate_mcp_catalogue.py` from the catalogue
+module, and the suite compares it against the renderer
+byte for byte — a registry change that forgets to
+regenerate fails a test, never ships a stale catalogue.
+**Conformance** (`gpa.mcp.conformance`) is the automated
+spec-case half: ten named cases run in-process against a
+built server — identity and negotiated protocol versions,
+the tools list against the catalogue, served annotations
+against the catalogue's derivation, the prompts list
+against the B-215 catalogue, the shelf's statics and
+templates, the catalogue resource's own digest, and the
+three refusals (an unknown tool, resource, and prompt are
+each refused, never served). **Two independent worked
+clients** prove the wire from both sides:
+`examples/mcp_stdio_client.py` speaks through the official
+MCP SDK over stdio (spawning the server as a subprocess),
+and `examples/mcp_http_client.py` speaks to a remote
+server with no SDK at all — hand-rolled JSON-RPC 2.0 over
+the standard library, bearer token and `mcp-session-id`
+handled explicitly, both plain-JSON and event-stream
+response bodies read. Both print the same summary shape
+(server name, protocol version, tool count, catalogue
+count + digest), and both are run for real by the
+acceptance tests. **The MCP Inspector is not run in this
+environment**: it is an external interactive tool
+(`npx @modelcontextprotocol/inspector`, then point it at
+`python -m gpa.mcp.server --transport stdio` in this repo,
+or at a streamable-HTTP server's `/mcp` URL with its
+bearer token) that a human drives in a browser; it needs
+npm and a network install, and this build's suite runs
+with neither. Nothing here claims an Inspector result —
+the conformance module is the half that runs on every
+commit, and the Inspector road is this paragraph's, for a
+human who has it installed.
+
+<!-- BEGIN GENERATED MCP TOOL CATALOGUE (B-219) -->
+The MCP tool catalogue: 44 tools (42 operation tools, 2 meta tools). Catalogue digest: `874bd1c6bd0945d753f1e6fb0f0109311acbe823643c0d07ad1d1654f8990bdb`. Annotation letters: R = read-only, D = destructive, I = idempotent, O = open-world.
+
+| Tool | Operation | Credential scope | Internal scope | Annotations (R/D/I/O letters) |
+|---|---|---|---|---|
+| gpa_server_info | — | read | — | RI |
+| gpa_list_internal_operations | — | read | — | RI |
+| gpa_submit_ai_job | ai.submit_job | admin | ai:submit | — |
+| gpa_create_announcement | announcements.create | publish | announcements:write | — |
+| gpa_list_announcements | announcements.list | read | announcements:read | RI |
+| gpa_get_agenda | calendar.agenda | read | events:read | RI |
+| gpa_approve_candidate | candidates.approve | publish | candidates:decide | D |
+| gpa_create_candidate_draft | candidates.create | draft | candidates:write | — |
+| gpa_edit_candidate | candidates.edit | publish | candidates:decide | I |
+| gpa_get_candidate | candidates.get | read | candidates:read | RI |
+| gpa_list_candidates | candidates.list | read | candidates:read | RI |
+| gpa_reject_candidate | candidates.reject | publish | candidates:decide | D |
+| gpa_list_digests | digests.list | read | notifications:read | RI |
+| gpa_preview_digest | digests.preview | publish | notifications:write | — |
+| gpa_ask_for_missing_fact | elicitation.ask | draft | planning:write | O |
+| gpa_cancel_event | events.cancel | publish | events:write | D |
+| gpa_get_event | events.get | read | events:read | RI |
+| gpa_list_events | events.list | read | events:read | RI |
+| gpa_publish_event | events.publish | publish | events:publish | D |
+| gpa_request_extraction | extraction.request | publish | extraction:request | — |
+| gpa_get_group | groups.get | read | groups:read | RI |
+| gpa_list_members | groups.list_members | read | groups:read | RI |
+| gpa_update_group | groups.update | admin | groups:write | I |
+| gpa_emit_integration_event | integrations.emit | admin | integrations:write | O |
+| gpa_enqueue_job | jobs.enqueue | admin | jobs:write | — |
+| gpa_get_inbox | notifications.inbox | read | notifications:read | RI |
+| gpa_get_notification_preferences | notifications.preferences | read | notifications:read | RI |
+| gpa_request_notification | notify.request | admin | notify:write | — |
+| gpa_notify_rsvp_promotion | notify.rsvp_promotion | admin | notify:write | — |
+| gpa_get_decision_chain | planning.decision_chain | read | planning:read | RI |
+| gpa_list_decisions | planning.list_decisions | read | planning:read | RI |
+| gpa_list_questions | planning.list_questions | read | planning:read | RI |
+| gpa_list_tasks | planning.list_tasks | read | planning:read | RI |
+| gpa_resolve_question | planning.resolve_question | draft | planning:write | — |
+| gpa_update_task | planning.update_task | draft | planning:write | I |
+| gpa_get_profile | profile.get | read | profile:read | RI |
+| gpa_update_profile | profile.update | draft | profile:write | I |
+| gpa_list_rsvps | rsvps.list | read | events:read | RI |
+| gpa_set_rsvp | rsvps.set | draft | rsvps:write | I |
+| gpa_request_sampling | sampling.sample | publish | sampling:request | O |
+| gpa_append_source_chunks | sources.append | draft | sources:write | — |
+| gpa_create_source | sources.create | draft | sources:write | — |
+| gpa_get_source | sources.get | read | sources:read | RI |
+| gpa_list_sources | sources.list | read | sources:read | RI |
+<!-- END GENERATED MCP TOOL CATALOGUE -->
+
 ## Honest boundaries — what is not claimed
 
 This chapter closes where the threat model closes: with

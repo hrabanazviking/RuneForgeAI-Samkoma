@@ -321,6 +321,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_migrations_phase9.py` | Phase 9 migration tests (roadmap B-003 discipline). |
 | `tests/test_mcp_auth.py` | MCP authentication + authorisation tests (roadmap B-205). |
 | `tests/test_mcp_candidates.py` | MCP candidates / review-queue tool tests (roadmap B-208, Phase 19). |
+| `tests/test_mcp_conformance.py` | MCP conformance + client pack tests (roadmap B-219, Phase 19). |
 | `tests/test_mcp_core.py` | MCP server core tests (roadmap B-204, Phase 19). |
 | `tests/test_mcp_events.py` | MCP events / RSVPs / calendar tool tests (roadmap B-209, Phase 19). |
 | `tests/test_mcp_groups.py` | MCP groups / members / profile tool tests (roadmap B-207, Phase 19). |
@@ -334,6 +335,11 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_mcp_planning.py` | MCP planning (tasks / decisions / questions) tool tests (roadmap B-211, Phase 19). |
 | `tests/test_mcp_registry.py` | MCP tool registry tests (roadmap B-206, Phase 19). |
 | `tests/test_mcp_sources.py` | MCP sources / extraction-request tool tests (roadmap B-210, Phase 19). |
+| `src/gpa/mcp/catalogue.py` | MCP tool catalogue — worked examples + signed documentation (roadmap B-219, Phase 19). |
+| `src/gpa/mcp/conformance.py` | MCP conformance — the automated spec-case half (roadmap B-219, Phase 19). |
+| `examples/mcp_stdio_client.py` | Worked MCP client example — the official SDK over stdio (roadmap B-219, Phase 19). |
+| `examples/mcp_http_client.py` | Worked MCP client example — hand-rolled JSON-RPC over HTTP (roadmap B-219, Phase 19). |
+| `scripts/generate_mcp_catalogue.py` | Regenerates Doc 13's generated MCP tool catalogue section (roadmap B-219, Phase 19). |
 | `tests/test_newsletter.py` | Newsletter ingest tests (roadmap B-026). |
 | `tests/test_notifications_core.py` | Notification core: the outbox (roadmap B-095) + deliverability |
 | `tests/test_openapi_snapshot.py` | Contract snapshot (B-006): the committed OPENAPI.json must equal |
