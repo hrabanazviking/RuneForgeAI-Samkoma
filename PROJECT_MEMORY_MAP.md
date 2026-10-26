@@ -1797,6 +1797,61 @@ parses the model so it cannot drift from the code.
   re-run — docs/tests/checker only (Phase 18 precedent);
   a full Phase 18 green is the B-200 gate's to prove.
   Next: B-193.
+- **B-193 AI pipeline documents** ✅:
+  `docs/12-ai-pipeline.md` — every AI pipeline with
+  flowcharts and sequence diagrams, each with a prose
+  walking tour: text extraction (one pipeline, five kinds;
+  windows of at most 40 chunks / 12,000 characters; shape
+  check with one repair retry then a loud `ModelError`;
+  quote verification — an unmatched quote is
+  `supported: false` with no provenance; dates resolved by
+  the deterministic resolver, never by the model; coverage
+  check; machine author `system:extraction`, decided drafts
+  never superseded), flyer reading (the picture twin:
+  provenance is a validated region, transcript + genuine-only
+  alt text, no QR decoder pretended, an empty reading mints
+  no candidate), board segmentation (SAM wire client vs the
+  decided vision-box fallback behind one protocol,
+  `valid_region` on every box, the audit names the driver
+  that actually cut), de-duplication (matching weights
+  title .35 / time .35 / place .20 / host .10 at
+  `MATCH_THRESHOLD` 0.6, a bare title halved and never
+  proposing; flyer average-hash at most 6 bits + same title
+  or date → `possible_duplicate` + `duplicate_of`, a
+  suggestion never a merge), change detection
+  (`extraction_changes` v1, requestable but not in the
+  default run, `change_target_unknown`, approval applies
+  through the change door), and the context-pruning engine
+  (NOT embedding RAG — a model reads and judges; approved
+  history only; kept in original order with provenance,
+  dropped named in the `PruneRun` row; reconsider passes
+  capped at 3 with `budget_stopped` stated; citations
+  verified or the answer is refused). Prompt-versioning
+  rules in full (fifteen prompts, `manifest.json` pinning
+  version + SHA-256 per template, load fails loudly on an
+  unbumped edit, name+version recorded on every candidate,
+  single-pass `{{NAME}}` substitution). Evaluation method:
+  three harnesses, one habit — golden sets through the real
+  pipeline on the fixture driver, deliberately imperfect
+  corpora, 0.02 gate tolerance (extraction place 0.50 /
+  cost recall 0.00; vision clean 1.00, the other three
+  0.75, overall 0.8125; pruning floors in its gate test).
+  Five worked examples traced through fixture data end to
+  end (the club-night chat, the 12-candidate newsletter,
+  the Harvest Supper flyer, the golden board's 3 posters,
+  the forty-message trip argument). Honesty markers at the
+  point of use: no live Meta endpoint, SAM endpoint, or
+  transcription service exists here — the scores measure
+  the verification machinery this codebase owns. Mermaid
+  gate now 43 diagrams in docs/. Pinned by a new docs-gate
+  test (pipeline vocabulary + at least five diagrams incl.
+  a sequence diagram); docs gate now 19 tests. Regression
+  batch (docs gate + extraction/vision/pruning evaluations
+  + architecture + prompts + extraction + vision pipeline +
+  pruning + matching + merging) 75 passed. Full suite NOT
+  re-run — docs/tests only, no src changes (Phase 18
+  precedent); a full Phase 18 green is the B-200 gate's to
+  prove. Next: B-194. Progress: **193/350**.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

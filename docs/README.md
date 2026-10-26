@@ -46,7 +46,7 @@ each reader meets what they need before what they merely want.
 | 11 | [Module atlas](09-module-atlas.md) | B-190 | ✅ built |
 | 12 | [Internal encrypted API](10-internal-encrypted-api.md) | B-191 | ✅ built |
 | 13 | [Data model + ER pack](11-data-model-and-er-pack.md) | B-192 | ✅ built |
-| 14 | AI pipeline documents | B-193 | planned |
+| 14 | [AI pipeline documents](12-ai-pipeline.md) | B-193 | ✅ built |
 | 15 | Security + cryptography | B-194 | planned |
 | 16 | Durability + recovery | B-195 | planned |
 | 17 | Per-code-file atlas | B-197 | planned |

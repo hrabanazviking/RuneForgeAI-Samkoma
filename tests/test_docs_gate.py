@@ -368,6 +368,42 @@ def test_data_model_document_covers_every_table():
     assert "11-data-model-and-er-pack.md" in index
 
 
+def test_ai_pipeline_document_covers_its_pipelines():
+    """B-193: the AI pipeline chapter covers extraction, flyer
+    reading, board segmentation, de-duplication, change
+    detection, and the context-pruning engine — with diagrams,
+    the prompt-versioning rules, the evaluation method, and
+    worked examples traced through fixture data."""
+    chapter = ROOT / "docs" / "12-ai-pipeline.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "extraction", "flyer reading", "board segmentation",
+        "de-duplication", "change detection", "context-pruning",
+        "not embedding rag", "quote verification", "supported: false",
+        "date resolver", "repair retry", "coverage",
+        "40 chunks", "12,000 characters",
+        "samsegmenter", "visionboxsegmenter", "segmenterunavailable",
+        "valid_region", "average-hash", "6 bits",
+        "possible_duplicate", "duplicate_of", "match_threshold",
+        "change_target_unknown", "extraction_changes",
+        "prune", "prune_reconsider", "budget_stopped",
+        "max_passes_ceiling", "approved history only",
+        "i couldn't verify this",
+        "manifest.json", "sha-256", "flyer_reading",
+        "precision", "recall", "0.02", "0.8125",
+        "fixturemisserror", "worked example",
+        "golden-club-night", "harvest supper", "12 candidates",
+        "spark", "wonder", "no qr decoder",
+    ):
+        assert topic in text, f"B-193 chapter is missing its topic: {topic}"
+    # Flowcharts and sequence diagrams, per its roadmap line.
+    assert text.count("```mermaid") >= 5
+    assert "sequencediagram" in text
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "12-ai-pipeline.md" in index
+
+
 def test_erdiagram_crows_foot_is_not_a_broken_brace(tmp_path):
     """B-192 checker repair: erDiagram cardinality spends
     braces as glyphs (o{ is a 'many' foot, not a block), so a
