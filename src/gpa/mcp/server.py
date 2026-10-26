@@ -37,6 +37,17 @@ What this module builds, and what it deliberately does not:
   role, plus the product's own OpenAPI document and docs
   set. Their guard is this module's principal resolution
   plus the read-scope law, checked per read.
+* **Subscriptions + notifications (B-214)** — the shelf's
+  watch, in ``gpa.mcp.subscriptions``: protocol handlers
+  for ``resources/subscribe`` / ``resources/unsubscribe``
+  over the calendar and queue resources (guarded by the
+  same read-scope law as a read), a per-session store on
+  the built server, a dispatcher that translates the
+  backend's one SSE stream vocabulary into
+  ``notifications/resources/updated`` sends, and
+  initialization options that advertise subscribe +
+  list-changed truthfully (the SDK's defaults understate
+  both — see the subscriptions module's docstring).
 * **Authentication is B-205's slice, landed on this core.**
   stdio is the local road: a configured seat API key
   (``GPA_MCP_SEAT_API_KEY``) is re-resolved on every call, and
@@ -77,6 +88,7 @@ from gpa.mcp.auth import (
 from gpa.mcp.bridge import InternalBridge, package_version
 from gpa.mcp.resources import register_resources
 from gpa.mcp.structured import get_logger, log_event, timed
+from gpa.mcp.subscriptions import SubscriptionStore, dispatch_frame
 from gpa.mcp.tools import all_tool_specs
 
 SERVER_NAME = "group-planning-assistant"
@@ -1414,6 +1426,141 @@ def build_server(
     # plus the read-scope law — so a resource read is checked
     # exactly as freshly as a tool call, by the same hand.
     register_resources(server, bridge, _resource_guard)
+
+    # --- B-214: subscriptions + change notifications -----------
+    #
+    # The protocol handlers for resources/subscribe and
+    # resources/unsubscribe, registered on the low-level
+    # server the SDK's FastMCP wraps (that is the SDK's own
+    # registration road for these two requests). A subscribe
+    # is a READING act — it asks to be told a document's
+    # future — so it passes the same per-call read-scope
+    # guard as a resource read; an unsubscribe only ever
+    # drops the caller's own session's watch, so it needs
+    # no scope: tidying up must always work.
+    #
+    # Sessions are keyed by the live SDK session's identity
+    # where a request context exists, falling back to the
+    # single "local" key for context-free calls (the stdio
+    # road's one operator, and tests driving the handlers
+    # directly). The live session object is remembered at
+    # subscribe time so the dispatcher below can send on it;
+    # both maps ride the built server object, beside the
+    # bridge, for operators and tests to reach.
+    subscriptions = SubscriptionStore()
+    subscription_sessions: dict[str, Any] = {}
+    server._gpa_subscriptions = subscriptions  # type: ignore[attr-defined]
+    server._gpa_subscription_sessions = subscription_sessions  # type: ignore[attr-defined]
+
+    def _session_key() -> tuple[str, Any | None]:
+        """This call's session key + live session, if in context.
+
+        Outside a request context (a direct handler call in
+        a test, say) there is no session to name: the key is
+        "local" and the session is None — the subscription
+        is still recorded, and a later dispatch simply has
+        no live session to send on for that key.
+        """
+        try:
+            session = server._mcp_server.request_context.session  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001 — no context is a context-free call
+            return "local", None
+        return f"session:{id(session)}", session
+
+    @server._mcp_server.subscribe_resource()  # type: ignore[attr-defined]
+    async def _on_resource_subscribe(uri: Any) -> None:
+        """Record one session's watch on a subscribable resource.
+
+        The guard runs first (its AppError refusal is
+        re-raised as a plain error leading with its code,
+        the surface's one refusal language); the store then
+        validates the URI itself, so a non-subscribable name
+        meets its distinct refusal from subscriptions.py.
+        """
+        try:
+            _resource_guard()
+            session_key, session = _session_key()
+            subscriptions.subscribe(session_key, str(uri))
+        except AppError as exc:
+            raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
+        if session is not None:
+            subscription_sessions[session_key] = session
+        log_event(
+            logger, "mcp.subscription.subscribed", operation=str(uri), result="ok"
+        )
+
+    @server._mcp_server.unsubscribe_resource()  # type: ignore[attr-defined]
+    async def _on_resource_unsubscribe(uri: Any) -> None:
+        """Drop one session's watch (its own, by construction).
+
+        The session key is derived from the caller's own
+        context, so a session can only ever unsubscribe
+        itself — there is no argument by which it could
+        name another session's watches.
+        """
+        session_key, _session = _session_key()
+        subscriptions.unsubscribe(session_key, str(uri))
+        log_event(
+            logger, "mcp.subscription.unsubscribed", operation=str(uri), result="ok"
+        )
+
+    async def _notify_stream_frame(
+        group_id: str, event: str, data: dict | None = None
+    ) -> list[tuple[str, str]]:
+        """Translate one backend stream frame into notifications.
+
+        The MCP boundary's half of B-214's "one event
+        system, two surfaces": a frame in the SSE stream's
+        published vocabulary (job.progress,
+        notification.created, …) for one group becomes
+        resources/updated sends to the sessions watching
+        that group's calendar/queue documents, through
+        subscriptions.dispatch_frame. Whoever holds this
+        server and hears the backend's stream — an embedding
+        process today — calls this; the translation itself
+        is the subscriptions module's, tested there.
+        """
+        return await dispatch_frame(
+            subscriptions, subscription_sessions, group_id, event, data
+        )
+
+    server._gpa_notify_stream_frame = _notify_stream_frame  # type: ignore[attr-defined]
+
+    # Truthful capabilities (B-214): the SDK builds its
+    # initialization options with every listChanged flag off
+    # and resources subscribe=False hardcoded, even though
+    # it routes subscribe requests and offers the send verbs
+    # — so this instance's options are wrapped to advertise
+    # what the handlers above and the senders in
+    # subscriptions.py truly do. The wrap replaces nothing
+    # else: protocol versions, server info, and the
+    # experimental map pass through untouched.
+    from mcp.server.lowlevel.server import NotificationOptions
+
+    _lowlevel_server = server._mcp_server  # type: ignore[attr-defined]
+    _build_init_options = _lowlevel_server.create_initialization_options
+
+    def _init_options(notification_options=None, experimental_capabilities=None):
+        """Initialization options advertising B-214's surface.
+
+        The caller's own notification options are superseded
+        by the truthful set (all three listChanged flags on),
+        because there is exactly one truth here — this
+        server CAN send those notifications — and the
+        subscribe flag is then set on the resources
+        capability the SDK built.
+        """
+        options = _build_init_options(
+            notification_options=NotificationOptions(
+                prompts_changed=True, resources_changed=True, tools_changed=True
+            ),
+            experimental_capabilities=experimental_capabilities or {},
+        )
+        if options.capabilities.resources is not None:
+            options.capabilities.resources.subscribe = True
+        return options
+
+    _lowlevel_server.create_initialization_options = _init_options
 
     log_event(
         logger,

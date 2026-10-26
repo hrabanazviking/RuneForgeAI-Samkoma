@@ -2749,6 +2749,71 @@ parses the model so it cannot drift from the code.
   green is the B-220 gate's to prove. No ZIP at this
   slice. Progress: **213/350. Next: B-214 (MCP
   subscriptions + notifications).**
+- **B-214 MCP subscriptions + notifications** ✅ (timer
+  crew, 2026-10-26): the shelf's watch, in a new module
+  `src/gpa/mcp/subscriptions.py` wired into `build_server`.
+  NO new internal operations and NO new tools (the
+  catalogue stands at 42 tools / 40 operations).
+  Subscribable set is exactly the moving shelf —
+  `gpa://groups/{id}/calendar.json`, `calendar.ics`, and
+  `queue.json` — validated by the store on the way in with
+  two distinct refusals (a non-group-resource name is
+  `not_found`; an existing but unmoving group resource —
+  decisions, memory-map — is `validation_error` naming
+  the set). `SubscriptionStore` is per-session, locked,
+  and deliberately NOT durable (clear_session forgets a
+  session whole; a subscription is a fact about a live
+  session). The server registers real low-level protocol
+  handlers for `resources/subscribe` /
+  `resources/unsubscribe`: subscribe passes B-213's
+  read-scope guard per call (a draft-only principal meets
+  `insufficient_scope`, store untouched); unsubscribe
+  derives its session key from the caller's own context,
+  so a session can only drop its own watches.
+  **One event system, two surfaces**: `dispatch_frame`
+  translates frames in the SSE stream's published
+  vocabulary (`gpa.services.stream` — the module imports
+  no service; it works on the frames' plain shape) into
+  `send_resource_updated` calls on the watching sessions:
+  `job.progress` → calendar (both forms) + queue,
+  `notification.created` → calendar only,
+  `snapshot`/`comment.created` → nothing (a comment moves
+  a discussion, which neither document carries), unknown
+  frames → nothing. Over-notify is the stated law (a
+  spurious updated costs one re-read; a missed one leaves
+  a stale calendar cited). `send_list_changed` rides the
+  SDK's three per-catalogue verbs and refuses an invented
+  catalogue. The server also exposes
+  `_gpa_notify_stream_frame(group, event, data)` — the
+  boundary entry an embedding process calls when it hears
+  the backend's stream. **SDK capability gap, recorded
+  honestly**: SDK 1.30.0 hardcodes resources
+  `subscribe=False` and defaults every `listChanged` off
+  while still routing subscribe requests and offering the
+  send verbs — `build_server` wraps the instance's
+  initialization options to advertise the truth
+  (subscribe=True, all three listChanged=True), covered
+  by test. Tests: tests/test_mcp_subscriptions.py **8
+  passed** (subscribable set + refusal codes, store
+  per-session/forgetful laws, handlers registered +
+  capabilities, handler records/drops the watch, scope
+  guard, frame translation table, dispatcher
+  watchers-only/exactly-once, list-changed verbs +
+  refusal). One transient: the file's very first run
+  showed 7 passed / 1 failed on the capabilities test;
+  the same test passed alone immediately after and the
+  full file passed 8/8 on re-run — not reproduced since,
+  recorded here rather than hidden. Combined batch (all
+  `test_mcp_*` + parity + comment gate + docs gate +
+  architecture + internal API) **122 passed** from its
+  own log, with comment-gate mcp density held (the new
+  module is documented to the package's 100/100/45
+  floor). Ruff E9+F clean on touched files. Atlas
+  regenerated (416 files), B-198 inventory row added.
+  Contract unchanged: **202 paths / 230 schemas**. Full
+  suite NOT re-run — a full Phase 19 green is the
+  B-220 gate's to prove. No ZIP at this slice. Progress:
+  **214/350. Next: B-215 (MCP prompts).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

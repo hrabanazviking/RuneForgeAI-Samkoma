@@ -6,7 +6,8 @@ What this module is, and the law it works under:
   B-204 → B-212 gave agents tools — verbs, each travelling
   one internal operation through the bridge. This module
   gives them NOUNS: stable ``gpa://`` URIs an agent (or its
-  client's UI) can read, subscribe to later (B-214), and
+  client's UI) can read, subscribe to (B-214, in
+  ``gpa.mcp.subscriptions``), and
   cite — the group's calendar in both its shapes, one event,
   the standing decisions, a queue summary, a map of the
   group's product data, the OpenAPI document itself, and the
