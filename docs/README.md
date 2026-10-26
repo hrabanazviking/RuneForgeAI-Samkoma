@@ -42,7 +42,7 @@ each reader meets what they need before what they merely want.
 
 | Order | Chapter | Slice | State |
 |---|---|---|---|
-| 10 | Architecture diagram pack | B-189 | planned |
+| 10 | [Architecture diagram pack](08-architecture-diagram-pack.md) | B-189 | ✅ built |
 | 11 | Module atlas | B-190 | planned |
 | 12 | Internal encrypted API | B-191 | planned |
 | 13 | Data model + ER pack | B-192 | planned |

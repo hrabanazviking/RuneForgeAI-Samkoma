@@ -231,6 +231,32 @@ def test_admin_guide_8_covers_dangerous_buttons_consequence_first():
     assert "07-admin-and-operator-guide.md" in index
 
 
+def test_architecture_pack_covers_its_six_diagrams():
+    """B-189: the architecture pack carries the six diagrams
+    its roadmap line names — system context, process view,
+    module map, request lifecycle, job lifecycle, deployment
+    topology — each with a prose walking tour, verified
+    against the module map's own names and the job chassis'
+    real states."""
+    chapter = ROOT / "docs" / "08-architecture-diagram-pack.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "system context", "process view", "module map",
+        "request lifecycle", "job lifecycle",
+        "deployment topology", "walking tour",
+        "gpa-worker", "gpa-arq-worker", "claim",
+        "backoff", "dead", "commit-before-answer",
+        "deps.py", "sqlite", "postgresql",
+        "no router imports a model", "project_memory_map",
+    ):
+        assert topic in text, f"B-189 chapter is missing its topic: {topic}"
+    # Six diagrams, no fewer: the roadmap line names six.
+    assert text.count("```mermaid") >= 6
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "08-architecture-diagram-pack.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"

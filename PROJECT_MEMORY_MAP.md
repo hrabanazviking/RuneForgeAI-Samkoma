@@ -1623,6 +1623,54 @@ parses the model so it cannot drift from the code.
   against the live privacy/groups/integrations routers.
   Pinned by a new docs-gate test; regression batch 19
   passed. Next: B-189.
+- **B-189 architecture diagram pack** ✅:
+  `docs/08-architecture-diagram-pack.md` — six lengthy
+  Mermaid diagrams, each with a prose walking tour naming
+  every box and arrow: (1) system context — the five
+  caller kinds (member, admin, seat that can never
+  approve, link-holding guest, public visitor reaching
+  only the absent-not-blanked projection) and the seven
+  outside systems behind their three-faced boundaries;
+  (2) the process view — API process (middleware with the
+  redacted access log + durability guard, thin routers
+  that never import a model, the deps.py door, services,
+  internal API, AI layer), the gpa-worker (startup
+  recovery first, claim loop, the shared handler
+  registry), the optional arq twin, and the shared ground
+  (SQLite WAL/synchronous=FULL or PostgreSQL, sha256
+  content-addressed storage, jobs as rows in the same
+  database); (3) the module map — the B-161 module names,
+  cross-module work through the internal API, the pinned
+  shrink-only direct edges, audit + crypto as the shared
+  targets, composition as wiring that owns no rules;
+  (4) the request lifecycle as a sequence diagram —
+  credential, request id + redaction, the deps door
+  (private group = 404), one service call, envelope
+  dispatch in the caller's transaction, commit-before-
+  answer, problem JSON; (5) the job lifecycle as a state
+  diagram — queued in the caller's transaction, claim by
+  conditional update (16-candidate scan), done at
+  progress 100, failure backoff (base doubled per
+  attempt), the FREE deferral when a dependency's breaker
+  is open (B-173), dead at the attempt cap with the row
+  kept visible, stuck rows requeued by startup recovery;
+  (6) deployment topology — native systemd install (no
+  Docker), the proxy as the only public face (API binds
+  localhost), the 03:15 backup timer, the 0640 env file,
+  three writable paths. Honesty markers carried at the
+  point of use: the MCP/database-bus topology is Phase
+  28's, not built here; the nginx example's live
+  validation is NOT RUN; no live third-party account is
+  connected in this environment. Mermaid gate now 9
+  diagrams, all sound. Pinned by a new docs-gate test
+  (six diagrams + topic coverage); docs gate now 14
+  tests. Verification honesty: the run's full-suite
+  attempt was killed by a service restart at ~68% with
+  zero failures in its log; the slice committed on the
+  docs-slice regression pattern (docs gate + architecture
+  + submission + threat model, 27 passed) — a full-suite
+  green for Phase 18 is the B-200 gate's to prove.
+  Next: B-190.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
