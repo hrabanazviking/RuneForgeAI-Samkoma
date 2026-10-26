@@ -75,6 +75,11 @@ def test_parity_report_counts_and_pending_surfaces(app):
     assert report["internal_api_backed"] == 2
     text = parity.format_parity_report(report)
     assert "PASS" in text
-    # Later surfaces are reported pending, never passed.
-    assert "Pending surface, not yet built: mcp (B-204)" in text
+    # Superseded by B-206: the MCP surface is no longer pending —
+    # its leg of this checker landed and the report counts it as
+    # covered (9 tools, 7 operations). The terminal surface is
+    # still reported pending, never passed.
+    assert report["mcp_tools"] == 9
+    assert report["mcp_operations_covered"] == 7
+    assert "MCP tool registry (B-206)" in text
     assert "Pending surface, not yet built: terminal (B-221)" in text

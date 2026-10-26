@@ -44,11 +44,23 @@ from gpa.models.groups import Candidate
 ROOT = Path(__file__).resolve().parent.parent
 MCP_PACKAGE = ROOT / "src" / "gpa" / "mcp"
 
+# Superseded by B-206: the catalogue is now the generated
+# registry's full set — B-204's four core tools plus one
+# generated tool per remaining internal operation. The name
+# stays CORE_TOOLS in these B-204 tests because what they pin
+# (both transports serve the SAME set) is unchanged; the set
+# itself is the registry's, asserted exactly in
+# tests/test_mcp_registry.py.
 CORE_TOOLS = {
     "gpa_server_info",
     "gpa_list_internal_operations",
     "gpa_create_candidate_draft",
     "gpa_publish_event",
+    "gpa_request_notification",
+    "gpa_notify_rsvp_promotion",
+    "gpa_enqueue_job",
+    "gpa_submit_ai_job",
+    "gpa_emit_integration_event",
 }
 
 
@@ -163,7 +175,8 @@ def test_bridge_call_commits_and_audits_without_payload(client, app, settings):
 
 
 def test_server_builds_with_the_core_tools(app, settings):
-    """The built server carries exactly the B-204 core tools."""
+    """The built server carries exactly the registered tool set
+    (B-204's core, grown to the full B-206 generated catalogue)."""
     bridge = InternalBridge(settings, database=app.state.db)
     server = build_server(bridge)
     tools = asyncio.run(server.list_tools())

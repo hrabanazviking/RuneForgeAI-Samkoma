@@ -18,13 +18,16 @@ What this module builds, and what it deliberately does not:
   version is answered with the server's supported set), and
   :func:`supported_protocol_versions` reports that set
   truthfully from the SDK itself.
-* **The core tool set** — B-204 is the core, not the catalogue:
-  server info, the internal-operation listing that B-206's
-  generated registry grows from, and two real domain tools
-  (draft a candidate, publish an event) that travel the whole
-  road — tool → bridge → internal encrypted API → owning
-  module — proving the road end to end. The domain families
-  land as B-207 → B-212 on this same core.
+* **The tool set is generated (B-206).** Every tool's name,
+  description, and scope come from the registry in
+  ``gpa.mcp.tools`` — generated from the internal operation
+  registry (B-162) plus its curated annotation layer — never
+  from a hand-list in this module. B-204's core pair (draft a
+  candidate, publish an event) keeps its typed signatures; the
+  remaining operations gained their generated tools at B-206;
+  the two meta tools (server info, the operation listing) are
+  the registry's declared meta kind. The domain families land
+  as B-207 → B-212 on this same generated catalogue.
 * **Authentication is B-205's slice, landed on this core.**
   stdio is the local road: a configured seat API key
   (``GPA_MCP_SEAT_API_KEY``) is re-resolved on every call, and
@@ -64,6 +67,7 @@ from gpa.mcp.auth import (
 )
 from gpa.mcp.bridge import InternalBridge, package_version
 from gpa.mcp.structured import get_logger, log_event, timed
+from gpa.mcp.tools import all_tool_specs
 
 SERVER_NAME = "group-planning-assistant"
 
@@ -120,6 +124,13 @@ def build_server(
     settings = settings or (bridge.settings if bridge is not None else get_settings())
     bridge = bridge or InternalBridge(settings)
     logger = get_logger()
+    # The B-206 registry is this build's catalogue: specs are
+    # generated from the internal operation registry at build
+    # time, and every decorator below takes its served
+    # description from its spec — the words an agent reads are
+    # the registry's words, the same words the signed release
+    # manifest carries, never a second hand-typed copy here.
+    specs = {spec.name: spec for spec in all_tool_specs()}
     fastmcp_kwargs: dict[str, Any] = {}
     if authenticated_http:
         # The resource-server profile: our verifier answers the
@@ -212,7 +223,7 @@ def build_server(
             done(result="ok")
             return data
 
-    @server.tool()
+    @server.tool(description=specs["gpa_server_info"].description)
     def gpa_server_info() -> dict[str, Any]:
         """Report this server's identity and negotiated capabilities.
 
@@ -232,21 +243,32 @@ def build_server(
                 **bridge.info(),
             }
 
-    @server.tool()
+    @server.tool(description=specs["gpa_list_internal_operations"].description)
     def gpa_list_internal_operations() -> dict[str, Any]:
         """List the internal operations this surface may call.
 
         The factual registry — name, owning module, required
-        scope, one-line summary — from which B-206 generates
-        the full tool catalogue. An operation missing here is
-        a capability MCP does not have, by the bridge's law.
+        scope, one-line summary — plus the generated tool
+        registry (B-206) that covers it: one tool per operation,
+        with the scope each tool's calls are checked against.
+        An operation missing here is a capability MCP does not
+        have, by the bridge's law.
         """
         _guard("gpa_list_internal_operations")
         operations = bridge.operations()
         log_event(logger, "mcp.tool.completed", tool="gpa_list_internal_operations", result="ok", operations_count=len(operations))
-        return {"operations": operations, "count": len(operations)}
+        tools = [
+            {
+                "name": spec.name,
+                "operation": spec.operation,
+                "credential_scope": spec.credential_scope,
+                "kind": spec.kind,
+            }
+            for spec in specs.values()
+        ]
+        return {"operations": operations, "count": len(operations), "tools": tools}
 
-    @server.tool()
+    @server.tool(description=specs["gpa_create_candidate_draft"].description)
     def gpa_create_candidate_draft(
         group_id: str,
         kind: str,
@@ -274,7 +296,7 @@ def build_server(
             tool="gpa_create_candidate_draft",
         )
 
-    @server.tool()
+    @server.tool(description=specs["gpa_publish_event"].description)
     def gpa_publish_event(group_id: str, event_id: str, actor: str) -> dict[str, Any]:
         """Publish one draft event through the internal operation.
 
@@ -290,12 +312,150 @@ def build_server(
             tool="gpa_publish_event",
         )
 
+    # --- The B-206 generated operation tools --------------------------------
+    #
+    # The five operations B-204's core pair did not cover. Each
+    # function below is the typed wire shape of its operation's
+    # payload — the handler's own _need() list, no more — and
+    # each registration takes its name and served description
+    # from its registry spec, so what is served and what the
+    # registry declares cannot drift apart in this module.
+    #
+    # A note on the scopes these five carry, for the reviewer:
+    # all five require the "admin" credential scope, and that is
+    # B-205's mapping table speaking, not a taste for gates.
+    # Their operations' internal scopes — notify:write,
+    # jobs:write, ai:submit, integrations:write — map only from
+    # an admin credential in EXTERNAL_TO_INTERNAL, because in
+    # the human product the acts beneath them are likewise
+    # operator-grade: writing notifications to a whole audience,
+    # submitting background and AI work, and announcing acts to
+    # outside endpoints. The B-206 checker enforces the mapping
+    # per tool, so if a future mapping widens, the widened scope
+    # is a deliberate edit in both tables, visible in one diff.
+    #
+    # A note on shapes: these tools are deliberately THIN. The
+    # operation handlers own validation (a missing payload key
+    # is internal_bad_payload, a wrong job kind is refused at
+    # the AI door), the bridge owns the transaction, and this
+    # layer owns only the argument names an agent sees. The
+    # richer, domain-shaped tools of B-207 → B-212 will stand
+    # on these same operations with group-shaped arguments;
+    # these generated tools are the registry's guarantee that
+    # no operation waits for its family slice to be reachable.
+
+    @server.tool(description=specs["gpa_request_notification"].description)
+    def gpa_request_notification(
+        kind: str,
+        subject: str,
+        body_text: str,
+        audience: dict[str, Any],
+        group_id: str | None = None,
+        body_html: str = "",
+        event_id: str | None = None,
+        urgent: bool = False,
+    ) -> dict[str, Any]:
+        """Write notification rows via notify.request (see the
+        served description — the registry's words — for the law)."""
+        return _call(
+            "notify.request",
+            {
+                "kind": kind,
+                "subject": subject,
+                "body_text": body_text,
+                "audience": audience,
+                "group_id": group_id,
+                "body_html": body_html,
+                "event_id": event_id,
+                "urgent": urgent,
+            },
+            tool="gpa_request_notification",
+        )
+
+    @server.tool(description=specs["gpa_notify_rsvp_promotion"].description)
+    def gpa_notify_rsvp_promotion(
+        group_id: str, event_id: str, rsvp_id: str
+    ) -> dict[str, Any]:
+        """Notify a promoted waitlist member via
+        notify.rsvp_promotion (the registry's description
+        carries the law this thin shape travels under)."""
+        return _call(
+            "notify.rsvp_promotion",
+            {"group_id": group_id, "event_id": event_id, "rsvp_id": rsvp_id},
+            tool="gpa_notify_rsvp_promotion",
+        )
+
+    @server.tool(description=specs["gpa_enqueue_job"].description)
+    def gpa_enqueue_job(
+        kind: str,
+        payload: dict[str, Any] | None = None,
+        run_at: str | None = None,
+        max_attempts: int | None = None,
+    ) -> dict[str, Any]:
+        """Commit one queued job via jobs.enqueue; ``run_at``
+        is an ISO-8601 moment, as the internal payload carries."""
+        return _call(
+            "jobs.enqueue",
+            {
+                "kind": kind,
+                "payload": payload or {},
+                "run_at": run_at,
+                "max_attempts": max_attempts,
+            },
+            tool="gpa_enqueue_job",
+        )
+
+    @server.tool(description=specs["gpa_submit_ai_job"].description)
+    def gpa_submit_ai_job(
+        kind: str,
+        payload: dict[str, Any] | None = None,
+        run_at: str | None = None,
+        max_attempts: int | None = None,
+    ) -> dict[str, Any]:
+        """Submit one AI job via ai.submit_job — the operation
+        itself refuses any kind that is not AI work."""
+        return _call(
+            "ai.submit_job",
+            {
+                "kind": kind,
+                "payload": payload or {},
+                "run_at": run_at,
+                "max_attempts": max_attempts,
+            },
+            tool="gpa_submit_ai_job",
+        )
+
+    @server.tool(description=specs["gpa_emit_integration_event"].description)
+    def gpa_emit_integration_event(
+        group_id: str,
+        kind: str,
+        data: dict[str, Any] | None = None,
+        event_id: str | None = None,
+        event_extra: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Announce one act via integrations.emit.
+
+        The payload carries ``data`` OR ``event_id`` (the
+        handler builds an event's wire data from its row), so
+        only the keys actually given are sent — the handler
+        branches on their presence, and sending an explicit
+        null would read as "given, but empty" on its road.
+        """
+        payload: dict[str, Any] = {"group_id": group_id, "kind": kind}
+        if data is not None:
+            payload["data"] = data
+        if event_id is not None:
+            payload["event_id"] = event_id
+        if event_extra is not None:
+            payload["event_extra"] = event_extra
+        return _call("integrations.emit", payload, tool="gpa_emit_integration_event")
+
     log_event(
         logger,
         "mcp.server.built",
         caller=bridge.caller,
         key_id=bridge.key_id,
-        tools_count=4,
+        tools_count=len(specs),
         operations_count=len(bridge.operations()),
     )
     return server

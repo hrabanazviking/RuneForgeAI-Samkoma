@@ -202,11 +202,20 @@ def test_under_scoped_principal_fails_insufficient_scope():
     # Every registered tool has a stated scope (registry honesty).
     from gpa.mcp.server import build_server as _build  # noqa: F401
 
+    # Superseded by B-206: the generated registry grew the
+    # catalogue to one tool per internal operation plus the two
+    # meta tools; the scope table grew with it, and the registry
+    # checker now asserts this set equals the registry's own.
     assert set(TOOL_SCOPES) == {
         "gpa_server_info",
         "gpa_list_internal_operations",
         "gpa_create_candidate_draft",
         "gpa_publish_event",
+        "gpa_request_notification",
+        "gpa_notify_rsvp_promotion",
+        "gpa_enqueue_job",
+        "gpa_submit_ai_job",
+        "gpa_emit_integration_event",
     }
 
 

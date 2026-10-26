@@ -36,12 +36,14 @@ Honest boundaries, stated at the point of use
   actions are module-internal service operations behind their
   handlers; this register does NOT claim they travel the
   encrypted bus -- claiming that would be inventing coverage.
-* MCP (B-204 onward) and the terminal (Phase 20) are later
-  surfaces. At B-201 their coverage is zero BY DESIGN and the
-  report says so in plain words; B-206/B-222 extend this same
-  register and checker to those surfaces, they do not replace
-  it. A surface that does not exist yet is reported pending,
-  never reported passed.
+* MCP and the terminal (Phase 20) are the other surfaces.
+  B-206 extended this same checker with its MCP leg (below):
+  the generated tool registry in ``gpa.mcp.tools`` is checked
+  against the internal operation registry — every operation
+  has its tool, every tool its operation, scopes agree — and
+  the report counts that surface as covered, with its failures
+  named like any other leg's. The terminal (B-221) does not
+  exist yet: it is reported pending, never reported passed.
 * There is no separate UI codebase in this repository: the
   team's frontends are clients of this API (section 6A.10).
   A capability that existed only in a frontend would have no
@@ -342,10 +344,26 @@ ACTIONS: tuple[ParityAction, ...] = (
     ParityAction("put_preferences", "PUT", "/api/v1/users/me/groups/{group_id}/notification-preferences", "gpa.routers.notifications:put_preferences", ""),
 )
 
-# The surfaces this phase and the next will add to this same
-# register. Listed here so the report can name them as pending
-# rather than stay silent about them (see the header).
-PENDING_SURFACES: tuple[str, ...] = ("mcp (B-204)", "terminal (B-221)")
+# The surfaces still to come to this same register. Listed
+# here so the report can name them as pending rather than stay
+# silent about them (see the header). MCP left this list at
+# B-206, when its leg of the checker landed below.
+PENDING_SURFACES: tuple[str, ...] = ("terminal (B-221)",)
+
+
+def check_mcp_parity() -> list[str]:
+    """The B-206 MCP leg of this checker, as failure sentences.
+
+    Delegates to the generated tool registry's own checker
+    (``gpa.mcp.tools.check_tool_registry``) and prefixes each
+    failure ``mcp:`` so a report reader can tell which surface
+    refused. Imported lazily: the registry module registers the
+    internal handlers (which import services), and a top-level
+    import here would close that circle at module load.
+    """
+    from gpa.mcp.tools import check_tool_registry
+
+    return [f"mcp: {failure}" for failure in check_tool_registry()]
 
 
 def _live_routes(app) -> dict[tuple[str, str], str]:
@@ -439,6 +457,13 @@ def check_parity(app, actions: tuple[ParityAction, ...] = ACTIONS) -> list[str]:
             failures.append(
                 f"unregistered API route {method} {path} served by {dotted}"
             )
+    # The MCP leg (B-206): the generated tool registry against
+    # the internal operation registry — both directions, scopes
+    # included. It runs on the default register only: a caller
+    # checking fixture actions is asking about those actions,
+    # and the MCP leg's own tests exercise it directly.
+    if actions is ACTIONS:
+        failures.extend(check_mcp_parity())
     return failures
 
 
@@ -452,10 +477,18 @@ def parity_report(app, actions: tuple[ParityAction, ...] = ACTIONS) -> dict:
     """
     failures = check_parity(app, actions)
     bus_backed = sum(1 for a in actions if a.internal_api)
+    # The MCP surface's counts come from the generated registry
+    # itself at call time — tools served and operations covered
+    # are computed, never stored numbers, like every count here.
+    from gpa.mcp.tools import all_tool_specs
+
+    specs = all_tool_specs()
     return {
         "actions_registered": len(actions),
         "api_routes_live": len(_live_routes(app)),
         "internal_api_backed": bus_backed,
+        "mcp_tools": len(specs),
+        "mcp_operations_covered": sum(1 for s in specs if s.kind == "operation"),
         "failures": failures,
         "parity_ok": not failures,
         "pending_surfaces": list(PENDING_SURFACES),
@@ -477,6 +510,15 @@ def format_parity_report(report: dict) -> str:
     else:
         lines.append("Parity check: FAIL")
         lines.extend(f"  - {failure}" for failure in report["failures"])
+    # The MCP surface (B-206): covered, counted, and — when the
+    # overall check failed — its failures are in the list above
+    # under the "mcp:" prefix, not hidden behind this line.
+    lines.append(
+        "MCP tool registry (B-206): "
+        f"{report.get('mcp_tools', 0)} tools generated from the internal "
+        f"operation registry, {report.get('mcp_operations_covered', 0)} "
+        "operations covered — checked by the MCP leg of this checker."
+    )
     for surface in report["pending_surfaces"]:
         lines.append(f"Pending surface, not yet built: {surface} -- "
                      "reported pending, never passed.")

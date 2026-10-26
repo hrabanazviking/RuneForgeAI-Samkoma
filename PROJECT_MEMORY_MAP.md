@@ -2332,6 +2332,57 @@ parses the model so it cannot drift from the code.
   NOT re-run — a full Phase 19 green is the B-220 gate's to
   prove. No ZIP at this slice. Progress: **205/350. Next:
   B-206 (tool registry from one source of truth).**
+- **B-206 tool registry from one source of truth** ✅ (timer
+  crew, 2026-10-26): new `src/gpa/mcp/tools.py` — the catalogue
+  is GENERATED from the internal operation registry (B-162,
+  handlers registered first) plus a curated annotation layer
+  (operation → tool name / credential scope / served
+  description, the only hand-written part, annotation never
+  capability). `ToolSpec` (operation | meta kinds; the two
+  meta tools declared with operation=None), `check_tool_registry`
+  (coverage both directions by name, uniqueness, meta honesty,
+  per-tool scope-mapping through B-205's EXTERNAL_TO_INTERNAL,
+  enforcement-table agreement, and a served-surface leg against
+  a built server's live list). The server now registers NINE
+  tools: B-204's typed core pair + meta pair take their served
+  descriptions from their specs, and the five remaining
+  operations gained generated typed tools
+  (gpa_request_notification / gpa_notify_rsvp_promotion /
+  gpa_enqueue_job / gpa_submit_ai_job /
+  gpa_emit_integration_event — all "admin": their internal
+  scopes map only from admin, enforced by the mapping leg);
+  `TOOL_SCOPES` in auth.py is the enforcement copy and the
+  checker fails by name if it disagrees with the registry.
+  The B-201 parity checker gained its MCP leg
+  (`check_mcp_parity`, prefixed `mcp:`, run by check_parity on
+  the default register) and its report counts the MCP surface
+  covered (9 tools / 7 operations); PENDING_SURFACES is now
+  only the terminal (B-221) — test_parity's pending-line
+  assertion superseded accordingly, as were test_mcp_core's
+  CORE_TOOLS set and test_mcp_auth's scope set. **Tool
+  poisoning defence**: `tool_manifest()` emits every tool's
+  description + its SHA-256 + one whole-list digest;
+  make_release_zip stamps both into the SIGNED train
+  release-manifest, and release_signing.verify_release now
+  recomputes them — a swapped description refuses its own
+  release's verification. Tests: tests/test_mcp_registry.py
+  **7 passed** (totality, both-direction failures by name,
+  scope-table + mapping drift, served == registry incl.
+  descriptions byte-for-byte, manifest digest tripwire,
+  generated job tools end-to-end incl. the AI door refusing a
+  non-AI kind); registry+parity batch 13 passed; auth+core 17
+  passed; gates batch (comment 45.1% mcp density after
+  documentation, docs, architecture, signed releases,
+  release-zip) + registry/parity re-run 55 passed; ruff clean
+  on all touched files except the pre-existing F841 in
+  tests/test_mcp_core.py (B-204 code, noted at B-205, left
+  as found). Atlas regenerated (406 files), B-198
+  inventory row added. Contract unchanged: **202 paths / 230
+  schemas**. Full suite NOT re-run — a full Phase 19 green is
+  the B-220 gate's to prove. No ZIP at this slice (the next
+  train ZIP carries the tool manifest by construction).
+  Progress: **206/350. Next: B-207 (MCP tools — groups,
+  members, profile).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

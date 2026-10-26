@@ -115,12 +115,26 @@ EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
 # Tool -> the credential scope a call to it requires. Every
 # tool the server registers must appear here (a test asserts
 # the sets agree), so a new tool cannot quietly ship without a
-# stated scope — B-206's generated registry inherits this table.
+# stated scope. B-206 made the generated registry in
+# gpa.mcp.tools the source of truth for this table: this dict
+# is the enforcement copy the call-time guard reads, and the
+# registry checker (which the B-201 parity checker runs as its
+# MCP leg) fails by name if the two ever disagree. The five
+# operation tools B-206 generated beyond B-204's core pair all
+# require "admin": their operations' internal scopes
+# (notify:write, jobs:write, ai:submit, integrations:write)
+# map only from an admin credential in EXTERNAL_TO_INTERNAL
+# above — the checker enforces exactly that mapping per tool.
 TOOL_SCOPES: dict[str, str] = {
     "gpa_server_info": "read",
     "gpa_list_internal_operations": "read",
     "gpa_create_candidate_draft": "draft",
     "gpa_publish_event": "publish",
+    "gpa_request_notification": "admin",
+    "gpa_notify_rsvp_promotion": "admin",
+    "gpa_enqueue_job": "admin",
+    "gpa_submit_ai_job": "admin",
+    "gpa_emit_integration_event": "admin",
 }
 
 
