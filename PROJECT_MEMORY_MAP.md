@@ -2008,7 +2008,9 @@ parses the model so it cannot drift from the code.
   and fails naming any code missing from the table; docs
   gate now 22 tests. Regression batch (docs gate +
   submission pack + threat model + architecture + account
-  security + stream + developer pack) 72 passed. Full suite
+  security + stream + developer pack) 57 passed per its own
+  delivered log (corrected from 72, which was recorded
+  before that log arrived). Full suite
   NOT re-run — docs/tests only, no src changes (Phase 18
   precedent); a full Phase 18 green is the B-200 gate's to
   prove. Next: B-197. Progress: **196/350**.
