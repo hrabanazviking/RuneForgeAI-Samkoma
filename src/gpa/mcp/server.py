@@ -25,12 +25,15 @@ What this module builds, and what it deliberately does not:
   road — tool → bridge → internal encrypted API → owning
   module — proving the road end to end. The domain families
   land as B-207 → B-212 on this same core.
-* **Authentication is B-205's slice.** This core serves its
-  transports without claiming an auth story it does not have:
-  stdio inherits the spawning process's trust (the local
-  road), and a remote deployment must not expose the HTTP
-  transport until B-205's OAuth/seat-key door lands. That
-  boundary is stated here, in the open, rather than implied.
+* **Authentication is B-205's slice, landed on this core.**
+  stdio is the local road: a configured seat API key
+  (``GPA_MCP_SEAT_API_KEY``) is re-resolved on every call, and
+  without one the server acts as the spawning operator's own
+  trusted local principal. Streamable HTTP is the remote road:
+  the OAuth 2.1 resource-server verifier (``gpa.mcp.auth``)
+  guards it, and every tool call re-checks its scope at call
+  time against the freshly resolved principal — never a
+  connect-time fact. See ``gpa.mcp.auth`` for the full law.
 
 Every tool call is timed and logged through
 ``gpa.mcp.structured`` — tool name, operation, outcome,
@@ -49,6 +52,16 @@ from mcp.server.fastmcp import FastMCP
 
 from gpa.config import Settings, get_settings
 from gpa.errors import AppError
+from gpa.mcp.auth import (
+    LOCAL_PRINCIPAL,
+    McpPrincipal,
+    OAuthTokenVerifier,
+    issuer_url,
+    principal_from_access_token,
+    require_tool_scope,
+    resource_url,
+    seat_key_provider,
+)
 from gpa.mcp.bridge import InternalBridge, package_version
 from gpa.mcp.structured import get_logger, log_event, timed
 
@@ -84,6 +97,8 @@ def build_server(
     bridge: InternalBridge | None = None,
     *,
     settings: Settings | None = None,
+    principal_provider=None,
+    authenticated_http: bool = False,
 ) -> FastMCP:
     """Build the MCP server object with the core tool set.
 
@@ -92,20 +107,92 @@ def build_server(
     serving process passes nothing — the bridge is built from
     the deployment's settings, and the HTTP transport's host
     and port come from those same settings.
+
+    ``principal_provider`` (B-205) is a zero-argument callable
+    re-invoked for EVERY tool call to resolve who is calling
+    right now — the seat-key road's re-resolution rides it, and
+    tests use it to prove the call-time re-check. With
+    ``authenticated_http`` the server additionally carries the
+    OAuth 2.1 resource-server verifier + auth metadata, so the
+    SDK's bearer middleware guards the HTTP transport; inside a
+    session the tool guard reads the verified token's claims.
     """
     settings = settings or (bridge.settings if bridge is not None else get_settings())
     bridge = bridge or InternalBridge(settings)
     logger = get_logger()
+    fastmcp_kwargs: dict[str, Any] = {}
+    if authenticated_http:
+        # The resource-server profile: our verifier answers the
+        # SDK middleware's per-request question, and the auth
+        # settings publish the protected-resource metadata (the
+        # resource URL is the audience; token-resource
+        # validation is on, per the current specification).
+        from mcp.server.auth.settings import AuthSettings
+
+        fastmcp_kwargs["token_verifier"] = OAuthTokenVerifier(settings)
+        fastmcp_kwargs["auth"] = AuthSettings(
+            issuer_url=issuer_url(settings),  # type: ignore[arg-type]
+            resource_server_url=resource_url(settings),  # type: ignore[arg-type]
+            validate_token_resource=True,
+        )
     server = FastMCP(
         SERVER_NAME,
         instructions=INSTRUCTIONS,
         host=settings.mcp_http_host,
         port=settings.mcp_http_port,
+        **fastmcp_kwargs,
     )
     # The bridge rides the server object so the HTTP-app
     # factory and tests can reach the one door this server
     # speaks through, without a second construction.
     server._gpa_bridge = bridge  # type: ignore[attr-defined]
+
+    def _principal(tool: str) -> McpPrincipal:
+        """Resolve this call's principal and check its scope.
+
+        Resolution order (B-205): an explicit provider first
+        (the seat-key road re-resolving per call, or a test's
+        hand), then the HTTP request's SDK-verified access
+        token, then the keyless local principal. The scope
+        check happens HERE — at call time, for every call — so
+        a credential revoked or re-scoped after connecting
+        loses its powers on the next call, not the next login.
+        A refusal raises the backend's AppError, which the tool
+        wrappers render as a tool error leading with its code.
+        """
+        principal: McpPrincipal | None = None
+        if principal_provider is not None:
+            principal = principal_provider()
+        else:
+            try:
+                from mcp.server.auth.middleware.auth_context import get_access_token
+
+                access_token = get_access_token()
+            except Exception:  # noqa: BLE001 — no HTTP context is a local call
+                access_token = None
+            if access_token is not None:
+                principal = principal_from_access_token(access_token)
+        if principal is None:
+            principal = LOCAL_PRINCIPAL
+        require_tool_scope(principal, tool)
+        return principal
+
+    # The two read tools are guarded by the same check as the
+    # writing tools: "read" is a real scope, and a credential
+    # with no scopes at all (an OAuth token issued for another
+    # purpose, say) must not learn even the operation list —
+    # the registry's shape is itself product information.
+    def _guard(tool: str) -> None:
+        """Run the call-time scope check, as a tool error.
+
+        Used by the tools that do not travel ``_call`` (server
+        info, the operation listing): the check is identical,
+        and its AppError refusal is rendered in the same shape.
+        """
+        try:
+            _principal(tool)
+        except AppError as exc:
+            raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
 
     def _call(operation: str, payload: dict, *, tool: str) -> dict:
         """Run one tool's internal call, logging its outcome.
@@ -117,6 +204,7 @@ def build_server(
         """
         with timed(logger, "mcp.tool", tool=tool, operation=operation, caller=bridge.caller) as done:
             try:
+                _principal(tool)
                 data = bridge.call(operation, payload)
             except AppError as exc:
                 done(result="error", error_code=exc.code)
@@ -133,6 +221,7 @@ def build_server(
         and the protocol versions the initialize handshake can
         negotiate. No group content exists on this tool.
         """
+        _guard("gpa_server_info")
         with timed(logger, "mcp.tool", tool="gpa_server_info", caller=bridge.caller) as done:
             done(result="ok")
             return {
@@ -152,6 +241,7 @@ def build_server(
         the full tool catalogue. An operation missing here is
         a capability MCP does not have, by the bridge's law.
         """
+        _guard("gpa_list_internal_operations")
         operations = bridge.operations()
         log_event(logger, "mcp.tool.completed", tool="gpa_list_internal_operations", result="ok", operations_count=len(operations))
         return {"operations": operations, "count": len(operations)}
@@ -216,20 +306,29 @@ def bridge_of(server: FastMCP) -> InternalBridge:
     return server._gpa_bridge  # type: ignore[attr-defined,no-any-return]
 
 
+# The HTTP app factory always builds the authenticated
+# variant of the server: there is no unauthenticated remote
+# road after B-205, and a factory that offered one as an
+# option would be a misconfiguration waiting for a caller.
+# Tests that need the raw server build it directly and say so.
 def create_http_app(
     bridge: InternalBridge | None = None,
     *,
     settings: Settings | None = None,
+    principal_provider=None,
 ):
     """The streamable-HTTP ASGI app for the remote transport.
 
     A thin factory over the SDK's own app so a deployment (or
     a test) can mount or serve it; session management and the
     protocol handshake are the SDK's, the tools are this
-    module's, and the auth boundary is B-205's, stated in this
-    module's header.
+    module's, and the transport is authenticated (B-205): the
+    OAuth resource-server verifier guards every request, and
+    each tool call re-checks scope against the verified token.
     """
-    return build_server(bridge, settings=settings).streamable_http_app()
+    return build_server(
+        bridge, settings=settings, principal_provider=principal_provider, authenticated_http=True
+    ).streamable_http_app()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -256,7 +355,20 @@ def main(argv: list[str] | None = None) -> int:
     if overrides:
         settings = settings.model_copy(update=overrides)
 
-    server = build_server(settings=settings)
+    if args.transport == "stdio":
+        # The local road (B-205): a configured seat key binds
+        # this process to that seat, re-resolved per call; no
+        # key configured is the keyless local posture.
+        provider = None
+        if settings.mcp_seat_api_key:
+            bridge = InternalBridge(settings)
+            provider = seat_key_provider(bridge, settings.mcp_seat_api_key)
+            server = build_server(bridge, settings=settings, principal_provider=provider)
+        else:
+            server = build_server(settings=settings)
+    else:
+        # The remote road is authenticated by construction.
+        server = build_server(settings=settings, authenticated_http=True)
     logger = get_logger()
     log_event(logger, "mcp.server.starting", transport=args.transport, caller=server._gpa_bridge.caller)  # type: ignore[attr-defined]
     if args.transport == "stdio":

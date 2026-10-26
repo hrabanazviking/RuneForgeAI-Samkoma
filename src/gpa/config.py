@@ -136,6 +136,21 @@ class Settings(BaseSettings):
     mcp_http_host: str = "127.0.0.1"
     mcp_http_port: int = 8765
 
+    # MCP authentication (B-205, Phase 19). Local stdio: an
+    # agent-seat API key presented by the spawning process —
+    # empty means the keyless local posture (the operator's own
+    # trusted process, B-204). Remote HTTP: OAuth 2.1 resource-
+    # server verification — the resource URL is the audience
+    # tokens must name (empty derives it from the bind address),
+    # the issuer URL names the external authorisation server in
+    # the protected-resource metadata, and the OAuth secret is
+    # the HS256 verification key (empty falls back to the app
+    # secret, the development posture). All environment-only.
+    mcp_seat_api_key: str = ""
+    mcp_resource_url: str = ""
+    mcp_oauth_issuer_url: str = ""
+    mcp_oauth_secret: str = ""
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

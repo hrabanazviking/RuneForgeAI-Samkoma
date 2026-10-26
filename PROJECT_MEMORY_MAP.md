@@ -2285,6 +2285,53 @@ parses the model so it cannot drift from the code.
   green is the B-220 gate's to prove.
   No ZIP at this slice. Progress: **204/350. Next: B-205
   (MCP authentication + authorisation).**
+- **B-205 MCP authentication + authorisation** ✅ (timer crew,
+  2026-10-26): new `src/gpa/mcp/auth.py` — two roads, one law.
+  Local: an agent-seat API key (`GPA_MCP_SEAT_API_KEY`)
+  resolved by one parameterised SQL read through the bridge's
+  session (no service/model import — the B-204 boundary holds;
+  a person's key never resolves as a seat key), re-resolved on
+  EVERY tool call via `seat_key_provider`, so revocation lands
+  on the next call (proven by test). Remote: OAuth 2.1
+  resource-server profile — hand-rolled HS256 verification
+  (signature → expiry → audience → scope vocabulary, in that
+  order) against `GPA_MCP_OAUTH_SECRET` (app-secret fallback,
+  the house development posture); audience is the resource URL
+  (`GPA_MCP_RESOURCE_URL` or derived from the bind address);
+  the SDK `TokenVerifier` seam + `AuthSettings`
+  (validate_token_resource=True) guard the streamable-HTTP app
+  and `gpa-mcp --transport streamable-http` by construction —
+  the B-204 HTTP test was updated as superseded to present a
+  bearer token. Every tool call re-checks scope at call time
+  in `build_server`'s guard (explicit provider → SDK-verified
+  token claims → keyless LOCAL_PRINCIPAL, named not implicit);
+  `TOOL_SCOPES` states each core tool's credential scope and
+  `EXTERNAL_TO_INTERNAL` the one mapping table onto B-162
+  internal scopes (read→∅, draft→candidates:write,
+  publish→+events:publish, admin→all six). Acceptance errors
+  are the registry's own: expired `token_expired`,
+  wrong-audience/bad-signature/unknown-scope `token_invalid`,
+  under-scoped `insufficient_scope` (tool error, code leading),
+  unresolvable key `not_authenticated`. New settings
+  `mcp_seat_api_key` / `mcp_resource_url` /
+  `mcp_oauth_issuer_url` / `mcp_oauth_secret`. Tests:
+  tests/test_mcp_auth.py **9 passed** (the three acceptance
+  failures, verifier seam, seat-key resolve + revocation,
+  person-key refusal, call-time re-check on a live server);
+  auth+core batch **17 passed**; regression batch (parity +
+  architecture + internal + seat equality + docs gate) 111
+  passed with the comment gate first failing on mcp density
+  43%→ fixed by documentation to 45.2% (comment+docs gates
+  then 31 passed). Atlas regenerated (B-205 files), B-198
+  inventory row added. **Honest boundary**: token ISSUANCE is
+  an external authorisation server's job — `issue_oauth_token`
+  is a test/dev stand-in, never called by the serving path;
+  HS256 is the verified profile (an AS using RS256 would need
+  a JWKS verifier, a later hardening, not claimed here).
+  Contract unchanged: **202 paths / 230 schemas**. Full suite
+  NOT re-run — a full Phase 19 green is the B-220 gate's to
+  prove. No ZIP at this slice. Progress: **205/350. Next:
+  B-206 (tool registry from one source of truth).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

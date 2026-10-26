@@ -389,7 +389,21 @@ def test_streamable_http_transport_serves_the_same_server(settings, monkeypatch)
 
         async def run() -> tuple[str, set[str], dict]:
             url = f"http://127.0.0.1:{port}/mcp"
-            async with streamablehttp_client(url) as (read, write, _session_id):
+            # Superseded by B-205: the remote road is now
+            # authenticated — the client presents an OAuth
+            # bearer token minted for this server's audience
+            # (the full B-205 error cases live in
+            # tests/test_mcp_auth.py).
+            from gpa.mcp.auth import issue_oauth_token
+
+            token = issue_oauth_token(
+                settings,
+                subject="user:mcp-http-test",
+                scopes=["read", "draft", "publish", "admin"],
+                audience=url,
+            )
+            headers = {"Authorization": f"Bearer {token}"}
+            async with streamablehttp_client(url, headers=headers) as (read, write, _session_id):
                 async with ClientSession(read, write) as session:
                     init = await session.initialize()
                     tools = await session.list_tools()
