@@ -2102,7 +2102,7 @@ Phase 16 begins at B-157.
   hard rule also fails alone (bare migration, headerless
   prompt, unexplained setting block, restating docstring).
   Regression batch with architecture + threat model +
-  submission pack: 27 passed. Progress: **176/350**.
+  submission pack: 23 passed. Progress: **176/350**.
 
 ## Standing laws in force here
 
