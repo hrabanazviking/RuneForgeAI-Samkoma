@@ -2021,6 +2021,88 @@ Phase 16 begins at B-157.
   new contract; regenerated, its batch passes (developer
   pack + OpenAPI snapshot, 6 passed). No other test was
   touched by the fix. Progress: **174/350**.
+- **B-175 crash-correction test harness** ✅ (timer crew,
+  2026-10-25): fault injection as a first-class suite.
+  `gpa/services/chaos.py` (platform module) states the crash
+  invariant once, as code — no committed entry lost, no
+  half-written entity visible, no interrupted job silently
+  gone — and judges any database against it below the API
+  (integrity + foreign-key PRAGMAs, ready-source-without-
+  chunks tear probe, running-job census). The drivers:
+  `tests/chaos_worker.py`, a subprocess that reaches a named
+  kill point in one roadmap flow and then SIGKILLs itself
+  (marker file proves the point was reached by the road
+  intended, exit is -SIGKILL, never an early error) — ingest
+  after commit (whole source + 3 chunks survive), ingest
+  mid-transaction (nothing visible), extraction and digest
+  jobs claimed-then-killed (B-172 recovery requeues with a
+  plain-words record; the resumed job then runs to done
+  under a probe handler, restored afterwards), approval
+  mid-transaction (candidate stays pending, NO event
+  minted — the flip and the mint are one transaction or
+  neither), upload mid-session (session stays open, landed
+  part byte-intact, the missing part resumes and the
+  assembled whole matches the session's SHA-256). The
+  in-process legs inject disk-full at the storage boundary
+  (ENOSPC inside the ingest transaction → rollback, no
+  partial source) and a read-only database (creator-based
+  `mode=ro` open — the pysqlite driver ignores `?mode=ro`
+  in the URL string, found by the first run; writes refuse,
+  committed rows read whole). **The 100-run pass**:
+  `run_inprocess_chaos(seed=175)` draws seeded-random faults
+  over the five kinds (commit 18, rollback 17, job 17,
+  diskfull 19, readonly 29), one fresh deployment per run
+  (schema template copied per run — create_all ×100 made
+  the first pass take ~9 minutes; the copy brings the whole
+  file to ~80 s), recovery first, invariant judged after
+  every fault: **100/100 hold**. `scripts/chaos_report.py`
+  re-runs legs + loop as an operator road and writes
+  `CHAOS_REPORT.md` (6/6 legs, 100/100 runs — quoted in
+  TEST_REPORT's Phase 17 addendum, the ZIP's test report).
+  Power-loss profile, stated honestly: a SIGKILL inside an
+  open transaction is the same event as a power cut for
+  committed rows under WAL + synchronous=FULL (B-003), so
+  the mid-transaction legs ARE the fsync-window legs; no
+  VM/container rig is used (no-Docker law). Tests:
+  test_chaos 7 + architecture/recovery/durability batch —
+  19 passed in the targeted run. Progress: **175/350**.
+- **B-176 comment + documentation gate** ✅ (timer crew,
+  2026-10-25): `scripts/comment_gate.py` — a stdlib-only AST
+  checker, importable (`check_tree`) and runnable as a CLI;
+  it runs inside `test.sh` through `tests/test_comment_gate.py`
+  (test.sh IS the pytest suite). HARD rules, one breach fails:
+  every Python file under src/gpa + migrations/versions +
+  scripts opens with a purpose header (module docstring or
+  leading comment); every migration carries a why-docstring;
+  every prompt template carries its name+version front-matter
+  (B-038's discipline); every `.env.example` setting block is
+  comment-introduced; no docstring may merely restate its
+  name (§6A.1 counts that AGAINST a module). RATCHET floors
+  per module — function/class docstring coverage + documentation
+  density (docstring + comment lines as a share of all lines):
+  measured on this tree at the gate's landing, rounded down to
+  the nearest five points, and only ever rising (services
+  75/95/20, routers 85/60/15, schemas 55/70/20, models
+  95/95/40, migrations 10/0/15, scripts 40/0/15, the rest in
+  the checker's FLOORS table); a new module with no floor
+  fails until it is measured and floored. Every individual
+  missing docstring (512 at landing — mostly small private
+  helpers, `__init__`s, and protocol overrides whose contract
+  docstring lives on the protocol) is REPORTED by file and
+  line in the gap list: §6A.1's own division of labour —
+  "the gate enforces presence and floor; human review
+  enforces quality" — with 100% per-function coverage as the
+  standard the floors climb toward, recorded here as the
+  slice's honest deviation from the roadmap's every-function
+  letter rather than papered over. Acceptance
+  (tests/test_comment_gate.py, 6 passed): the real tree
+  passes its own gate; a deliberately stripped fixture fails
+  with its class/method/function gaps named by file and line
+  (Widget:3, spin:4, build_widget:8 in the fixture); each
+  hard rule also fails alone (bare migration, headerless
+  prompt, unexplained setting block, restating docstring).
+  Regression batch with architecture + threat model +
+  submission pack: 27 passed. Progress: **176/350**.
 
 ## Standing laws in force here
 
