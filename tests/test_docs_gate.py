@@ -187,6 +187,28 @@ def test_user_guide_5_covers_planning():
     assert "05-user-guide-planning.md" in index
 
 
+def test_user_guide_6_covers_reminders_digests_memory():
+    """B-187: the reminders/digests/memory chapter covers the
+    reminder rules and their defaults, change alerts, the
+    weekly digest, asking the group memory with verified
+    citations and its honest refusal, briefings and recaps,
+    and what the AI may and may not do."""
+    chapter = ROOT / "docs" / "06-user-guide-reminders-digests-memory.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "reminder rules", "7 days", "morning of", "quiet hours hold",
+        "urgent", "verbatim", "wording_source", "change alerts",
+        "reannounce-drafts", "weekly digest", "digest_weekday",
+        "digest/run", "approved history only", "not embedding rag",
+        "budget_stopped", "i couldn't verify this", "briefing",
+        "recap", "memory/runs", "may not",
+    ):
+        assert topic in text, f"B-187 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "06-user-guide-reminders-digests-memory.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"

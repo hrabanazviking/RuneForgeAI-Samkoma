@@ -23,7 +23,7 @@ each reader meets what they need before what they merely want.
 | 3 | [User guide III — the review queue](03-user-guide-review-queue.md) | B-184 | ✅ built |
 | 4 | [User guide IV — calendar + events](04-user-guide-calendar-and-events.md) | B-185 | ✅ built |
 | 5 | [User guide V — planning](05-user-guide-planning.md) | B-186 | ✅ built |
-| 6 | User guide VI — reminders, digests, memory | B-187 | planned |
+| 6 | [User guide VI — reminders, digests, memory](06-user-guide-reminders-digests-memory.md) | B-187 | ✅ built |
 
 ### 2. Group admins and whoever runs the server
 

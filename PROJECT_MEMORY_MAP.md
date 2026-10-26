@@ -1568,6 +1568,31 @@ parses the model so it cannot drift from the code.
   named). Route names verified against the live routers
   (availability/slots, costs vs budget). Pinned by a new
   docs-gate test; regression batch 17 passed. Next: B-187.
+- **B-187 user guide VI — reminders, digests, memory** ✅:
+  `docs/06-user-guide-reminders-digests-memory.md` — reminders
+  (materialised per coming/maybe RSVP + host; defaults 7d/1d
+  at 09:00 + morning-of 08:00 event-local; a move supersedes
+  old rows and deletes their queued jobs in the same act;
+  quiet hours hold, urgent never held, cancellation urgent),
+  the B-103 AI-wording leash (ships only if start/place/every
+  bring item survive verbatim; both versions + `wording_source`
+  kept), change alerts (organiser-approved re-announce draft,
+  exactly the RSVP'd + guests, sent once), the weekly digest
+  (planning digest + next week's events, Monday default,
+  settings re-anchor, manual run, alt-text render check),
+  asking the memory (approved-history-only corpus, pruning
+  NOT embedding RAG, budget checked per pass with
+  `budget_stopped` stated, every citation verified, the
+  "I couldn't verify this" refusal), summaries/briefings/
+  recaps as drafts until a person approves (approving a
+  newsletter files it as a source — the loop closes), run
+  transparency + purge (receipts go, summaries stay), and
+  the honest may/may-not list (no approving, no assigning,
+  no unverifiable facts, no unapproved corpus, no
+  over-budget spend, no self-sending). Routes verified
+  against the live memory/notifications routers. Pinned by
+  a new docs-gate test; regression batch 18 passed. Next:
+  B-188.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
