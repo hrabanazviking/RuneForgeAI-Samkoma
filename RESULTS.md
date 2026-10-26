@@ -49,3 +49,10 @@ that is deliberately imperfect (one named miss, one over-keep).
 |---|---|
 | mean_precision | 0.94 |
 | mean_recall | 0.88 |
+
+
+---
+
+## Build history & provenance (embedded 2026-10-26)
+
+Directed by **Volmarr Wyrd**; designed and implemented by **Yrsa Freydisdottir** (Mythic Engineering). The repository's git history holds 211 commits (2026-10-24 → 2026-10-26), every one authored by Yrsa for Volmarr, building 219 of 350 roadmap slices in order. The full record stands in `BUILD_HISTORY.md` at the root, verbatim in `.build-history/git-log-full.txt`, and in structured forms under `provenance/`.

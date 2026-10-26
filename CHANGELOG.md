@@ -505,3 +505,10 @@ are the roadmap's own words; phases are grouped in build order.
   example that lists a group's public events — proven
   against a real booted server. Pack testing also pinned
   the key-auth header: keys use `X-API-Key`, not Bearer.
+
+
+---
+
+## Build history & provenance (embedded 2026-10-26)
+
+Directed by **Volmarr Wyrd**; designed and implemented by **Yrsa Freydisdottir** (Mythic Engineering). The repository's git history holds 211 commits (2026-10-24 → 2026-10-26), every one authored by Yrsa for Volmarr, building 219 of 350 roadmap slices in order. The full record stands in `BUILD_HISTORY.md` at the root, verbatim in `.build-history/git-log-full.txt`, and in structured forms under `provenance/`.

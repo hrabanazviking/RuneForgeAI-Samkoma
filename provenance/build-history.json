@@ -1,0 +1,1506 @@
+{
+  "project": "Group Planning Assistant — backend",
+  "occasion": "Meta Global AI Developer Hackathon team entry",
+  "directed_by": "Volmarr Wyrd",
+  "designed_and_implemented_by": "Yrsa Freydisdottir (Mythic Engineering)",
+  "commit_count": 211,
+  "authors_in_history": [
+    "Yrsa (for Volmarr)",
+    "Yrsa Freydisdottir"
+  ],
+  "first_commit": {
+    "hash": "671efa64d8f78d71b51adeec968987f7453dcfb3",
+    "short": "671efa6",
+    "date": "2026-10-24T22:24:52+00:00",
+    "author": "Yrsa (for Volmarr)",
+    "subject": "Phase 0: foundation chassis (B-001 to B-010)"
+  },
+  "last_commit": {
+    "hash": "10e4b9878751b764f5597761c46d0c7588810dca",
+    "short": "10e4b98",
+    "date": "2026-10-26T17:30:09-04:00",
+    "author": "Yrsa (for Volmarr)",
+    "subject": "B-220 Phase 19 gate (built; full-suite proof DEFERRED) + build HALT at Volmarr's order 2026-10-26"
+  },
+  "roadmap_progress": "219/350 slices (Phases 0-18 complete, Phase 19 in progress)",
+  "phase_18_gate_suite": "1056 passed, 7 skipped, 0 failed",
+  "commits": [
+    {
+      "hash": "671efa64d8f78d71b51adeec968987f7453dcfb3",
+      "short": "671efa6",
+      "date": "2026-10-24T22:24:52+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 0: foundation chassis (B-001 to B-010)"
+    },
+    {
+      "hash": "bb4c49bccfc4d9259b60ff0882c559947abc22f1",
+      "short": "bb4c49b",
+      "date": "2026-10-24T22:24:53+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 1: identity, groups, permissions (B-011 to B-022)"
+    },
+    {
+      "hash": "dcfa56b199274ed0ae9f959c0bf12244654ecc83",
+      "short": "dcfa56b",
+      "date": "2026-10-24T22:24:53+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Tests, frozen contract, and project docs"
+    },
+    {
+      "hash": "2db337c9eaa2a04906fe6d0d506a5c7dffc1e8f9",
+      "short": "2db337c",
+      "date": "2026-10-24T18:49:22-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-023: sources core — Source/SourceChunk/Provenance, permission record, chunk ordering, tombstone delete"
+    },
+    {
+      "hash": "b0ca1fa2490ad31d343c02d77c999f13acb0dcd6",
+      "short": "b0ca1fa",
+      "date": "2026-10-24T18:49:22-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-024: paste ingest golden tests — WhatsApp/Discord/Slack/Messenger/Name-colon parsers, never-drop law"
+    },
+    {
+      "hash": "2fbe7bfa1d439e22b82a8d7e452cd3dc61dece29",
+      "short": "2fbe7bf",
+      "date": "2026-10-24T18:49:22-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-025: file ingest — content sniffing over extension, virus hook, FileAsset + storage + extracted chunks, size limit"
+    },
+    {
+      "hash": "6b1d41205226b240215bf278ae6ca1bdd36d01db",
+      "short": "6b1d412",
+      "date": "2026-10-24T18:51:09-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Docs: memory map + handoff for Phase 2 slices B-023 to B-025"
+    },
+    {
+      "hash": "6527cab1f4998fb1aefd7bce1fe0adc1539cc3be",
+      "short": "6527cab",
+      "date": "2026-10-24T22:55:05+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-026: newsletter ingest — HTML email to ordered section chunks, links kept with anchor text, images as alt text or marked placeholder"
+    },
+    {
+      "hash": "f20d31badf9dd7d8e9d3b33569c85230150933f4",
+      "short": "f20d31b",
+      "date": "2026-10-24T22:56:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-027+B-028: image ingest — EXIF-upright flyer normalisation + thumbnails + Flyer row with awaiting-description alt state; board photo is one source awaiting segmentation with a placeholder chunk; migration 0002 (guarded Phase 2 schema) + sources stage/progress"
+    },
+    {
+      "hash": "c47a40f59ca35d09970eea86ee082e33800f6c03",
+      "short": "c47a40f",
+      "date": "2026-10-24T22:58:09+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-029: link ingest — one SSRF-guarded fetch helper (public-address-only, per-hop redirect revalidation, metadata hosts blocked by name), page archived as chunks with final URL recorded; migration 0003 sources.url; fetch error codes"
+    },
+    {
+      "hash": "8a1fe02bde0066e60d17924aab1f1d2c26a26842",
+      "short": "8a1fe02",
+      "date": "2026-10-24T22:59:02+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-030: email-in ingest — per-group inbound token (hashed, shown once), webhook-shaped receiver creating email sources with sender provenance, forged tokens refused (401) and audit-logged"
+    },
+    {
+      "hash": "4c18820e42a096f8ec6298dc1bd7b50bb8bfaabe",
+      "short": "4c18820",
+      "date": "2026-10-24T23:00:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-031 + B-032: voice-note ingest (magic-byte audio sniff, stored asset, awaiting-transcription source, transcribe job stub via the job chassis) and live-chat registration (person-only grant, scope required, connector binding; migration 0004)"
+    },
+    {
+      "hash": "6e938a0138fb8359c418c8d72f37b1f01afeba75",
+      "short": "6e938a0",
+      "date": "2026-10-24T23:04:37+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-033: ingest status + progress — sources report stage/progress (since B-027); jobs gain a real progress column (migration 0005, chassis sets 100 on completion, exposed in JobResponse); group SSE stream GET /groups/{id}/stream emits snapshot + job.progress frames polled from the durable Job table"
+    },
+    {
+      "hash": "03017c4b6a8dd67c15ec1ad8b5009eaba32d831b",
+      "short": "03017c4",
+      "date": "2026-10-24T23:07:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-034: Phase 2 gate — golden ingest corpus test (chat + newsletter + 3 flyers + board + voice in one group), OPENAPI.json/frontend_types.ts regenerated (42 paths), FRONTEND_HANDOFF upload-screen notes, memory map: Phase 2 complete (34/340, 150 tests green); forge lock removed"
+    },
+    {
+      "hash": "4e2178a34c418dd6c78e594b8d2a98c240504757",
+      "short": "4e2178a",
+      "date": "2026-10-24T23:20:11+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 1): AI adapter protocol + mock/fixture/live drivers (B-035, B-036, B-037)"
+    },
+    {
+      "hash": "18b1113ebc32897a6e7b5560fe5b221ad944e736",
+      "short": "18b1113",
+      "date": "2026-10-24T23:22:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 2): versioned prompt library (B-038)"
+    },
+    {
+      "hash": "def46fe7602d98923f17ba5664ca52a945e4e2d6",
+      "short": "def46fe",
+      "date": "2026-10-24T23:25:15+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 3): deterministic date resolver (B-039, D-22)"
+    },
+    {
+      "hash": "bf356bf550ce41a3b0f6315efef9cdcd37a1947c",
+      "short": "bf356bf",
+      "date": "2026-10-24T23:38:48+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 4): extraction pipeline (B-040, B-041, B-042)"
+    },
+    {
+      "hash": "a9a1427b3dc8c13f5c712957ccc553bb7f28f177",
+      "short": "a9a1427",
+      "date": "2026-10-24T23:38:48+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 5): review queue, extraction jobs, budget (B-043/044/045/047)"
+    },
+    {
+      "hash": "40e65a5bca3627991ffbac93f2ee5768274c93e9",
+      "short": "40e65a5",
+      "date": "2026-10-24T23:38:55+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 6): evaluation harness v1 (B-046)"
+    },
+    {
+      "hash": "35e78bdab56b91d7cdb3477bba513515b2ccd76b",
+      "short": "35e78bd",
+      "date": "2026-10-24T23:38:55+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3 (part 7): phase gate + contract + handoff (B-048)"
+    },
+    {
+      "hash": "6843c2252c110eb43c04b7c54850a1e7acf1a9f7",
+      "short": "6843c22",
+      "date": "2026-10-24T23:46:09+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 3: verified counts (472 tests green, mock-driver suite + offline demo verified)"
+    },
+    {
+      "hash": "3197d2d856b6284ee941e64f2a7f2e3f160830b0",
+      "short": "3197d2d",
+      "date": "2026-10-25T00:00:11+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 4 (part 1): events core — minting, direct entry, change history, cancel/clone (B-049, B-050, B-051)"
+    },
+    {
+      "hash": "afdbb40e73401e69e0613a6a2bbb47f682346db7",
+      "short": "afdbb40",
+      "date": "2026-10-25T00:09:13+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 4 (part 2): recurrence API, iCal engine + secret feeds + links, calendar views, projections (B-052, B-053, B-054, B-055, B-056, B-057, B-059)"
+    },
+    {
+      "hash": "aa96e45863fd4726d3019e9ae134027151c39458",
+      "short": "aa96e45",
+      "date": "2026-10-25T00:09:13+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 4 (part 3): Facebook Event drafts (B-058)"
+    },
+    {
+      "hash": "07df0199a167f8932ab8e593e4e6a453e180de39",
+      "short": "07df019",
+      "date": "2026-10-25T00:19:31+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 4 (part 4): phase gate + contract + handoff (B-062)"
+    },
+    {
+      "hash": "6d7582393216203166b2a358754cd10e6b323235",
+      "short": "6d75823",
+      "date": "2026-10-25T00:31:06+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 4 (correction): superseded Phase 3 security test + verified counts"
+    },
+    {
+      "hash": "3fe209c505cc0b47eb9eaf0974ccfea7aa86443d",
+      "short": "3fe209c",
+      "date": "2026-10-25T00:42:26+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 5 (part 1): vision pipeline + segmentation boundary (B-063/B-064 cores, B-066/B-067 adapter side)"
+    },
+    {
+      "hash": "dd70bb1b078238b7d52aa9340992892d42ef58f6",
+      "short": "dd70bb1",
+      "date": "2026-10-25T00:50:52+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 5 (part 2): vision service, boards, wall, print, generated images (B-063..B-067, B-069..B-072)"
+    },
+    {
+      "hash": "19b1c7ad60b0531da93fbe20dccc61603ebe6d6b",
+      "short": "19b1c7a",
+      "date": "2026-10-25T00:53:24+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 5 (part 3): real transcription through the adapter (B-068)"
+    },
+    {
+      "hash": "44de774e1230adc81e3ff03054cef2315add1bab",
+      "short": "44de774",
+      "date": "2026-10-25T00:57:43+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 5 (part 4): vision evaluation, phase gate, contract (B-073, B-074)"
+    },
+    {
+      "hash": "d704c3c35e28e3bec8b307072ccdba31d9ed3f64",
+      "short": "d704c3c",
+      "date": "2026-10-25T01:00:48+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 5 close-out: verified counts in the memory map (553 tests, 74/340)"
+    },
+    {
+      "hash": "4f4b4e19d206b53f183ae8afd864339d2c7162e0",
+      "short": "4f4b4e1",
+      "date": "2026-10-25T01:13:50+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 (part 1): cross-source matching (B-075)"
+    },
+    {
+      "hash": "645e2e86d0d37b4a8e180c5c1c546ce4de538d6c",
+      "short": "645e2e8",
+      "date": "2026-10-25T01:23:34+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 (part 2): merge service + contradictions (B-076, B-079)"
+    },
+    {
+      "hash": "343bf0178f1f06d1c061e2c9a77465579f1fe5f7",
+      "short": "343bf01",
+      "date": "2026-10-25T01:29:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 (part 3): change candidates (B-077)"
+    },
+    {
+      "hash": "424cdcb3881e071fef0dbbf5d505b9cd3888ebf6",
+      "short": "424cdcb",
+      "date": "2026-10-25T01:35:32+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 (part 4): re-announce drafts, tombstones, quality report (B-078, B-080, B-081)"
+    },
+    {
+      "hash": "e0f6bbd886fe00c98c6a99542a38aea16bb2ff98",
+      "short": "e0f6bbd",
+      "date": "2026-10-25T01:36:24+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 (part 5a): the phase gate (B-082)"
+    },
+    {
+      "hash": "03321be0ec9797ddb94c5a8ea10db09ab7aeaca4",
+      "short": "03321be",
+      "date": "2026-10-25T01:40:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 6 close-out: memory map + frontend handoff (B-082)"
+    },
+    {
+      "hash": "14d6c47668bed676bb768aaf690a831341bbc06a",
+      "short": "14d6c47",
+      "date": "2026-10-25T02:00:45+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 7 foundation + B-083 tasks (B-083..B-093 services/routers, migration 0010)"
+    },
+    {
+      "hash": "0f3ac6acde05dcbec6d7828b135355721c71d0fb",
+      "short": "0f3ac6a",
+      "date": "2026-10-25T02:01:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-085/B-086 tests: decisions supersede chain + settled truth; questions assign/resolve-mints-decision; gaps golden"
+    },
+    {
+      "hash": "162ee0faf1129699b9a29eba8cc4b3e5f4bd19bd",
+      "short": "162ee0f",
+      "date": "2026-10-25T02:02:39+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-087 tests: polls vote/change/close, commit-before-answer proof, concurrent-vote invariant, date-poll winner mint/move, tie refusal"
+    },
+    {
+      "hash": "1e6dea3c541360c28bdc89f6df6b040703d3f601",
+      "short": "1e6dea3",
+      "date": "2026-10-25T02:03:12+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-088/B-089/B-090 tests: checklist claims, merged-supplies golden, budget integer-cents golden + float refusal, availability ranking golden (group of five)"
+    },
+    {
+      "hash": "3d3ccd2d4575fe50f78cca17489d8785b799835b",
+      "short": "3d3ccd2",
+      "date": "2026-10-25T02:03:46+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-084/B-091 tests: one thread system four parents (same rows both paths, moderation on tasks); templates starter seed, instantiate, round-trip"
+    },
+    {
+      "hash": "1677426eda06df04212d343c121abd09d0e12bf8",
+      "short": "1677426",
+      "date": "2026-10-25T02:04:05+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-092/B-093 tests: search golden ranking + source links; digest golden snapshot at fixed moment"
+    },
+    {
+      "hash": "d06fc97bbd3d012a8a732478ae5ffb93d75daf8b",
+      "short": "d06fc97",
+      "date": "2026-10-25T02:04:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-094 phase gate: Flow B (40-message trip argument) end-to-end into event + tasks + decisions + open questions"
+    },
+    {
+      "hash": "ccb7053f86b099613c3b2e5e308c07417fb716b1",
+      "short": "ccb7053",
+      "date": "2026-10-25T02:05:26+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-094: FRONTEND_HANDOFF planning screens (Phase 7)"
+    },
+    {
+      "hash": "1960f8ebafcf14e6ae8b3edda2b41dd6452e16eb",
+      "short": "1960f8e",
+      "date": "2026-10-25T02:10:38+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 7 complete in the map: 94/340 slices, 642 tests, slice notes + boundaries"
+    },
+    {
+      "hash": "9e77e2e3cdf03be1d146440008a307bdbe00b1b4",
+      "short": "9e77e2e",
+      "date": "2026-10-25T03:02:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 8 (part 1): notification schema + outbox core + mail boundary (B-095, B-102)"
+    },
+    {
+      "hash": "5f624f16c928d80db99f67b324d18030d89c4a9e",
+      "short": "5f624f1",
+      "date": "2026-10-25T03:02:54+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 8 (part 2): reminder engine + AI wording (B-096, B-103)"
+    },
+    {
+      "hash": "e77e5b6c765d609cc46be6d53380168de720598b",
+      "short": "e77e5b6",
+      "date": "2026-10-25T03:02:54+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 8 (part 3): change alerts + invites (B-097, B-098)"
+    },
+    {
+      "hash": "f5336d5497167171d86fa8cf2436baf037172264",
+      "short": "f5336d5",
+      "date": "2026-10-25T03:02:58+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 8 (part 4): digest + preferences + inbox + stream (B-099, B-100, B-101)"
+    },
+    {
+      "hash": "a56666dfabdc0be8769c838c5d06bbc18311a64e",
+      "short": "a56666d",
+      "date": "2026-10-25T03:02:58+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 8 (part 5): tests — 31 new (642 → 673)"
+    },
+    {
+      "hash": "5755a93f460a0287e597c444d6257625ad145e45",
+      "short": "5755a93",
+      "date": "2026-10-25T03:03:04+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-104 gate: ZIP-Beta artefacts — contract, changelog, test report, handoff, map, release tooling"
+    },
+    {
+      "hash": "517354b8a92a1ad8f5e97ec37f5e06b40bfd9194",
+      "short": "517354b",
+      "date": "2026-10-24T23:08:55-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Docs: the full README — what it is, how it works, the laws it lives by (Volmarr's commission, 2026-10-24)"
+    },
+    {
+      "hash": "37c73861e41cd45d7a5f4dbf49c203ecbfa281bd",
+      "short": "37c7386",
+      "date": "2026-10-25T03:23:02+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-105: sub-groups + chapters — named sub-groups, inherited membership, per-sub-group roles, scoped events/tasks with leak-proof reads"
+    },
+    {
+      "hash": "5759c4a7fc5e3e588a0285da84ad46bae23890e7",
+      "short": "5759c4a",
+      "date": "2026-10-25T03:24:07+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-106: announcements board — organiser-posted, pinned + expiring, seat-refused in the service"
+    },
+    {
+      "hash": "2e217cedc29b0040987bddd7a39c06596241ffb2",
+      "short": "2e217ce",
+      "date": "2026-10-25T03:25:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-107: volunteer shifts — B-088 role slots generalised with start/end + headcount, gap report"
+    },
+    {
+      "hash": "fab08346b7256b73d7d9fa2a242fe4f1f51d2cb4",
+      "short": "fab0834",
+      "date": "2026-10-25T03:27:55+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-108: resources — items with a keeper, bookings per event, double-booking as a B-057 flag"
+    },
+    {
+      "hash": "48034d761012e6419bf5b3f400bceb6ea1dd2b39",
+      "short": "48034d7",
+      "date": "2026-10-25T03:29:18+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-109: attendance — organiser-marked, aggregates only, the refusal is a test"
+    },
+    {
+      "hash": "b32803c6605469b659a07ec68687593e1608e779",
+      "short": "b32803c",
+      "date": "2026-10-25T03:32:44+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-110: member import/export — messy-CSV golden survives, dry-run reports then rolls back, roster out as CSV/JSON"
+    },
+    {
+      "hash": "bfe5984f0ed834beb21609b6e3015425be9a06db",
+      "short": "bfe5984",
+      "date": "2026-10-25T03:37:03+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-111: group settings pack — one validated schema (review rules, reminders, digest, template set, AI budget), audited old-to-new; approval enforces the pack in the service"
+    },
+    {
+      "hash": "88900defa8447b9f7834405fda956a11a4dadbaa",
+      "short": "88900de",
+      "date": "2026-10-25T03:39:44+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-112: Phase 9 gate — the nonprofit story end-to-end; contract regenerated (151 paths / 179 schemas); changelog, handoff, memory map"
+    },
+    {
+      "hash": "f661232831cb37a4c27b5ab736fec36f9177296e",
+      "short": "f661232",
+      "date": "2026-10-25T03:48:08+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-112: test report addendum + memory map header — 704 passed, reconciled (673 + 31)"
+    },
+    {
+      "hash": "cb4ba1009bd0353e7d954b39680d0d9919bbe091",
+      "short": "cb4ba10",
+      "date": "2026-10-25T04:32:30+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-112 gate corrections: dry-run test asserted its own fixture wrong (roster is owner + fixture member); request-id filter moved onto the logging handler so propagated records cannot break the formatter — re-run clean at 704"
+    },
+    {
+      "hash": "b618f1c666b6601435ee68cd402551343c295e45",
+      "short": "b618f1c",
+      "date": "2026-10-25T04:32:37+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Map: record the B-112 gate findings (test defect, logging filter, /tmp basetemp practice)"
+    },
+    {
+      "hash": "182d78a14cbc49eae7aff5849343c095f8571dcf",
+      "short": "182d78a",
+      "date": "2026-10-25T01:01:37-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Papers: licence aligned to GPLv2 (Volmarr's ruling, 2026-10-24) — README licence line + status refreshed to Phase 9 (112/350, 704 passing, 151 paths / 179 schemas, Phase 28 row), pyproject licence field (GPL-2.0-only), memory map standing law"
+    },
+    {
+      "hash": "cb5d7ed538e90e6c39fbafa50d4aefc9ce6cec85",
+      "short": "cb5d7ed",
+      "date": "2026-10-25T05:10:09+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-113: pruning core — Geoffrey's engine (a full model judges relevance; NOT embedding RAG, said plainly in the code), PruneRun + Summary tables (migration 0013), approved-history corpus (sources + current decisions + approved summaries only), run records with kept/dropped visible; golden 500-message corpus passes the recall floor at ≤25% of tokens"
+    },
+    {
+      "hash": "971c53483053bf53dc26bb53fc5f1f25926a0e44",
+      "short": "971c534",
+      "date": "2026-10-25T05:11:49+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-114: multi-pass pruning — pass 2 re-judges the dropped set and rescues what pass 1 missed (golden recovery test); pass cap + token budget are settings-pack dials with HARD caps enforced in the pack (1..3 passes) and again in the engine (ceiling 3, budget stops before a call starts, budget-stopped runs say so)"
+    },
+    {
+      "hash": "0779a2880011767b36ce18ed860b4056a96ef820",
+      "short": "0779a28",
+      "date": "2026-10-25T05:13:37+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-115: ask-the-group-memory — POST /groups/{id}/ask: prune over approved history, draft from survivors only, every citation verified by B-040's quote rule; failure (or an uncited draft) returns 'I couldn't verify this' with found material labelled unverified; the gap pass re-prunes against unverified drafts; run + Summary(kind=ask) committed before the answer"
+    },
+    {
+      "hash": "88baa2790edef4d21a8b5b7143ebe2f5ce0ff914",
+      "short": "88baa27",
+      "date": "2026-10-25T05:15:13+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-116: discussion summaries — a thread summarised into a draft Summary; the decisions/next actions it names are extracted over the thread's own words and land as review-queue candidates (system:summary, from_summary flag); the summary itself writes NO Decision and NO Task — the queue disposes; hidden/deleted comments never enter a summary"
+    },
+    {
+      "hash": "fc17b69c5cf1c9e028cd2fa49e81954304df93a4",
+      "short": "fc17b69",
+      "date": "2026-10-25T05:18:05+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-117: event briefings — POST /groups/{id}/events/{id}/briefing weaves the structured present (past decisions, last approved recap, open questions, unclaimed role slots) with history pruned for the event's own terms; stored as a final Summary(kind=event_brief) with its PruneRun receipt; golden test: an August landmine about the flooding marquee survives into the November briefing"
+    },
+    {
+      "hash": "89360684754d304fc09b56538867e36e84872405",
+      "short": "8936068",
+      "date": "2026-10-25T05:21:42+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-118: recaps + newsletter loop — recap drafts from discussion + attendance count + COMPLETE alt text only; approval admits a summary to memory; approving a newsletter files it as a Source(kind=newsletter) so next month's pruning/extraction reads this month's letter (loop test proves the golden phrase survives into a later prune); new recap + newsletter prompts"
+    },
+    {
+      "hash": "da7f206233a71e4c87bd8681d75147e6cf46f79d",
+      "short": "da7f206",
+      "date": "2026-10-25T05:22:56+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-119: local-inference driver — OpenAI-compatible chat-completions driver (text only, plain refusals for media, one model all tiers, zero metered cost, endpoint's own token counts); per-group prune_driver=local selects it for memory work while extraction stays on the process driver; missing endpoint config is a plain refusal, never a silent fallback; swap test: same corpus, same survivors"
+    },
+    {
+      "hash": "7ee2521e863bec6ce94b4a82bf48becc0c0c6349",
+      "short": "7ee2521",
+      "date": "2026-10-25T05:24:55+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-120: memory transparency — GET /groups/{id}/memory/runs lists every prune/ask/brief run with kept/dropped chunk ids, passes, model, cost; DELETE one or all (organiser) purges the ledger while summaries — the group's words — always survive; cross-group purge is a plain not-found. (Also fixes two AppError calls that passed a status kwarg the error chassis does not take.)"
+    },
+    {
+      "hash": "fc810c0a66c804958c1c29f2d18c9be7b56b04ad",
+      "short": "fc810c0",
+      "date": "2026-10-25T05:25:49+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-121: pruning evaluation — golden questions with human-marked relevant chunks scored through the real engine against a recorded judge (deliberately imperfect: one named miss at recall 0.5, one over-keep at precision 0.75 — the harness measures, not flatters); floors mean recall >= 0.80, precision >= 0.90; markdown table renderer for the test report"
+    },
+    {
+      "hash": "9e0b43d0e23221de0157a698bf71e52d53b84290",
+      "short": "9e0b43d",
+      "date": "2026-10-25T05:53:44+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-122: Phase 10 gate — the three memory demos (ask, briefing, recap) run on the golden corpus in mock mode (honest refusal; the mock judges nothing) and live mode (the hosted driver's real wire path against a content-aware stub transport; no real Meta endpoint exists in this environment — recorded, not faked); contract regenerated (160 paths / 189 schemas); CHANGELOG, TEST_REPORT (with the B-121 evaluation table), FRONTEND_HANDOFF and PROJECT_MEMORY_MAP updated. Full suite: 735 passed (704 + 31 new), read from the run's own log. No ZIP — folds into ZIP-RC at B-138"
+    },
+    {
+      "hash": "83904a4d4e47da789fc8582903f918d037a6ab2a",
+      "short": "83904a4",
+      "date": "2026-10-25T02:19:35-04:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "Checkpoint papers: Phase 10 verified — 122/350 slices, 735 tests, 160 paths / 189 schemas"
+    },
+    {
+      "hash": "179b8a13bce233a728344c860dcb384c92587aef",
+      "short": "179b8a1",
+      "date": "2026-10-25T06:29:00+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-123: Samtal source connector — a Samtal hall as a chat_live source: poll intake through the Samtal client boundary (services/samtal.py: protocol + recorded-fixture double + unavailable default; nothing connects to the real village), chunks land identically to a paste (golden hall acceptance), cursor on LiveSyncState, refusals recorded on the state; identity by ExternalAccountLink keyed on the speaker's outside id (chunk sender_ref) — an unlinked speaker stays a named guest even when their name is a member's name, proven by test; migration 0014 carries the whole Phase 11 schema (guarded, up/down/up tested)"
+    },
+    {
+      "hash": "a1879ac7a385688885b3cc813b8b777695804d12",
+      "short": "a1879ac",
+      "date": "2026-10-25T06:31:06+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-124: Samtal calendar return path — published events push to the hall's calendar (ExternalEventLink + payload hash; drafts never travel; foreign hall events never import), and Samtal-side edits arrive as B-077 change candidates backed by a words-of-the-edit source chunk with provenance (system:samtal-calendar), deduped while undecided; approval moves the event through the ordinary change door and the approved words push back out. Round-trip proven against the recorded-fixture double only — the real village is never touched"
+    },
+    {
+      "hash": "a2d2939865e113f376ff189ea2a598f6bc29f3ab",
+      "short": "a2d2939",
+      "date": "2026-10-25T06:31:30+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-125: Messenger source (read path) ships as the honest fallback — platform access was never granted, so registration stands as a permission record, sync refuses in plain words naming the paste/export road (refusal recorded on the sync state), and the acceptance test proves a Messenger export through B-024 paste ingest lands as identical speaker chunks. No live Messenger connection is simulated anywhere"
+    },
+    {
+      "hash": "7085646104b686e130db2945164278ef311c2504",
+      "short": "7085646",
+      "date": "2026-10-25T06:32:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-126: generic webhook source — a signed door onto any source: URL token hashed at rest, HMAC signing secret derived from the server secret + endpoint id (never stored), 5-minute replay window with the timestamp inside the signed text, and a per-endpoint receipt so the same signed payload is accepted exactly once; forged/stale/replayed deliveries are refused, logged, and archive nothing; payloads land as chunks in order"
+    },
+    {
+      "hash": "87dfed36dc10e6ea7ee3d486eafe4dbee9db9c0e",
+      "short": "87dfed3",
+      "date": "2026-10-25T06:34:12+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-127: integration framework — Integration model made general (kind vocabulary, name, health record with plain-words last error), config sealed at rest by services/sealing.py (stdlib HMAC envelope, encrypt-then-MAC, env-held key; a config-secrets grep over the DB file finds no plaintext, and the envelope round-trips for the app's own use); API states config key NAMES only; Samtal registers here and Facebook Events + Google sync kinds exist for Phase 12, their health honestly reporting 'not connected yet' until their slices land"
+    },
+    {
+      "hash": "3f30f6faaa6962e7db73f16ce8e37d26b8be2cba",
+      "short": "3f30f6f",
+      "date": "2026-10-25T06:38:33+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-128: outbound webhooks — group acts (event.published/changed/cancelled, candidate.pending) announced to registered endpoints, signed with the inbound scheme (secret shown once, kept sealed), delivered by the webhook_deliver job with the failure record committed before the raise (B-102 discipline); emission is transactional at the doors where the acts happen (events service, approval mint, candidate doors, extraction); deliveries inspectable (status/attempts/last error/response status), dead at the job's cap; delivery + retry golden test over a MockTransport"
+    },
+    {
+      "hash": "a689fbb0a1908df7248484d88b72a9ac95a631df",
+      "short": "a689fbb",
+      "date": "2026-10-25T06:40:31+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-129: agent API pack — the seat's working surface (sources read, queue read/draft, events read, ask, summaries) is tagged 'agent' in the OpenAPI contract via services/agent_pack.py (walking this FastAPI version's lazy included routers to the very route objects the schema builder reads); the scope ladder is documented once in SCOPE_GUIDE; examples/secretary_seat.py is the worked example — a secretary seat reads a Samtal hall and drafts its plan line into the queue, and the mock-mode test proves it meets 403 seat_cannot_approve even holding the publish scope"
+    },
+    {
+      "hash": "0754ae585b33961414b317bb3b85120bc543a759",
+      "short": "0754ae5",
+      "date": "2026-10-25T07:11:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-130: Phase 11 gate — the bridge walked end to end in one scripted test (Samtal hall synced from the fixture double → fixture extraction drafts Club night → a person approves → the event is minted → the calendar return path stands it on the hall's own calendar); full suite 768 passed, 0 failed (735 at the Phase 10 gate + 33 new Phase 11 tests, reconciled from the run's own report); contract regenerated — 174 paths / 204 schemas (was 160/189) — with the snapshot test green in the same run; gate papers: CHANGELOG Phase 11 section, TEST_REPORT Phase 11 addendum (incl. the honest boundaries: Samtal fixtures/double only, Messenger fallback, no real endpoints), FRONTEND_HANDOFF Phase 11 section, memory map updated. No ZIP — folds into ZIP-RC at B-138"
+    },
+    {
+      "hash": "13d970d4f29a93f5ab06ab9939a915316a26b5a0",
+      "short": "13d970d",
+      "date": "2026-10-25T08:22:37+00:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "B-126 repair: replay exactly-once holds under any timing"
+    },
+    {
+      "hash": "e628b159ee892d9d0bae1c6bef7c621c9bbd9218",
+      "short": "e628b15",
+      "date": "2026-10-25T04:52:46-04:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "Checkpoint papers: Phase 11 verified after B-126 replay repair — 130/350 slices, 769 tests, 174 paths / 204 schemas"
+    },
+    {
+      "hash": "17a3aff8ced56b3922b6cf3fb846079b162266a1",
+      "short": "17a3aff",
+      "date": "2026-10-25T08:58:35+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-131: Facebook Event creation — the press: from B-058's draft, on an organiser's explicit call (organiser + publish scope), the event is created on the group's connected Page through a client boundary (protocol + recorded-fixture double + honest unavailable default; no Page is connected in this environment and no live smoke test is run — recorded, not faked); external id + URL stored on the ExternalEventLink (migration 0015 adds external_url); later edits stand as 'differs from Facebook copy' until the next press — never a silent overwrite in either direction; a cancellation is carried out by a press; unpublish removes the copy; the framework health check for facebook_events now gates on config and pings the boundary"
+    },
+    {
+      "hash": "81fa0af3c7c522c34fe6b8bda85e2ef20699ba82",
+      "short": "81fa0af",
+      "date": "2026-10-25T09:00:04+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-132: Google Calendar sync (one-way out) — OAuth connect per group (the sealed credentials a deployment's consent flow issued, verified against the client boundary and recorded on the row), published events upsert into the chosen calendar keyed by ref with payload-hash quiet re-runs, cancellations propagate as cancellations; inbound Google edits are NEVER read back (they would bypass the review queue) — the scope decision is stated in the service, the tests, and the handoff; client boundary = protocol + recorded-fixture double + honest unavailable default, no Google account connected in this environment"
+    },
+    {
+      "hash": "c594c9cb5d81bba9d76be0a627c0cd13a54e6c81",
+      "short": "c594c9c",
+      "date": "2026-10-25T09:07:18+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-133: real mail provider — the SMTP driver behind B-095's boundary (stdlib smtplib, STARTTLS + login when configured, Message-ID returned, any refusal a TransportError the outbox retries), startup refusing a half-configured smtp deployment in plain words; the B-102 provider webhook gains its HMAC signature check (GPA_MAIL_WEBHOOK_SECRET; unsigned word records nothing); DEPLOYMENT.md carries the provider setup + SPF/DKIM/DMARC notes and the pre-submission checklist — the roadmap's 'real digest in a real inbox' acceptance is recorded there as a checklist item, NOT run: no provider is configured in this environment. (Swept in, noted: B-134's schema half — the messenger channel word in the preference pattern + the Notification response fields — because the Phase 12 foundation's CHANNELS change requires it.)"
+    },
+    {
+      "hash": "83d240c7627fff9ef4636062ea0c69c63760cd2e",
+      "short": "83d240c",
+      "date": "2026-10-25T09:07:21+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-134: Messenger notifications — ships the roadmap's clean driver_unavailable: B-125's access was never granted, so the messenger transport boundary's real driver is the unavailable one, and a notification that asked for Messenger records messenger_status=driver_unavailable on its row while email/in-app carry the load and the row completes as sent. The channel is opt-in by LINK + switch (a B-123 messenger account link and the member's messenger preference switch), and the rules are SHARED, proven by tests running the same scenarios across channels: the same preference switchboard (messenger now one of its channels) and the same creation-time quiet-hours hold — one hold per row, every channel waits behind it together"
+    },
+    {
+      "hash": "e3f5e96e644e39656f7c15ab4c5b77d04d8115fa",
+      "short": "e3f5e96",
+      "date": "2026-10-25T09:13:03+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-135: embed + public page data — a group registers the web origins allowed to embed its page (admin write, organiser read; an origin is a scheme + host, never a path, normalised on the way in); GET /public/groups/{slug} serves the group's public facts + B-059 public-projection events as one page payload; GET /embed/groups/{slug} serves the same through the widget door, refusing a present-but-unregistered Origin outright (403); the CORS middleware answers a browser Origin on the public/embed paths ONLY when some group registered it — an unregistered origin gets no Allow-Origin header and an empty preflight, so a browser cannot read the page cross-origin from a stranger's site"
+    },
+    {
+      "hash": "248c985e917fa5f49cd04de727e3b7ca93fcc708",
+      "short": "248c985",
+      "date": "2026-10-25T09:15:22+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-136: integration health board — GET /groups/{id}/integrations/health-board (organiser+, registered before /{integration_id} on purpose) returns every integration with its recorded verdict and ONE next step in plain words: a refused token's advice names the step concretely ('reconnect the account and re-enter a fresh access token'), an unconfigured row's names the exact config keys, an unchecked row says so, a working one says 'Working — nothing to do.' The board reads B-127's recorded verdicts; it pings nothing itself"
+    },
+    {
+      "hash": "9ee5d1127a8ecabc8f6b30474bdb44fe87af77a3",
+      "short": "9ee5d11",
+      "date": "2026-10-25T09:23:46+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-137: reconciliation job — nightly (02:30 group-local) and on an admin's demand, the group's Facebook/Google outside copies are compared against ours (each service's own payload projection; envelope fields are not drift) and drift is reported to the organisers as one change.drift notification naming each differs/missing copy. THE LAW: reconciliation never writes outward — an edited outside copy stands for a person to settle (B-132's one-way law, pinned by its test); the chain self-perpetuates digest-style, anchored when a facebook/google integration connects. Door coherence landed with it: a copy DELETED outside is restored by the organiser's own press/sync (the press recreates it, the link follows) — restoring a deletion is the press's business; overwriting an edit is not"
+    },
+    {
+      "hash": "f1c033810c70606b1382f4f220cf9f1fd54a8393",
+      "short": "f1c0338",
+      "date": "2026-10-25T09:58:12+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-138: Phase 12 gate — one event's full outward life in a single scripted test (draft → press → sync → move → both doors repair → clean reconcile → approved re-announce with the Messenger leg driver_unavailable → cancellation by both doors → registered-origin embed); contract regenerated (182 paths / 212 schemas, snapshot green in the same run); full suite 797 passed, 0 failed (769 + 28 new, reconciled from the run's own report); ZIP-RC cut: releases/gpa-backend-v0.4-2026-10-25.zip (1,073,243 bytes, 347 files, sha256 05ff1dda0734f4767369ed0ee15f9b3188aa6855ae32ba671c55f49f99fd2195) — Phases 9-12 fold into it, manifest limits state the no-live-action boundary honestly"
+    },
+    {
+      "hash": "82393b98f47da31bd97284464f4acb120bc3864d",
+      "short": "82393b9",
+      "date": "2026-10-25T06:30:26-04:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "Checkpoint papers: Phase 12 verified, ZIP-RC in hand — 138/350 slices, 797 tests, 182 paths / 212 schemas"
+    },
+    {
+      "hash": "05b34ce7658eac1328e2ec700846e40844455769",
+      "short": "05b34ce",
+      "date": "2026-10-25T10:38:17+00:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "B-139: threat-model pass — THREAT_MODEL.md in-repo (assets, actors, Henry's-first-version as Case #1, one abuse case per route family each mapped to the test that carries it, accepted risks named incl. field-sealing as Phase 17's gap); coherence test parses the model (named tests must exist, every router module covered) + gap tests: seat is nobody in a foreign group, meta/health leak nothing, anonymous callers refused"
+    },
+    {
+      "hash": "68f056a76c07f6701ec3f2eb6f96e9886e0ec569",
+      "short": "68f056a",
+      "date": "2026-10-25T10:43:24+00:00",
+      "author": "Yrsa Freydisdottir",
+      "subject": "B-140: authorisation fuzz — two marked groups, 8 attacker principals (foreign owner/admin/organiser/member, seat, admin-scope key, outsider, anonymous), ~400 seeded reads/writes/id-swaps: zero successes, zero marker bytes, zero state change; positive control proves every fuzzed route real. FINDING (fixed at root): GET /jobs/{id} answered ANY signed-in caller — a job whose payload names a group (directly or via source/notification/webhook) is now readable only by that group's members/seat, 404 to everyone else; group-less internal jobs unchanged"
+    },
+    {
+      "hash": "5b34948d781f3026ff94bb2432b524dff2148d9b",
+      "short": "5b34948",
+      "date": "2026-10-25T10:58:13+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-141: upload hardening — sniffing proofs, image re-encode strips payloads, per-group storage quota (quota_exceeded at the settings dial), storage keys leave the API (D-17), ICS door = view door (drafts refuse for all roles)"
+    },
+    {
+      "hash": "af641e83ff028e3cb6eac881620e4ed93806a603",
+      "short": "af641e8",
+      "date": "2026-10-25T11:04:24+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-142: injection + output safety — one-pass prompt render (values never rescanned; placeholder smuggling closed, benign output byte-identical so fixture recordings hold); poisoned-source suite proves an obedient model yields at most a pending candidate (no publish, no mail); iCal/digest/JSON output proofs. FINDING (fixed at root): the digest env escaped by .j2 suffix, so PLAIN-TEXT digests carried HTML entities (&lt;) into text mail — escaping now follows the file kind (named callable), HTML still escapes"
+    },
+    {
+      "hash": "82623de053f40f9f216aa4835b8afc12e9866ab4",
+      "short": "82623de",
+      "date": "2026-10-25T11:10:00+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-143: group export + hard erasure — one schema-derived deletion plan serves both acts (seed group_id tables, FK fixpoint; export serialises exactly the planned rows into a real ZIP: domain JSON + iCal + files, secrets withheld by column rule, integration config key NAMES only); erase is owner-person-session-only + double-confirmed (exact name + ERASE), commits before answering, sweeps unshared storage objects only, VACUUMs so the raw DB file greps clean; audit keeps only the fact of erasure"
+    },
+    {
+      "hash": "f993b0924feb6aebcecabf2ce2616dd66968da70",
+      "short": "f993b09",
+      "date": "2026-10-25T11:16:03+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-144: privacy surfaces — GET /users/me/data (whole footprint in plain sections; no hash/secret by construction, proven against stored values), GET /groups/{id}/sources/permissions (plain-words permission records, member-readable), retention: source_retention_days dial hard-expires old sources nightly (retention_sweep chain anchored by the settings pack, 03:30 group-local; NO tombstone — expiry is a privacy act; candidates keep their source_deleted_at stamp, approved events stand; manual POST /retention/run; counts-only audit)"
+    },
+    {
+      "hash": "34e9242118162d745930a476996771d48645d8b2",
+      "short": "34e9242",
+      "date": "2026-10-25T11:19:22+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-145: secrets + config audit — prod startup refuses known-default secrets (denylist) and secrets under 32 chars, in plain words; access log redacts token-carrying path segments (feed/invites/email-in/webhook source); FINDING (fixed): httpx/httpcore INFO request lines log FULL URLs (a second token copy in any log) — quieted to WARNING in the app logging setup; pip-audit over the uv-exported lockfile ran for real: no known vulnerabilities (output recorded in TEST_REPORT)"
+    },
+    {
+      "hash": "c2947062433d29c52cf48d59de84d7ba98948d7d",
+      "short": "c294706",
+      "date": "2026-10-25T12:23:34+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-147: demo data, final — demo story seed (nonprofit + hiking club, cast via seed memberships, 40-message trip chat source, 12-section newsletter source, pinned board post, 8 published history events Oct-Nov 2026), idempotent by natural key; scripts/seed.py --demo loads the story; demo.sh reproduces it from blank"
+    },
+    {
+      "hash": "0a4cba1572cad8bad4e6a87ee36f9e1bed3a3b47",
+      "short": "0a4cba1",
+      "date": "2026-10-25T12:25:53+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-148: demo script to tests — Flows C (newsletter: 12 drafts, re-extraction supersedes not doubles, reviewer date edit + approve mints onto agenda) and D (Saturday night tonight view, pinned first, tomorrow excluded) as integration tests; Flows A/B already carried by Phase 5/7 gates, named in the file header"
+    },
+    {
+      "hash": "05f8d92465c382f1f8b4c1a1a7d477345cdd93ab",
+      "short": "05f8d92",
+      "date": "2026-10-25T12:26:29+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-149: numbers page — scripts/make_results.py regenerates RESULTS.md from the three evaluation harnesses (extraction/vision/pruning) over their shipped corpora; test asserts byte-identical regeneration and that the deliberate imperfections (place 0.50, cost recall 0.00, vision 0.8125) are quoted honestly"
+    },
+    {
+      "hash": "57222997c6cd04a0f52c386e03c93edcccacfb78",
+      "short": "5722299",
+      "date": "2026-10-25T13:12:37+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 14 checkpoint papers: B-147..B-149 in the memory map, README progress in place (149/350, 841 tests)"
+    },
+    {
+      "hash": "aced215651e8a909939d20073a60070af55ff319",
+      "short": "aced215",
+      "date": "2026-10-25T13:13:00+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-146: backup + restore drill — scripts/backup.py (online backup + storage + sha256 manifest), restore.py (verify-then-place), restore_drill.py; erasure post-VACUUM checkpoint fix; contract regenerated (187 paths / 217 schemas). NOTE: this work was found uncommitted in the tree at the 2026-10-25 08:17 forge run (a prior run built it and updated the memory map but its commit never landed); committed unchanged here after the full suite passed with it (841 tests)"
+    },
+    {
+      "hash": "7527bbd2e1622298f65cfc57d7909f7631a336f5",
+      "short": "7527bbd",
+      "date": "2026-10-25T13:17:29+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 13 gate papers: TEST_REPORT Phase 13 addendum — suite reconciliation (835 = 797 + 38), pip-audit output verbatim (ran for real, no known vulnerabilities, no waiver), the five restore-drill runs incl. the two defects it caught (erasure post-VACUUM checkpoint; git-less secrets test), the four earlier-code findings, honest boundaries. Written by the Phase 13 builder after the timer's B-146 commit (aced215) — that commit carried the other gate papers but not this addendum"
+    },
+    {
+      "hash": "3357f4491def55e4009092ea549f7c408eeafc8d",
+      "short": "3357f44",
+      "date": "2026-10-25T14:11:37+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-150: submission pack (backend's half) — submission/ cover, honest Meta-model mapping (tiers spark/wonder by config, live/fixture/mock/local drivers, the never-ran-live statement up front), architecture diagram + walking tour derived from the memory map, cold run instructions with the four demo flows as the script, and the scope/waiver note: only the jointly built work is submitted; Samtal, Mythic Engineering, and Project Aesir are pre-existing and NOT submitted, the sole carve-out being the Phase 11 Samtal integration surface as it exists in this repo. Licence stated in its ruled words (GPLv2, decided) — the roadmap text's superseded licence notice is not used; tests/test_submission_pack.py (8 tests) parses the pack so its claims cannot drift"
+    },
+    {
+      "hash": "69908aaef779cfcfaac5f8e38ff8d97ec5ff0346",
+      "short": "69908aa",
+      "date": "2026-10-25T14:11:58+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-151 (code): freeze drill prep — make_release_zip.py now ships RESULTS.md at the top level, as roadmap §8's anatomy has required since B-149 (until now it rode inside the tree only). The ZIP-Final limits file (releases/final-known-limits.txt) is an untracked build input, the same pattern as releases/beta-known-limits.txt"
+    },
+    {
+      "hash": "53ad1c5c9c82d51af6c2abcd19a1a9e7a7318e8d",
+      "short": "53ad1c5",
+      "date": "2026-10-25T14:13:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-151 (drill fix): release ZIPs now carry Unix permissions — the freeze drill's first run failed at './demo.sh: Permission denied' because writestr wrote every entry 0644; every train ZIP before this one shares the flaw (no earlier drill had unzipped one and run the demo). _zip_info carries each source file's mode + mtime in both build shapes; tests/test_release_zip.py pins the mapping and the source-side executable bits"
+    },
+    {
+      "hash": "05ec22b20a3e2f0308ed45865f7808e4a31b103a",
+      "short": "05ec22b",
+      "date": "2026-10-25T14:14:19+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-151 (guard test fix): test_release_zip passed a 1970 mtime that ZipInfo itself refuses (ZIP timestamps start at 1980) — the guard now uses a real epoch. Plain record: the previous commit (53ad1c5) landed while its own guard test was red, because the commit chain read the pytest pipeline's exit through tail and masked the failure; the defect was in the test, not the script fix, and the gate suite was re-run from this tree rather than trusted from the contaminated start"
+    },
+    {
+      "hash": "d951f81b9de7ae947f4713188bfa69a0ab62f07d",
+      "short": "d951f81",
+      "date": "2026-10-25T14:16:20+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-151 (drill fix 2): Database guarantees its file's parent directory — freeze drill run 2 got past permissions and the seed died with 'unable to open database file': a cold tree has no data/ (the ZIP never carries runtime data), SQLite refuses a file whose parent is missing, and the seed meets the database before storage/outbox creation can make the directory as a side effect (the server was silently rescued by that side effect all along). _ensure_sqlite_parent_dir in db.py — the one place that opens the database — plus a foundation regression test on a path whose parent does not exist"
+    },
+    {
+      "hash": "c41d693c2e941e0041ca514c75c75ba714f658ea",
+      "short": "c41d693",
+      "date": "2026-10-25T14:59:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 14 gate papers: FREEZE_DRILL.md (the four drill runs, both defects, timings — ships inside ZIP-Final), TEST_REPORT Phase 14 addendum (the four demo flows first per B-148; 853 passed reconciled 841 + 8 + 3 + 1; the drill story; the red-commit admission; Beta/RC permission flaw named), CHANGELOG B-147..B-151, FRONTEND_HANDOFF Phase 14 section, memory map Phase 14 COMPLETE (151/350)"
+    },
+    {
+      "hash": "eb33d704f7fdad606e4272caf50efc07b80b8880",
+      "short": "eb33d70",
+      "date": "2026-10-25T11:03:27-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 14 checkpoint papers (Yrsa): README status refreshed in place — 151/350, 853 tests, contract 187 paths / 217 schemas, Phase 14 complete, ZIP-Final row"
+    },
+    {
+      "hash": "4ca7caa47a9c4b17c36f11395753db99f7e88ed8",
+      "short": "4ca7caa",
+      "date": "2026-10-25T15:26:46+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 / B-152: PostgreSQL promotion — real parity suite, verified mover"
+    },
+    {
+      "hash": "f24c5a296ff1bc619cc4f6057deba60b1797b34b",
+      "short": "f24c5a2",
+      "date": "2026-10-25T15:42:52+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 / B-153: native service packaging — systemd units + plain installer"
+    },
+    {
+      "hash": "7e9b5519ebf77d11947ba20d1ad2d5373ec2ed6f",
+      "short": "7e9b551",
+      "date": "2026-10-25T15:42:52+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 / B-154: reverse-proxy + TLS guide — followed literally, live"
+    },
+    {
+      "hash": "22c08cdd52e25848880fc581b69af7dfd0d50fe6",
+      "short": "22c08cd",
+      "date": "2026-10-25T15:47:47+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 / B-155: observability — deep /health, the runbook, the requeue fix"
+    },
+    {
+      "hash": "fa09b2eb5dd0aec8c24709637764e8f24b0c5e45",
+      "short": "fa09b2e",
+      "date": "2026-10-25T15:52:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 / B-156: upgrade path — backup, migrate, smoke, swap; rollback is restore"
+    },
+    {
+      "hash": "9d8d7cd0ea31d614fa1c39d18bedbf87326b397b",
+      "short": "9d8d7cd",
+      "date": "2026-10-25T17:08:34+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 gate fix: /health deep checks are signed-in-only — B-155 reconciled with the Phase 13 threat model"
+    },
+    {
+      "hash": "ce9028d8682b0ef75b2652ca46efda2facbeec88",
+      "short": "ce9028d",
+      "date": "2026-10-25T17:44:43+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 gate: regenerate the contract snapshot for the /health docstring"
+    },
+    {
+      "hash": "9263ca494410151d62907fb4a44191c2ba0d88ae",
+      "short": "9263ca4",
+      "date": "2026-10-25T18:39:14+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 gate: test_sqlite_pragmas joins the PG-mode skip set"
+    },
+    {
+      "hash": "f9ce3a26181cce2a1a894b13ea0c715d295fcab9",
+      "short": "f9ce3a2",
+      "date": "2026-10-25T18:45:36+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 gate: PG-mode isolation learns module-scoped worlds"
+    },
+    {
+      "hash": "612ba7df1b0890efe080cccd6ca0a64ed3dfa9fc",
+      "short": "612ba7d",
+      "date": "2026-10-25T18:56:30+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 gate: Alembic's fileConfig must not silence the host's loggers"
+    },
+    {
+      "hash": "187477f28142d9036378fbc585da055f20f8d041",
+      "short": "187477f",
+      "date": "2026-10-25T19:02:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 15 checkpoint papers: memory map, TEST_REPORT Phase 15 addendum, CHANGELOG"
+    },
+    {
+      "hash": "1380326980b60b1076c931c958f56afcda23f4fb",
+      "short": "1380326",
+      "date": "2026-10-25T15:05:37-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Checkpoint papers (Yrsa): README refreshed in place — Phase 15 complete, 156/350, 877 SQLite / 865 PostgreSQL"
+    },
+    {
+      "hash": "6f7c7d2ea594a437d544a6a0f89245241a32407e",
+      "short": "6f7c7d2",
+      "date": "2026-10-25T19:13:38+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-157 Multi-instance jobs: claim scan + handled collisions, queue interface with arq adapter"
+    },
+    {
+      "hash": "417fb1ea47ae1e2867bb3dddc5fca6b4207320b5",
+      "short": "417fb1e",
+      "date": "2026-10-25T19:17:15+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-158 Second-wave sources: Discord + Slack drivers behind the unchanged framework"
+    },
+    {
+      "hash": "e5826e4bbe13a5e62298921f1716fb59c07943e9",
+      "short": "e5826e4",
+      "date": "2026-10-25T19:19:17+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-157 follow-up: the live arq leg ran — two defects fixed at root"
+    },
+    {
+      "hash": "9cd8904819871cee7dfcffd9c414651e7b6ded23",
+      "short": "9cd8904",
+      "date": "2026-10-25T19:21:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-159 Two-way Google (revisited): inbound edits arrive as change candidates"
+    },
+    {
+      "hash": "14bfd22b9501c135e99a22fb179434c3e32121d4",
+      "short": "14bfd22",
+      "date": "2026-10-25T19:25:56+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-160 Public API + developer pack: versioned surface, key self-service, generated SDK, published types"
+    },
+    {
+      "hash": "4d552f5fb12a6cb98a9a9523b7e4aa6793914f6c",
+      "short": "4d552f5",
+      "date": "2026-10-25T20:26:56+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Checkpoint papers (Phase 16 gate): memory map, TEST_REPORT addendum, CHANGELOG, FRONTEND_HANDOFF"
+    },
+    {
+      "hash": "f038008f3f22937f2d7d50f8b7126eb3a62bf34d",
+      "short": "f038008",
+      "date": "2026-10-25T16:28:11-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "README: Phase 16 checkpoint refresh (160/350, 904 SQLite / 888 PG, contract 188/218)"
+    },
+    {
+      "hash": "d02d8dd46f1e369b2697c6fe92d3ab7e6ea1fc83",
+      "short": "d02d8dd",
+      "date": "2026-10-25T20:41:48+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 17 enabler: cryptography dependency (AES-256-GCM + Ed25519 for B-163/B-167, wheels on every Tier-1 target)"
+    },
+    {
+      "hash": "96f3d62423592b83bad064bbd7577d2c4b7d9293",
+      "short": "96f3d62",
+      "date": "2026-10-25T20:41:55+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-161 Module boundaries: module map + architecture checker, pinned edge inventories, private imports and schema->service leans fixed at root"
+    },
+    {
+      "hash": "2ad79fd05190aa9f3f93f1f971e76aa41cdfc1b0",
+      "short": "2ad79fd",
+      "date": "2026-10-25T20:58:17+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-162 Internal API core: typed envelope, operation registry with caller scopes, handlers in the caller's transaction; cross-module calls rewired through it (events/announce/rsvps/invites/reconcile/groups/digests/retention/extraction/vision/voice/google_inbound/samtal/memory)"
+    },
+    {
+      "hash": "e72161d9a0e30712ea27f6039aa589c6debb7513",
+      "short": "e72161d",
+      "date": "2026-10-25T21:01:42+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-163 Encrypted internal transport: AES-256-GCM + Ed25519 (HMAC profile) wire form, Unix socket + loopback mTLS doors with internal CA, tap-capture and unsigned-refusal acceptance tests, cross-process fixture server; client.execute_envelope shares the one dispatch law"
+    },
+    {
+      "hash": "c3fa8a8380a5b3e33a6df1b4dba7cec15dfc357a",
+      "short": "c3fa8a8",
+      "date": "2026-10-25T21:04:59+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-164 Service identities + replay protection: per-module Ed25519 identities with key ids and rotation overlap, caller==signer binding at the door, 5-minute replay window with seen-nonce store; impersonation/replay/rotation acceptance tests"
+    },
+    {
+      "hash": "f9b0d65ab821d63e142d286286ec2dcbea497d3d",
+      "short": "f9b0d65",
+      "date": "2026-10-25T21:06:29+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-165 Internal API audit: every dispatch writes its B-019 line (caller, key id, operation, scope, module, result - never payload) via the client audit hook, installed by all three composition roots"
+    },
+    {
+      "hash": "a9b678401291a94ce508951662025448de366ccc",
+      "short": "a9b6784",
+      "date": "2026-10-25T21:14:45+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-166 In-process profile honestly: wire-mode internal client (split profile is composition, not code), execute_envelope transaction law, job payloads envelope-encrypted at rest and at the arq boundary with payload_of as the one reading law; composition-injected sealing settings fix the two-key-source defect"
+    },
+    {
+      "hash": "8dd536b7c3dd87678edc3168062ba3512ad66ec2",
+      "short": "8dd536b",
+      "date": "2026-10-25T21:32:15+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-167 Field-level encryption: gpa/crypto envelope scheme (master wraps per-group data keys, enc:v1: seals bound to group+field, blind index); chunk text/senders, provenance quotes and event-link quotes sealed end to end, export opens at assembly; B-166 payload-law stragglers (vision stamp, retention, jobs router, erasure attribution) fixed at root"
+    },
+    {
+      "hash": "be333700a4d6244f382e2d6b1f7506cb65eb6c71",
+      "short": "be33370",
+      "date": "2026-10-25T21:34:39+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-168 Encrypted file storage: EncryptedStorage driver (per-file keys wrapped under the master, GPAE1 header, content addressing and dedup preserved, legacy objects readable), LocalStorage.put_at, GPA_ENCRYPT_STORAGE composition in all roots"
+    },
+    {
+      "hash": "bcbe910b9d0beda18870d3e5e9f021a2603d97e6",
+      "short": "bcbe910",
+      "date": "2026-10-25T22:17:18+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-169 Key management: master rotation by re-wrap (one transaction, crypto.rotate_master job), owner recovery codes (scrypt escrow, shown once, mint kills the old set, one-time spend), KEY_MANAGEMENT.md; migrations 0018 (recovery_escrow) + 0019 (audit-chain schema, wires at B-170); full-suite checkpoint after B-168: 955 passed / 4 skipped / 1 stale-assertion failed (test fixed to live head)"
+    },
+    {
+      "hash": "6f3626b21c9b53312253f7f7552883ec4a59fa72",
+      "short": "6f3626b",
+      "date": "2026-10-25T22:22:38+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-170 Tamper-evident audit hash chain: prev/row hashes extended inside the writer's transaction, one-row chain head, link-walk verification naming the wound, GET /groups/{id}/audit/verify"
+    },
+    {
+      "hash": "adb224171276583722b01a753777eaa341b320d4",
+      "short": "adb2241",
+      "date": "2026-10-25T22:33:33+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-171 Durability manager: structural commit-before-answer (write tracker + guard middleware, 500 uncommitted_writes), draft autosaves with conflict copies (409 draft_conflict), resumable chunked uploads (offset-verified parts, whole-file hash, resume across instances); modulemap placements + pin for B-169/B-170 modules"
+    },
+    {
+      "hash": "87afb0a946d5a9d6ee63eae7b6c6ce6f817515f3",
+      "short": "87afb0a",
+      "date": "2026-10-25T22:36:32+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-172 Startup recovery & self-healing: assess_and_repair (serve/repaired/refuse verdicts, WAL checkpoint, stuck-job requeue, orphan part sweep, unknown-revision refusal), worker refuses damaged ground; double-verdict guard tested"
+    },
+    {
+      "hash": "725ef65b6610831e9989ad75d8d5ec10c2006f53",
+      "short": "725ef65",
+      "date": "2026-10-25T19:05:46-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-173 Error-correction services: circuit breakers + bulkheads per dependency enforced by the job chassis (defer, never burn attempts), data_repair job crew (derived counters, orphan provenance, stale digests; audit names every fix), DEGRADATION.md matrix; kill-each-dependency suite; root fix: voice.ingest_voice commits its own transaction (B-171 guard caught its B-165 audit-row residue)"
+    },
+    {
+      "hash": "880155488087dc17fb411360d02d7d4b51a06023",
+      "short": "8801554",
+      "date": "2026-10-25T20:06:02-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-174 Advanced account security: TOTP MFA (sealed secret, single-use steps, 5-min challenge), password policy (12+ local breached list), progressive lockout, per-device session list/revoke, new-device notice; migration 0021; contract 201/229 + SDK regen"
+    },
+    {
+      "hash": "b0dfe3ea2d43150fe175f41639dd063ab2e936d6",
+      "short": "b0dfe3e",
+      "date": "2026-10-25T21:13:55-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-176 Comment + documentation gate: AST checker (purpose headers, migration/prompt whys, env comments, no restatement docstrings), per-module ratchet floors for docstring coverage + documentation density, stripped fixture fails by file and line; gate runs in test.sh via the suite"
+    },
+    {
+      "hash": "16c64b16819cb4efca74f04bdaaf24e274b3e20b",
+      "short": "16c64b1",
+      "date": "2026-10-25T21:15:10-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-176 correction: regression batch total is 23 passed per its own log (gate 6 + architecture/threat/submission 17), not 27 as first recorded"
+    },
+    {
+      "hash": "cbca7ec4287bc737d2d1f04619810d25a2646150",
+      "short": "cbca7ec",
+      "date": "2026-10-25T21:32:19-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-177 Cross-platform verification matrix: portability audit (pathlib-only, explicit encodings, no OS branching; URL joins pinned), BOM/CRLF + DST + transport-door + FS-probe fixtures, CI matrix for Linux/Windows/macOS, PLATFORM_MATRIX.md naming the waived columns; identity.py text reads gain explicit utf-8"
+    },
+    {
+      "hash": "de9e3f2f6369fb0b80f2eb1518c75f1c56151d3a",
+      "short": "de9e3f2",
+      "date": "2026-10-25T21:40:27-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-178 Production-quality pipeline: ruff+mypy+pytest-cov+pre-commit as locked dev deps, enforced ruff E9+F brought to zero at root (33 findings; InternalResult undefined-name annotation fixed; load-bearing etag_of re-export restored with noqa), mypy --strict ratchet ceiling 722 over services/ai/internal/crypto in scripts/quality_gate.py (CI + pre-commit mirror it), QUALITY_PIPELINE.md records the format/wider-rules deviation and coverage-floor posture"
+    },
+    {
+      "hash": "9fdd8124fc66eda14bbfb2d359ac3584422804a9",
+      "short": "9fdd812",
+      "date": "2026-10-25T21:40:48-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Papers: memory map B-177 + B-178 entries (178/350)"
+    },
+    {
+      "hash": "a1f9977619b1d8da95bdb06339b4d24226a486a9",
+      "short": "a1f9977",
+      "date": "2026-10-25T22:02:19-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-179 Signed releases + SBOM: SPDX 2.3 bill of materials generated from uv.lock inside every train ZIP, Ed25519 detached signature + public key beside the ZIP (key custody outside the repo, in-repo key path refused, ephemeral fallback stamped in the manifest), verify_release checks sha256/signature/SHA256SUMS/SBOM-vs-shipped-lock/manifest fingerprint; one-flipped-byte tamper fixture refused loudly (5 new tests, batch 17 passed)"
+    },
+    {
+      "hash": "b0d7ec27f3be5a215de26eb54e0d17152584d5c4",
+      "short": "b0d7ec2",
+      "date": "2026-10-25T22:14:42-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-180 Phase 17 gate drill: resumable-upload flyer -> worker dies mid-vision-job -> startup recovery requeues -> job completes -> approval (internal.* audit story present) -> raw-disk greps clean -> audit chain verifies (tests/test_phase17_gate.py); TWO root defects found by the drill and fixed: (1) chunked-upload completion refused image bytes (sent everything to the text/PDF ingest) — completion now dispatches on the sniffed kind to the B-027 image ingest; (2) Flyer.transcript rested in PLAINTEXT while its chunk twin was sealed — now sealed as field flyer.transcript with one opening funnel (wall/detail/flyer views + export opener; tombstone snapshots keep the sealed form; architecture pin flyers->sources added with reason). Batches: drill+durability+architecture+field-encryption 14 passed, vision/flyer/tombstone/erasure/phase5 batches 45 passed"
+    },
+    {
+      "hash": "0ed3dcd577d62fb7e5f16920ea7eba0724632ba3",
+      "short": "0ed3dcd",
+      "date": "2026-10-26T03:21:51+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 17 gate repair: first PG-mode run of the Phase 17 tests found four SQLite-bound tests (B-167 raw-file greps x2, B-169 bundle grep, B-173 orphan planting) plus the parity mover's raw user insert aged by B-174's NOT NULL columns — fixed at root: PG_FILE_TESTS entries in conftest, parity twins in test_postgres_parity.py (sealed fields + wrapped keys raw-read, backup refusal + no key material at rest, data repair with the orphan insert refused by the server itself), mover insert speaks the current schema. Parity 7/7, PG-mode files 16 passed + 4 named skips, SQLite files + comment gate + architecture 29/29, ruff E9+F clean"
+    },
+    {
+      "hash": "66f88fbfc647b1c8fe0c53fe8a00a66d3ec3e9e5",
+      "short": "66f88fb",
+      "date": "2026-10-26T03:43:42+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 17 gate fix (production): audit chain head race on PostgreSQL — B-170's read-prev/hash/advance dance in audit.record was serialised on SQLite only by the database write lock; on PG two concurrent writers could both see no head and both insert id=1 (UniqueViolation, ~half of B-003 concurrent-writer runs) or hash against the same prev and fork the chain. Head now read FOR UPDATE (serialises extenders on PG, dialect no-op on SQLite) and a missing head is created inside a nested transaction so a lost creation race re-chains onto the winner's head. PG concurrent-writers 5/5 (was ~1/2); audit batches green both engines (SQLite 24/24, PG 22 + 2 named skips)"
+    },
+    {
+      "hash": "50b15bd2a256f2c4a8ba83b25905b397b9034f0f",
+      "short": "50b15bd",
+      "date": "2026-10-26T04:01:58+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 17 gate repair 2 (test isolation): PG per-test reset now also drops alembic_version — the table is not a model table, so the TRUNCATE never touched it, and B-172's unknown-revision test (planting '9999_from_the_future' on what PG mode makes the shared suite DB) poisoned every later recovery test on a reused database: healthy databases scored 'refuse' and the planting test itself died on DuplicateTable. Fresh-database runs were green, which is why two earlier PG gate runs missed it. Recovery file now 5/5 twice back-to-back on the same reused, previously poisoned database"
+    },
+    {
+      "hash": "8d06c9c12983b99dca0d3c2fd6fc77b3941a916b",
+      "short": "8d06c9c",
+      "date": "2026-10-26T05:41:20+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "README checkpoint refresh (in place): Phase 17 complete — 180/350 slices, contract 201 paths / 229 schemas, Phase 13 + 17 rows marked done, honest-boundaries note now reads Phases 0-17 with Phase 18 next"
+    },
+    {
+      "hash": "7547930e442d21d94e99c567f40fa8c4282d2a04",
+      "short": "7547930",
+      "date": "2026-10-26T05:41:20+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 17 gate papers: drill totals filled from the runs' own logs (SQLite 1026/7/0 in two declared halves, PG 1006/27/0 + parity 7/7 = 1013 on-engine, collected 1033 both engines), TEST_REPORT Phase 17 gate section (the drill's two root defects + the gate's three repairs incl. the production audit-chain race), memory map B-180 entry + Phase 17 COMPLETE (180/350)"
+    },
+    {
+      "hash": "b6fa85f8870fa5098d00816532b8e1adc49a0fa0",
+      "short": "b6fa85f",
+      "date": "2026-10-26T01:59:49-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-181 Documentation architecture: docs/ tree + reader-ordered index + docs-as-code rules, stdlib Mermaid gate in test.sh (broken diagram fails by file; 6 gate tests)"
+    },
+    {
+      "hash": "7980b82c3200b50f58663efcdf771ddd81bd6b11",
+      "short": "7980b82",
+      "date": "2026-10-26T02:21:37-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-182 User guide I: start + groups (account, sign-in incl. MFA, group creation, invites, roles in plain words, group settings, notification preferences, quiet hours; task-shaped with first-success checklist, honesty markers pinned by docs-gate test)"
+    },
+    {
+      "hash": "fca9b2c6923ba82a1285358b23d8a300c411f28d",
+      "short": "fca9b2c",
+      "date": "2026-10-26T02:21:41-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-183 User guide II: sources — every way in (paste, file, newsletter, flyer, board, link, email-in, voice, live chat), the permission record in plain words, and revocation/tombstone consequences; pinned by docs-gate test"
+    },
+    {
+      "hash": "504317a7373e2c09c8328a9ede97ff18251fcdba",
+      "short": "504317a",
+      "date": "2026-10-26T02:41:01-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-184 User guide III: the review queue — reading a candidate, confidence and the closed flag vocabulary, provenance quotes and flyer regions (supported: false shown, never hidden), editing (flags recomputed server-side), approve/reject under the group's review policy (seats can never approve), both merges settled by source support, change candidates, and contradiction resolution; pinned by docs-gate test"
+    },
+    {
+      "hash": "47b529a066dc472030b47d93a4a31cc1652925df",
+      "short": "47b529a",
+      "date": "2026-10-26T02:41:16-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-185 User guide IV: calendar + events — agenda/month/tonight views (tonight 15:00-03:00 group-local, pinned first), server-built projections (member fields absent, not blanked), discussion, RSVP with the strict next-in-line waitlist, .ics/Google/feed (token shown once, hashed, revocable), print month, conflicts, and organiser edit/cancel/clone/recurrence; pinned by docs-gate test"
+    },
+    {
+      "hash": "39031d26ae8668aa34144a61b6978934262ab7b4",
+      "short": "39031d2",
+      "date": "2026-10-26T02:41:43-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-186 User guide V: planning — tasks and the owner law (AI words land only as a suggested label), decisions log with supersede chains, open questions + gaps, polls (apply-winner refuses ties in plain words), checklists/roles/supplies, budget-lite in integer cents, availability finder (marks only on proposed slots), and templates with the 7 starters; pinned by docs-gate test"
+    },
+    {
+      "hash": "9137a1eae88ec5922896fd6c4b3cb1017a8cb837",
+      "short": "9137a1e",
+      "date": "2026-10-26T03:01:34-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-187 User guide VI: reminders, digests, memory — materialised reminders (7d/1d 09:00 + morning-of 08:00 event-local, moves supersede old rows in the same act), the AI-wording verbatim-facts leash, organiser-approved change alerts, the weekly digest, asking the memory (approved-history-only corpus, pruning not embedding RAG, verified citations, the 'I couldn't verify this' refusal), drafts-until-approved summaries/briefings/recaps, run transparency, and the honest AI may/may-not list; pinned by docs-gate test"
+    },
+    {
+      "hash": "1117a55ce8f58e2ec138a564aaf2e4531c7fbc2b",
+      "short": "1117a55",
+      "date": "2026-10-26T03:01:55-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-188 Admin + operator guide: every dangerous button with consequence before instructions — settings pack (one transaction, per-field audit), agent seats (key shown once, seat_cannot_approve), integrations (sealed config, key names only, reconcile never writes outward, webhook token/secret discipline), AI budget dial, audit chain + verify, member data (no hashes by construction), export (owner person-session only, secrets withheld), and erasure (hard, total, irreversible; exact name + ERASE double confirmation); pinned by docs-gate test"
+    },
+    {
+      "hash": "3a35af9c9897aad46af8d43cde8ac93ec105d1bb",
+      "short": "3a35af9",
+      "date": "2026-10-26T03:47:24-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-189 Architecture diagram pack: six lengthy Mermaid diagrams each with a prose walking tour naming every box and arrow — system context (five caller kinds, seven boundary systems), process view (API/worker/arq over SQLite-or-PostgreSQL, jobs as rows), module map (B-161 names, internal-API road, pinned shrink-only edges, audit+crypto shared), request lifecycle (deps door, envelope in the caller's transaction, commit-before-answer), job lifecycle (claim-by-update, backoff, free breaker deferral, dead at cap, recovery requeue), deployment topology (native systemd, proxy-only public face, 03:15 backup, 0640 env); honesty markers for Phase 28 MCP topology and the NOT RUN nginx live validation; pinned by docs-gate test"
+    },
+    {
+      "hash": "f923cf21f433f2615d6f0727fb354cada142cb0a",
+      "short": "f923cf2",
+      "date": "2026-10-26T03:48:07-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-189 correction: regression batch total is 31 passed per its own logs (docs gate/architecture/submission 25 + threat model 6), not 27 as first recorded"
+    },
+    {
+      "hash": "5eea552c588d841c178afd2bd60e73b89237f579",
+      "short": "5eea552",
+      "date": "2026-10-26T04:13:20-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-190 Module atlas: one chapter per B-161 module (22 chapters) — job, public surface, tables owned, internal operations offered/consumed, invariants, failure modes, and a diagram each; verified against modulemap.py, the models' tablenames, and the registry's seven operations; honest api.py note (no single api.py exists — surface is router families + service functions); pinned by docs-gate test"
+    },
+    {
+      "hash": "bdbf83ffd9399b7a368c82f5d25192d14f3bedef",
+      "short": "bdbf83f",
+      "date": "2026-10-26T04:32:13-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-191 Internal encrypted API document: the §6A.4 protocol in full — envelope field-by-field (request/result + wire form), signing and encryption in the door's real checking order (signature before decryption, caller-is-signer, replay, GCM, one dispatch path), transport profiles (in-process with sealed-at-rest job payloads, Unix socket, loopback TCP + mTLS internal CA, named pipe honestly NOT RUN), identity + scope registry (seven operations, nine caller grants, key ids, directory vs derived custody), replay defence (300s window, restart bound stated), key rotation (identity .pub.prev overlap; AES comms key honestly non-overlapping), three sequence diagrams (publish, AI extraction submission, rejected impersonation), B-165 audit shape, full refusal table; pinned by docs-gate test"
+    },
+    {
+      "hash": "d61be4bd915254d31a9451ec86ebad9ba0bf50e4",
+      "short": "d61be4b",
+      "date": "2026-10-26T04:54:05-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-192 Data-model document + ER pack: six erDiagram packs (identity, sources, events, planning, comms, system) with walking tours, all 69 tables from Base.metadata with columns/FKs/uniques/indexes, sealed (enc:v1: chunk.text/sender, provenance.quote, event_link.quote, flyer.transcript; whole-sealed config/secret/totp; wrapped group keys + escrow) vs hashed (Argon2id + token/key hashes, shown once) vs plain told honestly, migration chain 0001-0021; model-document checker in the docs gate parses every __tablename__ and fails naming a missing table; Mermaid checker repair: erDiagram crows-foot cardinality (o{, }|) normalised so sound ER diagrams pass while a dropped entity brace still fails by file; pinned by docs-gate tests"
+    },
+    {
+      "hash": "f22d4b0ef86935b38112c63eb144ba4b0917a701",
+      "short": "f22d4b0",
+      "date": "2026-10-26T05:13:29-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-193 AI pipeline documents: extraction, flyer reading, board segmentation, de-duplication, change detection, and the context-pruning engine — flowcharts and sequence diagrams with walking tours, prompt-versioning rules (fifteen prompts, manifest SHA-256 pins), the three-harness evaluation method (0.02 tolerance, deliberately imperfect corpora), and five worked examples traced through fixture data; pinned by docs-gate test (docs gate now 19 tests, regression batch 75 passed)"
+    },
+    {
+      "hash": "11597b60b409144eeb4c005755b0d52a8e41747a",
+      "short": "11597b6",
+      "date": "2026-10-26T05:32:41-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-194 Security + cryptography document: threat model in prose (assets, actors, Case #1 decided at the review queue), key hierarchy diagram (master wraps group + file keys, domain-separated derivations, scrypt recovery escrow), encryption at rest by layer (enc:v1: field seals, whole-sealed secrets, GPAE1 storage, sealed job payloads, Argon2id/hashed credentials), encryption inside, account security (TOTP MFA, lockout, refresh families), audit chain, and the honest-boundaries chapter (no member-to-member E2E claimed, most content plain); pinned by docs-gate test (docs gate now 20 tests, regression batch 80 passed)"
+    },
+    {
+      "hash": "8f8098024ce50b151c1515346973876af0722a99",
+      "short": "8f80980",
+      "date": "2026-10-26T05:33:21-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-194 correction: regression batch total is 70 passed per its own log, not 80 as first recorded"
+    },
+    {
+      "hash": "ffdd9689d1fcada8d5405b187b7ed62d76f8e546",
+      "short": "ffdd968",
+      "date": "2026-10-26T05:52:23-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-195 Durability + recovery document: §6A.5 machinery as diagrams and drills (WAL/FULL foundation, WriteTracker commit-before-answer, autosave conflicts, resumable uploads, boot recovery + double-verdict guard, watchdog honestly no separate daemon, backup/restore, chaos harness 100/100); pinned by docs-gate test (docs gate now 21 tests, regression batch 53 passed + fixed test green on re-run)"
+    },
+    {
+      "hash": "b864e2051ff4d55216b8eb136922e69949fcdfdb",
+      "short": "b864e20",
+      "date": "2026-10-26T06:12:03-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-196 API + frontend guide: three auth sequence diagrams (password+MFA challenge, magic link, refresh-family rotation), the three credentials kept apart (Bearer vs X-API-Key vs feed token), agenda-only cursor pagination (opaque next_cursor), the complete error table (all 35 registry codes parsed live from errors.py by the docs-gate test), the four SSE frames polled from durable tables, ETag/If-Match, idempotency told honestly (no Idempotency-Key store on the public API — D-15's remaining half), Bruno walkthrough with its B-010-skeleton honesty marker, and the mock/fixture mock-mode guide; pinned by docs-gate test (docs gate now 22 tests, regression batch 72 passed, Mermaid gate 56 diagrams)"
+    },
+    {
+      "hash": "7ac622d739cf8e346f599c0e0c8ff959b83a0ce6",
+      "short": "7ac622d",
+      "date": "2026-10-26T06:12:30-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-196 correction: regression batch total is 57 passed per its own delivered log, not 72 as first recorded"
+    },
+    {
+      "hash": "c291b1ef9df456acd9386b562bbada9c7cec949d",
+      "short": "c291b1e",
+      "date": "2026-10-26T06:32:40-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-197 Per-code-file atlas: generated docs/16 chapter with one entry per code file (391 files: purpose from the file's own D-26 header, B-161 module, AST public symbols + imports, layer-law allowed/forbidden dependencies, owned tables, failure behaviour, tests that name it, creating slice from git log), generator scripts/build_file_atlas.py, and a tree<->atlas checker in the docs gate that fails naming any missing or stale file (docs gate now 23 tests, regression batch 32 passed with comment gate + architecture, Mermaid gate 57 diagrams)"
+    },
+    {
+      "hash": "55bd9840929d132c3cbfeb191a7bee735027e86b",
+      "short": "55bd984",
+      "date": "2026-10-26T06:33:53-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-198 Testing + quality document: how to run (test.sh anatomy — Mermaid gate then suite, one-page report, basetemp note, PostgreSQL leg), how to read the ZIP's TEST_REPORT (reconciliation arithmetic, superseded-assertion discipline, deliberately imperfect evaluation corpora, NOT RUN markers), every suite family explained by what it guards, the failure-becomes-a-fixture discipline (reproduce alone, fix at root, freeze as fixture, supersede honestly, totals from the run's own log), the non-pytest gates, and a generated appendix naming all 156 test files in their own header words; pinned by docs-gate test (docs gate now 24 tests)"
+    },
+    {
+      "hash": "e901c987934070eae58a1a2fe494e7def8cb6f20",
+      "short": "e901c98",
+      "date": "2026-10-26T06:34:50-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-199 Deployment + release document: native install (Linux systemd road rehearsed — dedicated user, non-editable venv, 0640 env never overwritten; Windows/macOS run road with the supervision gap stated honestly, NOT RUN legs named), the three units + backup timer, proxy/TLS (Caddy live-proven, nginx reviewed-not-run), verify-then-place backups, upgrade.py with its printed rollback and .previous tree, the §8 ZIP anatomy with the B-179 Ed25519 signature + fingerprint verification and SBOM, and release discipline (green-suite totals, freeze drill, known limits travel with the release); pinned by docs-gate test (docs gate now 25 tests)"
+    },
+    {
+      "hash": "9cd6524343be926e6d1a88355f181d38a3c11710",
+      "short": "9cd6524",
+      "date": "2026-10-26T07:25:56-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-200 Documentation proof — Phase 18 gate: three cold reads as executable/audit legs (guide I checklist parsed from docs/01 and its golden tasks executed through the guide's own API doors; B-196 contract claims re-derived from live OPENAPI.json 201/229; publish flow traced against the live internal registry), diagram accuracy + modulemap coverage, human cold reads honestly NOT RUN (no human readers in this environment); findings fixed in-release (handlers.py registers the operations, preferences door 403-by-design for non-members, docs/08 states the approval law in prose, atlas + B-198 inventory regenerated for the new gate file); FULL SUITE GREEN 1056 passed / 7 skipped / 0 failed in 46m32s from the run's own log, reconciled 1033+30=1063 collected — Phase 18 COMPLETE, 200/350"
+    },
+    {
+      "hash": "6fd1cf2269d775734dae9ca63f71d9cfd2b2936f",
+      "short": "6fd1cf2",
+      "date": "2026-10-26T11:29:06+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "Phase 18 gate papers (checkpoint): README refreshed in place (200/350, 1056 passing SQLite — tests line had lagged two gates, corrected; Phase 18 row done; boundaries note Phases 0-18), TEST_REPORT Phase 18 gate section (SQLite 1056/7/0 from the gate log, collected 1063 reconciled, PG not re-run stated plainly, human cold reads NOT RUN waiver)"
+    },
+    {
+      "hash": "ba84f5fbb95806948a77374d0ccbf9bc4a4825f0",
+      "short": "ba84f5f",
+      "date": "2026-10-26T07:54:41-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-201 API parity audit + checker: 256-action register (route + internal operation per action, reverse drift check, UI-only fixture fails by name), parity report script for TEST_REPORT, MCP/terminal reported pending never passed; regression batch 40 passed (parity 6 + architecture + comment gate + docs gate), atlas regenerated 395 files — Phase 19 opens, 201/350"
+    },
+    {
+      "hash": "83efd67e79a7523be99df17c82be254b0b493a62",
+      "short": "83efd67",
+      "date": "2026-10-26T08:37:02-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-202 agent-seat equality pack + B-203 the one approval law: seat profile (name/description/avatar, migration 0022, self-or-admin edit door, parity register 258 actions, contract 202/230), seat task ownership via planning.owner_display, role matrix run unchanged for seat and human principals (tests/test_seat_equality.py); approval restated — B-018 blanket seat ban superseded: a seat below the approver role meets seat_cannot_approve, a draft-scoped seat meets the scope door, an organiser seat with publish approves through the same service operation audited as the seat, multi-approver counting keyed per principal; superseded assertions updated (permissions seat test's surviving half, B-129 scope guide, docs/15 + README contract size in place); regression batches 104 + 87/1-fixed + 30 passed from their own logs — 203/350"
+    },
+    {
+      "hash": "13bad8c86d4fc0c4d6d809f91c4832e2353937e5",
+      "short": "13bad8c",
+      "date": "2026-10-26T09:04:37-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-204 MCP server core: official SDK server package (src/gpa/mcp) talking only through the internal encrypted API as its own mcp service identity (registry gateway grants, B-165 audit installed, per-call commit/rollback bridge), stdio + streamable HTTP transports on one FastMCP server, protocol negotiation from the SDK table, core tools (server info, internal operations, candidate draft, event publish), structured stderr JSON logging with a payload allow-list; mcp>=1.25,<2 locked 1.29.1, gpa-mcp entry point, GPA_MCP_HTTP_* settings; acceptance tests/test_mcp_core.py 8 passed (import scan, identity+grants, committed+audited draft, log redaction, both transports as real subprocesses via the SDK client); regression batch 46 passed, comment-gate mcp floor 100/100/45 — 204/350"
+    },
+    {
+      "hash": "e34f0a7ec0844b501089d3002742c004cd1818c8",
+      "short": "e34f0a7",
+      "date": "2026-10-26T09:05:39-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-204 atlas: regenerated per-file atlas for the MCP package (402 files, B-197 checker green via docs gate 25 passed)"
+    },
+    {
+      "hash": "508a09c22fbd98b6dd6ea6b65f067eab789fc674",
+      "short": "508a09c",
+      "date": "2026-10-26T09:06:57-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-204 correction: MCP SDK version is 1.30.0 per uv.lock and the installed environment, not 1.29.1 as first recorded in 13bad8c and the memory map"
+    },
+    {
+      "hash": "182f2ff0a8cf551f83085bf87c52848f4a784b71",
+      "short": "182f2ff",
+      "date": "2026-10-26T09:37:19-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-205 MCP authentication + authorisation: seat-key local road (re-resolved per call, revocation lands on next call) and OAuth 2.1 resource-server verification for streamable HTTP (HS256 signature/expiry/audience/scope checks, SDK TokenVerifier + AuthSettings), per-tool scope re-checked at call time, EXTERNAL_TO_INTERNAL mapping onto internal scopes; acceptance tests/test_mcp_auth.py 9 passed, auth+core 17 passed, regression batch 111 passed with comment-gate density repaired to 45.2% (comment+docs gates 31 passed), atlas regenerated — 205/350"
+    },
+    {
+      "hash": "faf77a34038f6ac5de7e8873ef0ed41f32fd8e27",
+      "short": "faf77a3",
+      "date": "2026-10-26T10:07:00-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-206 MCP tool registry from one source of truth: catalogue generated from the internal operation registry (gpa.mcp.tools ToolSpec + curated annotations, meta tools declared), checker covering both directions by name + scope-mapping through EXTERNAL_TO_INTERNAL + TOOL_SCOPES agreement + served-surface leg; server serves 9 tools with registry descriptions (five generated operation tools: notify.request, notify.rsvp_promotion, jobs.enqueue, ai.submit_job, integrations.emit — admin-scoped per the mapping); B-201 parity checker gained its MCP leg and counts the surface covered (terminal only still pending); tool descriptions + per-description SHA-256 + whole-list digest stamped into the signed release manifest and recomputed by verify_release (tool-poisoning tripwire); acceptance tests/test_mcp_registry.py 7 passed, registry+parity 13 passed, auth+core 17 passed, gates batch 55 passed, atlas regenerated 406 files — 206/350"
+    },
+    {
+      "hash": "a7759c1d4136996ef614a3bb05f344565a297993",
+      "short": "a7759c1",
+      "date": "2026-10-26T14:23:21+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-207 MCP tools — groups, members, profile: first domain family on the generated catalogue — five new internal operations registered in the composition root (groups.get + groups.list_members under the registry's first read scope groups:read, groups.update under groups:write, profile.get/profile.update under profile:read/profile:write; mcp gateway grants widened beside the six write scopes); roster returns persons and seats in one labelled answer; edits are closed vocabularies at the operation door (five plain group fields; per-kind profile sets; out-of-family fields refused by name as internal_bad_payload; a profile payload naming both/neither principal refused likewise) delegating to the owning services and audited under the actor label; EXTERNAL_TO_INTERNAL widened honestly (read now maps onto the read operations, draft adds profile:write, groups:write only from admin) so gpa_update_group is admin-scoped and gpa_update_profile draft-scoped; server serves 14 tools; superseded count assertions updated in place (operations 7→12, manifest 9→14, parity 9/7→14/12); acceptance tests/test_mcp_groups.py 7 passed, groups+registry+auth+parity 29 passed, core+internal 44 passed, gates batch 55 passed with comment-gate mcp density repaired to 45.1% by documentation, atlas regenerated 407 files — 207/350"
+    },
+    {
+      "hash": "a74ec57c643f71ceeaf9d6ef40a35116f35f7576",
+      "short": "a74ec57",
+      "date": "2026-10-26T14:32:42+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-208 MCP tools — candidates and the review queue: second domain family — five new internal operations (candidates.list + candidates.get under candidates:read returning the queue's rows/triage filters and one candidate in full with provenance + B-111 approval progress; candidates.approve/reject/edit under one new internal scope candidates:decide); candidates:decide maps only from the publish credential rung (and admin) so a seat's default read+draft key is structurally unable to decide over this surface, exactly as at the HTTP doors; approval travels groups.approve_candidate itself — the one approval law (B-203) with role floor, distinct-approver counting and the mint applied inside the service, recorded-vs-deciding outcomes told apart by the returned row's status; reject keeps the row, edit marks edited and stays undecided; merging + extraction requests deliberately out of family; server serves 19 tools; superseded count assertions updated in place (operations 12→17, parity 14/12→19/17); acceptance tests/test_mcp_candidates.py 5 passed, family batch 91 passed, core+internal 44 passed, gates batch 61 passed with comment-gate mcp density repaired to 45.0% by documentation, atlas regenerated 408 files — 208/350"
+    },
+    {
+      "hash": "ee57fac1adc3bb61b15b0ee558bfc5701d3246c5",
+      "short": "ee57fac",
+      "date": "2026-10-26T14:45:19+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-209 MCP tools — events, RSVPs, and the calendar: third domain family — six new internal operations (events.list + events.get under events:read carrying the viewer's role so the B-049 bright line holds over this surface exactly, drafts absent-not-redacted below organiser; rsvps.list with summary counts; calendar.agenda with occurrence expansion, opaque cursor, and window moments converted at the operation to naive UTC; rsvps.set under rsvps:write mapped from draft — answering is participation, a seat's default key can answer for its seat; events.cancel under events:write mapped from publish, doubly gated with the organiser role law stated in the operation itself); event editing deliberately out (an ETag conversation for its own surface; reads carry version); server serves 25 tools; superseded count assertions updated in place (operations 17→23, parity 19/17→25/23); acceptance tests/test_mcp_events.py 5 passed, family batch 60 passed, core+internal 44 passed, final gates+family run 69 passed with comment-gate mcp density repaired to 45.0% by documentation, atlas regenerated 409 files — 209/350"
+    },
+    {
+      "hash": "f5f43cfad43e1ae5648733a69f1d5a57150c8999",
+      "short": "f5f43cf",
+      "date": "2026-10-26T14:52:15+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-210 MCP tools — sources and extraction requests: fourth domain family — five new internal operations (sources.list + sources.get under sources:read: metadata + chunk counts with no chunk opened for the list, the full read opening chunks through the service's one funnel in position order; sources.create + sources.append under sources:write mapped from draft — filing is a member act, the create carrying the permission record granted_by/granted_scope verbatim, append continuing the one true order; extraction.request under extraction:request mapped from publish with the organiser role law stated in the operation — it queues the durable job and returns its id, the run remaining the worker's, pinned by a queue-still-empty assertion); source deletion deliberately out of family (tombstone law stays at the human doors); server serves 30 tools; superseded count assertions updated in place (operations 23→28, parity 25/23→30/28); acceptance tests/test_mcp_sources.py 6 passed, family batch 52 passed, core+internal 44 passed, final gates run 70 passed with comment-gate mcp density repaired to 45.1% by documentation, atlas regenerated 410 files — 210/350"
+    },
+    {
+      "hash": "5618026dbac6cf958638b3bc24e97090a26e3e04",
+      "short": "5618026",
+      "date": "2026-10-26T14:59:36+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-211 MCP tools — planning (tasks, decisions, questions): fifth domain family — six new internal operations (planning.list_tasks/list_decisions/list_questions under planning:read in the services' own orders; planning.decision_chain walking the whole supersede history oldest-first as a first-class tool; planning.update_task + planning.resolve_question under planning:write mapped from draft, as at their member doors); serialisers keep the planning law visible — suggested owner separate from assignment, resolve-with-text minting a linked Decision in the service's transaction; update takes the presence-stated changes dict; direct creation deliberately out of family (agent-originated planning work is born as candidates and approved, carrying provenance); server serves 36 tools; superseded count assertions updated in place (operations 28→34, parity 30/28→36/34); acceptance tests/test_mcp_planning.py 5 passed, family batch 45 passed, core+internal 44 passed, final gates run 69 passed with comment-gate mcp density repaired to 45.1% by documentation, atlas regenerated 411 files — 211/350"
+    },
+    {
+      "hash": "8f2334680ca0f30498b4ba5c7ed5654e42244121",
+      "short": "8f23346",
+      "date": "2026-10-26T15:08:15+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-212 MCP tools — notifications, digests, and announcements: sixth and last domain family of the B-207→B-212 ladder — six new internal operations (announcements.list under announcements:read with expired posts honoured only at organiser role; announcements.create under announcements:write mapped from publish, role law in the operation and the B-043 person law passed through to the service, which refuses a seat in its own words; notifications.inbox + notifications.preferences under notifications:read — a person's own rows and effective policy, no seat form offered; digests.list; digests.preview under notifications:write mapped from publish with the organiser role law — compose-and-store UNSENT, the digest send deliberately staying at the human door); the MCP domain surface stands complete at 42 tools over 40 operations through the one bridge under the call-time scope law; superseded count assertions updated in place (operations 34→40, parity 36/34→42/40); acceptance tests/test_mcp_notifications.py 6 passed, six-family batch 46 passed, core+internal 44 passed, final gates run 70 passed with comment-gate mcp density repaired to 45.0% by documentation, atlas regenerated 412 files — 212/350"
+    },
+    {
+      "hash": "9618de428290f356d8968f1b1e6bc1a8fad68845",
+      "short": "9618de4",
+      "date": "2026-10-26T11:35:19-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-213 MCP resources: read-only gpa:// shelf — six group templates (calendar as JSON + iCalendar rendered in-module from events.list facts, one event, current decisions, queue summary, memory-map of the group's product data) plus the static shelf (the shipped OpenAPI document verbatim, the docs set by chapter with the directory listing itself as the allow-list); no new operations and no new tools (catalogue stands 42/40) — every resource is a presentation of an existing operation through the one bridge; reads at member role so the bright line holds on the shelf (draft absent from both calendar forms, not_found at its own URI), and the read scope is checked per read via server.py's factored _resolve_principal + a new _resource_guard (a draft-only principal meets insufficient_scope at the resource); acceptance tests/test_mcp_resources.py 7 passed, combined MCP+parity+gates batch 103 passed (2 docs-gate failures were the new-file inventory, fixed by atlas regen + docs/17 row, gates then 31 passed), internal batch 36 passed, atlas regenerated 414 files — 213/350"
+    },
+    {
+      "hash": "05043de0d5d286c3eecdb4a05f37d1b5266cfca3",
+      "short": "05043de",
+      "date": "2026-10-26T11:59:43-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-214 MCP subscriptions + notifications: resources/subscribe + unsubscribe protocol handlers for the calendar (JSON + iCalendar) and queue resources only — per-session locked SubscriptionStore in new src/gpa/mcp/subscriptions.py (not durable by design; not_found vs validation_error refusals kept distinct), subscribe guarded per call by B-213's read-scope law (draft-only principal refused insufficient_scope), unsubscribe keyed by the caller's own session; one event system, two surfaces — dispatch_frame translates the SSE stream's published vocabulary (job.progress -> calendar+queue, notification.created -> calendar only, snapshot/comment.created/unknown -> nothing) into send_resource_updated on watching sessions only, plus send_list_changed over the SDK's three catalogue verbs; build_server wraps the instance's initialization options to advertise subscribe=True + all listChanged=True (SDK 1.30.0 hardcodes subscribe=False and defaults listChanged off while routing subscribe and offering the send verbs — gap recorded in the module and the memory map); no new operations and no new tools (catalogue stands 42/40); acceptance tests/test_mcp_subscriptions.py 8 passed (first run showed one transient capabilities-test failure, passed alone and 8/8 on re-run, recorded honestly in the map), combined MCP+parity+gates batch 122 passed, atlas regenerated 416 files — 214/350"
+    },
+    {
+      "hash": "0e8493fa786df20b87b24805f36407c80f1e00b2",
+      "short": "0e8493f",
+      "date": "2026-10-26T12:22:40-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-215 MCP prompts: curated versioned workflow templates — five roadmap jobs (plan_event, brief_before_event, recap_last_night, what_is_undecided, prepare_weekly_digest_draft, all version 1) in new src/gpa/mcp/prompts.py (PROMPTS + render_prompt per the docs atlas), registered on the same FastMCP server; each template composes the group's own resources/tools in its text, carries DRAFTS_RULE verbatim (drafts go to the queue, approval is the one law) and the data posture, holds no capability of its own (no bridge/service imports); typed arguments with typed failures (unknown=not_found, missing/undeclared/non-string=validation_error), unsupplied optionals render as explicit not-specified; acceptance tests/test_mcp_prompts.py 8 passed, combined MCP+parity+gates batch 128 passed with 2 docs-gate inventory failures fixed by atlas regen (418 files) + docs/17 row, gates then 31 passed — 215/350"
+    },
+    {
+      "hash": "16d68925fe4d4146450b1bb66aa51493bfb4cfcf",
+      "short": "16d6892",
+      "date": "2026-10-26T12:52:53-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-216 MCP elicitation bridge: server may ask the human for one missing fact (place/time/yes_no/free_text, closed vocabulary with typed one-field answer schemas) — where the client's handshake advertised form elicitation the async tool gpa_ask_for_missing_fact (draft scope) asks live through the SDK context and returns the answer as data with approval:False and nothing filed; every other outcome (no context, no capability, decline, cancel, failed ask) degrades through the new elicitation.ask operation (planning:write, no grant widened) which files an OpenQuestion via the planning service with the agent's identity as author and routes it to the organiser inbox (one elicitation.question notification per active organiser+ person); a named candidate must be pending (unknown=not_found, decided=conflict) and is read never written — an answer can inform a draft, it can never be an approval; catalogue 43 tools / 41 operations, superseded count assertions updated in place; acceptance tests/test_mcp_elicitation.py 10 passed, combined MCP+parity+gates batch 146 passed, atlas regenerated 420 files — 216/350"
+    },
+    {
+      "hash": "de1bddf011b0ceaa866da8852c80338d7935204b",
+      "short": "de1bddf",
+      "date": "2026-10-26T12:54:32-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-216 correction: combined batch total is 140 passed per its own log (batch2.log, 300.70s), not 146 as first recorded in 16d6892 and the memory map — the 146 figure came from a garbled delivered summary; the batch file list totals 140 tests (batch1: 135 passed + 5 failed, all five fixed and green in batch2). All other B-216 facts stand."
+    },
+    {
+      "hash": "055eb490bdcca7ba88bd0d4c7a12dbc9e73028dc",
+      "short": "055eb49",
+      "date": "2026-10-26T13:24:34-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-217 MCP sampling policy: server-initiated sampling off by default (GPA_MCP_SAMPLING_ENABLED, reason in Doc 13 + DEFAULT_OFF_REASON) — where an operator enables it, the new tool gpa_request_sampling is publish-scoped over the new sampling:request internal scope and authorises BEFORE the ask through the new sampling.sample operation, which budget-gates both ways on B-047's ledger (daily AI budget spent or the group's sampling day cap, counted on mcp_sampling ledger rows via usage.count_operation_today, both refused sampling_budget_exceeded) and writes the ledger row (honestly zero server-side cost) plus the hash-chained audit row (actor, prompt length, token ceiling — never words) in its transaction; per-call token cap clamps (512 default); a client without the sampling capability is reported as data with no model substituted, sampled text returns is_data — catalogue 44 tools / 42 operations, superseded count/set assertions and the docs/15 error table updated in place (new codes sampling_disabled + sampling_budget_exceeded); acceptance tests/test_mcp_sampling.py 10 passed (first run one transient failure, not reproduced — file 10/10 on re-run), combined MCP+parity+gates batch 148 passed with the 2 superseded-assertion failures fixed and their files re-run 39 passed, atlas regenerated 422 files — 217/350"
+    },
+    {
+      "hash": "ac96db6ba3d24d7a1a1d2e05f89238112ae4c85c",
+      "short": "ac96db6",
+      "date": "2026-10-26T13:25:46-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-217 correction: tests/test_mcp_sampling.py passed 10/10 on its first full-file run per that run's own delivered output (27.74s) — the '9 passed / 1 transient failure' note in 055eb49 and the first memory-map entry came from a misattributed background delivery belonging to no command in this run; the re-run also passed 10/10 (run3.log). All other B-217 facts stand."
+    },
+    {
+      "hash": "b13af7146bdf507032095237e4588b21da529d90",
+      "short": "b13af71",
+      "date": "2026-10-26T14:00:11-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-218 MCP security hardening: truthful tool annotations on every served tool (readOnly = the read scope; destructive = approve/reject/publish/cancel; openWorld = emit/sampling/elicitation; idempotent = reads + the upsert set), stamped into the signed manifest beside the descriptions — consent gates at the gateway for destructive + gated open-world tools (new consent_required code; elicitation exempt as its own human consent interaction), per-principal rate limits (GPA_MCP_RATE_LIMIT_PER_MINUTE, default 600) counted once per call after the scope check, every operation result marked is_data (planted instructions return as inert data), full audit asserted through the bridge's hash-chained hook; new src/gpa/mcp/security.py, catalogue stands 44 tools / 42 operations, 20 superseded gated call sites updated in place; acceptance tests/test_mcp_security.py 7 passed, combined batch re-run in chunks from their own logs 154 passed with the 3 resources publish-helper failures fixed and affected files re-run 25 passed, atlas regenerated 424 files — 218/350"
+    },
+    {
+      "hash": "bd1554c066a8a14f1f25eb91ca49b30cd61a7a41",
+      "short": "bd1554c",
+      "date": "2026-10-26T14:01:29-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-218 correction: the combined batch's own log (batch.log, 427.16s) reads 154 passed / 3 failed — the '155 passed / 5 failed' figure in b13af71 and the first memory-map entry came from a garbled delivered summary; the chunk re-runs (30 + 34 + 90 passed, same 3 resources failures) agree with the batch log exactly. All other B-218 facts stand."
+    },
+    {
+      "hash": "3df9236e4c2930b1f5f4850f1c96821573889152",
+      "short": "3df9236",
+      "date": "2026-10-26T18:38:38+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-219 MCP conformance + client pack: generated tool catalogue (every tool's credential + internal scopes, B-218 annotations, description hash, and one curated worked example with consent stated on gated tools; checker fails by name on coverage drift, hash, annotation, scope, or example tampering) served as the static resource gpa://tool-catalogue.json on B-213's shelf and rendered as Doc 13's generated index table (scripts/generate_mcp_catalogue.py, marker-fenced, idempotent, drift-pinned by test); conformance runner (src/gpa/mcp/conformance.py) passes ten named spec cases in-process against a built server — identity + protocol versions, tools/prompts lists vs their catalogues, served annotations, statics + templates, catalogue resource digest, unknown tool/resource/prompt refused — with the MCP Inspector stated honestly as an external human-run tool (npx @modelcontextprotocol/inspector), NOT run here; two independent worked clients run for real in the acceptance tests (official SDK over stdio in examples/mcp_stdio_client.py; hand-rolled JSON-RPC over stdlib http.client with bearer + mcp-session-id + both body shapes in examples/mcp_http_client.py, against a subprocess streamable-HTTP server with a minted OAuth bearer); acceptance tests/test_mcp_conformance.py 9 passed, specified suites from their own logs resources 7 / registry 7 / security 7 / prompts 8 / docs gate 25 / comment gate 6 / architecture 3 / parity 6 / core 8 passed, combined batch all test_mcp_*.py 163 passed, atlas regenerated 428 files — 219/350"
+    },
+    {
+      "hash": "f71c26b3ec2149f67b249449c13e3b4c4522489b",
+      "short": "f71c26b",
+      "date": "2026-10-26T18:39:18+00:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-219 correction: the combined batch's own log (batch.log, 320.18s) reads 117 passed / 0 failed for all tests/test_mcp_*.py — the '163 passed' figure in 3df9236 and the first memory-map entry was derived by arithmetic (154 + 9) from B-218's differently-scoped batch and never read from this run's log; the sixteen files' per-file counts sum to exactly 117. All other B-219 facts stand."
+    },
+    {
+      "hash": "10e4b9878751b764f5597761c46d0c7588810dca",
+      "short": "10e4b98",
+      "date": "2026-10-26T17:30:09-04:00",
+      "author": "Yrsa (for Volmarr)",
+      "subject": "B-220 Phase 19 gate (built; full-suite proof DEFERRED) + build HALT at Volmarr's order 2026-10-26"
+    }
+  ]
+}

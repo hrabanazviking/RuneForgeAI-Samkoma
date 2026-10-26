@@ -1,0 +1,1 @@
+This hidden directory preserves the repository's complete git history verbatim (git-log-full.txt), so the record of who built this code, slice by slice and hour by hour, survives even if the .git directory itself is ever stripped.
