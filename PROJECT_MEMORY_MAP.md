@@ -1902,6 +1902,59 @@ parses the model so it cannot drift from the code.
   NOT re-run — docs/tests only, no src changes (Phase 18
   precedent); a full Phase 18 green is the B-200 gate's to
   prove. Next: B-195. Progress: **194/350**.
+- **B-195 durability + recovery document** ✅:
+  `docs/14-durability-and-recovery.md` — the §6A.5
+  machinery as diagrams and drills: the storage foundation
+  (WAL + synchronous=FULL + foreign_keys=ON +
+  busy_timeout=5000 on every connection through the one
+  db.py door), transaction discipline made structural
+  (WriteTracker flush marks, commit clears, the durability
+  middleware answering a success with uncommitted writes
+  as 500 `uncommitted_writes` after rollback; error
+  responses pass untouched), draft autosaves (base_version
+  optimistic concurrency; a stale save lands as a kept
+  conflict copy, 409 `draft_conflict` with both versions),
+  resumable uploads (offset law per part, status reports
+  `parts_missing`, completion verifies the whole-file
+  SHA-256 — mismatch 422, session stays open — and
+  dispatches on the sniffed kind), boot recovery
+  (`assess_and_repair`: WAL checkpoint, stuck jobs past the
+  900 s lease requeued/failed with audit, orphan parts
+  swept with open sessions never touched, unknown
+  migration revision refuses naming the manual repair;
+  verdicts serve/repaired/refuse, worker exits 2 on
+  refuse) with the double-verdict guard (a repaired ground
+  must immediately re-score serve), the watchdog told
+  honestly (no separate watchdog daemon exists — the work
+  is boot recovery + deep /health `stuck_running` +
+  `scripts/requeue_stuck_jobs.py` list-before-apply + the
+  daily verified backup; a standalone watchdog process and
+  index/cache rebuilds are NOT built and the gap is
+  recorded, not claimed over), backup/restore (SQLite
+  online backup API bundle + storage + sha256 manifest +
+  RESTORE.md; restore is verify-then-place, a damaged
+  bundle restores nothing; the B-146 drill and its
+  WAL-vacuum checkpoint find), and the chaos-harness
+  method (the three-leg invariant judged below the API by
+  integrity/foreign-key pragmas, SIGKILL legs at named kill
+  points + in-process diskfull/readonly legs, the seeded
+  100-run pass at 100/100, CHAOS_REPORT.md; the power-loss
+  profile stated honestly — SIGKILL under WAL+FULL is the
+  fsync-window leg, real hardware power loss NOT RUN).
+  Five Mermaid diagrams (foundation flowchart, tracker
+  sequence, upload state diagram, recovery flowchart,
+  chaos flowchart), each with a walking tour. Pinned by a
+  new docs-gate test (durability vocabulary + sequence +
+  state diagrams); docs gate now 21 tests. Regression batch
+  (docs gate + threat model + durability + startup
+  recovery + chaos + architecture + submission pack) 53
+  passed with the new test initially failing on a
+  line-wrapped phrase ("online backup" split across lines)
+  — fixed in the chapter, docs gate re-run 21 passed,
+  Mermaid gate 52 diagrams in docs/. Full suite NOT re-run
+  — docs/tests only, no src changes (Phase 18 precedent);
+  a full Phase 18 green is the B-200 gate's to prove.
+  Next: B-196. Progress: **195/350**.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

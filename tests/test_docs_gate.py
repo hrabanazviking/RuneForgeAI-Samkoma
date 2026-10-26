@@ -466,3 +466,40 @@ def test_security_document_covers_threat_crypto_account_audit():
     assert "sequencediagram" in text
     index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     assert "13-security-and-cryptography.md" in index
+
+
+def test_durability_document_covers_recovery_machinery():
+    """B-195: the durability + recovery chapter covers the
+    §6A.5 machinery — transaction discipline, autosave,
+    resumable upload, boot recovery with the double-verdict
+    guard, watchdog, backup/restore, and the chaos-harness
+    method — with diagrams and drills."""
+    chapter = ROOT / "docs" / "14-durability-and-recovery.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "transaction discipline", "commit-before-answer",
+        "uncommitted_writes", "writetracker",
+        "journal_mode=wal", "synchronous=full",
+        "foreign_keys=on", "busy_timeout=5000",
+        "autosave", "draft_conflict", "base_version",
+        "conflict copy", "resumable upload", "offset law",
+        "sha-256", "parts_missing", "session stays open",
+        "assess_and_repair", "double-verdict guard",
+        "serve", "repaired", "refuse", "900",
+        "wal checkpoint", "stuck jobs", "orphan upload parts",
+        "watchdog", "no separate", "stuck_running",
+        "requeue_stuck_jobs", "online backup", "manifest.json",
+        "verify-then-place", "restore_drill",
+        "chaos", "invariant", "sigkill", "100/100",
+        "chaos_report.md", "diskfull", "readonly",
+        "integrity_check", "foreign_key_check",
+    ):
+        assert topic in text, f"B-195 chapter is missing its topic: {topic}"
+    # Foundation, tracker, upload-state and recovery diagrams
+    # plus the chaos flowchart: at least four, incl. a sequence.
+    assert text.count("```mermaid") >= 4
+    assert "sequencediagram" in text
+    assert "statediagram" in text
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "14-durability-and-recovery.md" in index

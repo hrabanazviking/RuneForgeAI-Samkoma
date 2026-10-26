@@ -48,7 +48,7 @@ each reader meets what they need before what they merely want.
 | 13 | [Data model + ER pack](11-data-model-and-er-pack.md) | B-192 | ✅ built |
 | 14 | [AI pipeline documents](12-ai-pipeline.md) | B-193 | ✅ built |
 | 15 | [Security + cryptography](13-security-and-cryptography.md) | B-194 | ✅ built |
-| 16 | Durability + recovery | B-195 | planned |
+| 16 | [Durability + recovery](14-durability-and-recovery.md) | B-195 | ✅ built |
 | 17 | Per-code-file atlas | B-197 | planned |
 | 18 | Testing + quality | B-198 | planned |
 
