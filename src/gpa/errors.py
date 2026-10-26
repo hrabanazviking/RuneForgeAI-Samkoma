@@ -55,6 +55,10 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "internal_bad_signature": (401, "That internal message's signature did not verify"),
     "internal_replayed": (401, "That internal message was already seen"),
     "internal_bad_key": (500, "The internal key configuration is invalid"),
+    # Advanced account security (Phase 17, B-174).
+    "account_locked": (423, "This account is temporarily locked"),
+    "mfa_code_invalid": (401, "That authentication code did not match"),
+    "password_too_weak": (422, "That password is not strong enough"),
 }
 
 

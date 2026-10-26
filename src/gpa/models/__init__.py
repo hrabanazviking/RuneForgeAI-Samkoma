@@ -43,7 +43,7 @@ from gpa.models.events import (
     Thread,
 )
 from gpa.models.groups import AgentSeat, Candidate, Group, Membership
-from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User
+from gpa.models.identity import ApiKey, OneTimeToken, RefreshToken, User, UserDevice
 from gpa.models.integrations import (
     ExternalAccountLink,
     ExternalEventLink,
@@ -144,6 +144,7 @@ __all__ = [
     "Thread",
     "Tombstone",
     "User",
+    "UserDevice",
     "WebhookEndpoint",
     "WebhookReceipt",
 ]

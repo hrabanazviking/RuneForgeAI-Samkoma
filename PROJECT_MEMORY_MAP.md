@@ -1962,6 +1962,65 @@ Phase 16 begins at B-157.
   jobs, inbox, rsvps, internal profiles): 49 passed + the
   same 3 stream failures, all pre-existing, all fixed by
   the voice commit above. Progress: **173/350**.
+- **B-174 advanced account security** ✅ (timer crew,
+  2026-10-25): `gpa/services/account_security.py` (identity
+  module) + migration 0021. **TOTP MFA** hand-rolled RFC 6238
+  on stdlib (HMAC-SHA1, ±1-step window; RFC test vectors
+  pinned) — setup mints a secret stored SEALED via
+  services/sealing (shown once, in the setup answer), confirm
+  proves the app can read it before `mfa_enabled` flips, and
+  enrolment's confirming step is deliberately NOT spent (the
+  person may re-sign-in inside the same 30 s). Password
+  sign-in for an MFA account mints NO session: it earns a
+  5-minute single-use `mfa_challenge` one-time token, answered
+  at POST /auth/login/mfa; a mistyped code does not burn the
+  challenge, a correct one spends its TOTP step — the same
+  code replayed against a fresh challenge is refused
+  (`mfa_last_step`). Owners/admins see `offer_required` on
+  GET /users/me/mfa (the roadmap's mandatory-OFFER; taking it
+  up stays their act). Disabling MFA (current code required)
+  revokes every session. **Password policy**: ≥12 chars + a
+  LOCAL breached/common list (the roadmap's offline option —
+  no password fragment ever leaves the machine to be checked)
+  + not-the-email-name, enforced at register / reset /
+  change (`password_too_weak` 422); the seed road keeps its
+  direct-hash discipline and is untouched. **Progressive
+  lockout** on the User row: 5 consecutive failed password
+  sign-ins lock for 1 min, doubling per further failure,
+  capped 1 h (`account_locked` 423, plain words naming the
+  wait); success clears the count. **Session list**:
+  RefreshToken gained the birth device words (user-agent/IP,
+  carried forward across rotation — one family is one
+  device); access tokens now carry a `fam` claim (a label,
+  never a credential) so GET /users/me/sessions can mark the
+  current device; DELETE /users/me/sessions/{family_id}
+  signs out exactly that device (another's family = 404).
+  **Login anomaly**: issue_session records the (IP,
+  user-agent) pair in `user_devices` in the session's own
+  commit; a NEW pair for a person with known devices writes
+  an outbox notice + `user.login_new_device` audit row.
+  Acceptance (tests/test_account_security.py, 10 passed):
+  RFC vectors, policy (short + breached), full MFA flow +
+  code single-use + challenge single-use, setup-not-yet-
+  protection, owner offer, disable-revokes, session list +
+  per-device revoke, lockout + lift + counter reset,
+  new-device notice exactly once — and the slice's named
+  guarantee: **a stolen refresh token still dies by B-013's
+  rotation rule with MFA on** (replay revokes the family,
+  newest token included). **Boundaries recorded plainly**:
+  magic-link sign-in remains a full sign-in with MFA on (the
+  link proves mailbox control, itself a factor; the challenge
+  guards the password road); WebAuthn/passkeys are the
+  roadmap's post-window stretch and are NOT built. Contract
+  regenerated: **201 paths / 229 schemas** (188/218 at B-160 —
+  the delta is B-174's 7 routes plus the Phase 17 routes
+  B-169→B-173 had not frozen); SDK regenerated with it (256
+  operations). Full suite (basetemp on the overlay, totals
+  from the run's own log): **994 passed, 4 skipped, 1 failed**
+  — the one failure was the stale generated SDK against the
+  new contract; regenerated, its batch passes (developer
+  pack + OpenAPI snapshot, 6 passed). No other test was
+  touched by the fix. Progress: **174/350**.
 
 ## Standing laws in force here
 

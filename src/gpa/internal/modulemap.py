@@ -46,6 +46,7 @@ from __future__ import annotations
 SERVICE_MODULES: dict[str, str] = {
     # identity — accounts, sessions, keys, seats (Phase 1).
     "identity": "identity",
+    "account_security": "identity",  # B-174: MFA, policy, lockout, sessions
     "mail": "identity",  # dev file-outbox carrying identity's mail
     "agent_pack": "identity",  # agent seats are identity principals
     # audit — the append-only B-019 stream; a named common module.
