@@ -1955,6 +1955,63 @@ parses the model so it cannot drift from the code.
   — docs/tests only, no src changes (Phase 18 precedent);
   a full Phase 18 green is the B-200 gate's to prove.
   Next: B-196. Progress: **195/350**.
+- **B-196 API + frontend guide** ✅:
+  `docs/15-api-and-frontend-guide.md` — everything Geoffrey
+  and Henry need without reading backend code, verified
+  against the live tree: the contract (`OPENAPI.json`, 201
+  paths / 229 schemas, `frontend_types.ts`), the three
+  credentials kept apart (session Bearer vs API key in
+  `X-API-Key: gpa_…` — never Bearer, the B-160 lesson — vs
+  feed token in the URL), and three auth sequence diagrams
+  with walking tours (password sign-in with the MFA branch:
+  the password earns a 5-minute single-use `mfa_challenge`,
+  never a session, and a correct code spends its TOTP step;
+  magic link: 202 whether or not the account exists, hashed
+  30-minute single-use token, full sign-in even on MFA
+  accounts by the B-174 law; refresh rotation: spend-and-
+  replace within a family, a spent token presented again
+  revokes the WHOLE family, newest included). Pagination
+  told exactly: only the agenda cursor-paginates (`limit`
+  default 50, 1–200; opaque `next_cursor`, `null` at the
+  end; an unreadable cursor is a named 422, never a silent
+  restart); the month view returns whole weeks. Errors: the
+  one problem+json shape, branch on `code` never on words,
+  and the COMPLETE registry table — all 35 codes from
+  `src/gpa/errors.py` with HTTP status and the frontend
+  action for each, internal-door codes included with their
+  reason. SSE: the four frames (`snapshot` once on connect,
+  `job.progress`, `comment.created`, `notification.created`
+  — the last carrying no body by design), polled from the
+  durable tables never an in-memory bus, with the honest
+  boundary that synchronous ingests never appear (their
+  create response carries final stage/progress) and
+  `GET /api/v1/jobs/{id}` as the polling fallback. ETag /
+  If-Match (`"v<n>"`, 409 `stale_version`) and autosave
+  `base_version` / `draft_conflict`. Idempotency TOLD
+  HONESTLY: **no Idempotency-Key header store exists on the
+  public HTTP API** (D-15's remaining half, recorded in
+  Decisions below) — the safe ground is the naturally
+  idempotent upserts (RSVP, poll vote, availability marks),
+  the webhook receipt's exactly-once, and the re-GET +
+  If-Match retry pattern; creates are the one unsafe retry.
+  Bruno walkthrough with its honesty marker (the collection
+  is still the B-010 skeleton — one health request; the
+  contract of record is OPENAPI + types + the SDKs).
+  Mock-mode guide: `GPA_AI_DRIVER` mock (smallest
+  schema-valid answers; a mock flyer read honestly mints no
+  candidate) / fixture (hash-keyed replays, a miss is a loud
+  `FixtureMissError`) / live (no real Meta endpoint exists
+  in this environment), plus the demo (`./demo.sh`, the
+  three demo logins, idempotent seed). Mermaid gate now 56
+  diagrams in docs/. Pinned by a new docs-gate test that
+  additionally parses the LIVE registry out of errors.py
+  and fails naming any code missing from the table; docs
+  gate now 22 tests. Regression batch (docs gate +
+  submission pack + threat model + architecture + account
+  security + stream + developer pack) 72 passed. Full suite
+  NOT re-run — docs/tests only, no src changes (Phase 18
+  precedent); a full Phase 18 green is the B-200 gate's to
+  prove. Next: B-197. Progress: **196/350**.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

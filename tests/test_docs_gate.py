@@ -503,3 +503,41 @@ def test_durability_document_covers_recovery_machinery():
     assert "statediagram" in text
     index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     assert "14-durability-and-recovery.md" in index
+
+
+def test_api_frontend_guide_covers_its_roadmap_topics():
+    """B-196: the API + frontend chapter covers auth flows as
+    sequence diagrams, pagination, every error code in a
+    table, the SSE events, idempotency told honestly, the
+    Bruno walkthrough, and the mock-mode guide."""
+    chapter = ROOT / "docs" / "15-api-and-frontend-guide.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "magic link", "mfa_challenge", "refresh", "family is revoked",
+        "x-api-key", "authorization: bearer", "seat_cannot_approve",
+        "pagination", "next_cursor", "opaque", "limit",
+        "application/problem+json", "branch on **`code`**",
+        "snapshot", "job.progress", "comment.created",
+        "notification.created", "polled",
+        "idempotency-key", "no `idempotency-key` header store",
+        "bruno", "b-010 skeleton",
+        "mock", "fixture", "gpa_ai_driver", "demo-password-123",
+        "etag", "if-match", "retry-after", "raw request bodies",
+        "201 paths, 229 schemas", "integer cents",
+    ):
+        assert topic in text, f"B-196 chapter is missing its topic: {topic}"
+    # Every code in the live registry appears in the table.
+    import re
+
+    errors_src = (ROOT / "src" / "gpa" / "errors.py").read_text(encoding="utf-8")
+    registry = errors_src.split("ERROR_CODES", 1)[1].split("}", 1)[0]
+    codes = re.findall(r'"([a-z_]+)": \(', registry)
+    assert len(codes) >= 30, "registry parse must find the code table"
+    for code in codes:
+        assert f"`{code}`" in text, f"B-196 error table is missing code: {code}"
+    # Auth as sequence diagrams: at least three, all sequences.
+    assert text.count("```mermaid") >= 3
+    assert text.count("sequencediagram") >= 3
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "15-api-and-frontend-guide.md" in index

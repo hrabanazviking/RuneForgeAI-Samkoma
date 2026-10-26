@@ -36,7 +36,7 @@ each reader meets what they need before what they merely want.
 
 | Order | Chapter | Slice | State |
 |---|---|---|---|
-| 9 | API + frontend guide | B-196 | planned |
+| 9 | [API + frontend guide](15-api-and-frontend-guide.md) | B-196 | ✅ built |
 
 ### 4. Backend developers and maintainers
 
