@@ -110,6 +110,24 @@ def test_user_guide_1_covers_its_roadmap_topics():
     assert "01-user-guide-start-and-groups.md" in index
 
 
+def test_user_guide_2_covers_every_way_in():
+    """B-183: the sources chapter covers every way in its
+    roadmap line names, the permission record in plain words,
+    and what revoking a source does to its data."""
+    chapter = ROOT / "docs" / "02-user-guide-sources.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "paste a chat", "upload a file", "newsletter", "flyer",
+        "noticeboard", "paste a link", "forward an email",
+        "voice note", "live chat", "granted_by", "granted_scope",
+        "source_deleted_at", "30 days",
+    ):
+        assert topic in text, f"B-183 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "02-user-guide-sources.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"
