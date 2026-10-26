@@ -1060,3 +1060,12 @@ here and in the gate commit.
 - Pending surface, not yet built: terminal (B-221) — reported pending, never passed.
 - Regression batch at this slice (parity + architecture + comment gate + docs gate): 40 passed. Full suite NOT re-run at this slice; a full Phase 19 green is the B-220 gate's to prove.
 - Progress: 201/350 slices, Phase 19 in progress.
+
+## Phase 19 addendum — B-202/B-203 seat equality + one approval law (2026-10-26)
+
+- API parity: 258 actions registered, 258 API routes live, 2 actions backed by a registered internal-API operation (B-162). The two new actions are the seat profile doors (B-202).
+- Contract: **202 paths / 230 schemas** (was 201/229 — the seat profile read/update routes are the growth; regenerated OPENAPI.json + frontend_types.ts).
+- New suite `tests/test_seat_equality.py`: the B-022 role matrix's participation actions run against BOTH a person principal and a seat principal under one expectation table (40 matrix cases per kind), seat profile lifecycle, organiser-seat approval attribution, draft-scope door, distinct-approver counting with a seat as first approver, RSVP/poll/discussion/task-ownership/feed participation, and the standing person-only doors (seat creation, person invites) asserted as refusals.
+- SUPERSEDED at B-203, recorded per the house discipline: B-018's blanket seat approval ban. `tests/test_permissions.py::test_seat_can_draft_cannot_approve` now pins the surviving half (a member seat with publish still meets `seat_cannot_approve`); the organiser half is pinned in the new suite. The B-129 scope guide's publish wording is restated to match.
+- Regression batches at these slices, from their own logs: batch 1 (seat equality + permissions + agent pack + parity + settings pack) 104 passed; batch 2 (candidates + groups + tasks + polls + rsvps + discussion + calendar views + architecture + docs gate + Phase 18 gate + Phase 17 migrations) 87 passed + 1 failed — the Phase 18 gate's contract-size claim, fixed by restating docs/15 + README at 202/230 — re-run of the two gate files: 30 passed. Comment gate passes. Full suite NOT re-run at these slices; a full Phase 19 green is the B-220 gate's to prove.
+- Progress: 203/350 slices, Phase 19 in progress.

@@ -10,7 +10,7 @@
 |---|---|
 | 🧩 Roadmap | **200 of 350 slices** built — B-001 → B-200 of a 29-phase roadmap |
 | ✅ Tests | **1,056 passing** on SQLite (1,013 on PostgreSQL at the Phase 17 gate), counted from clean runs against the committed tree |
-| 📜 API contract | **201 paths · 229 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
+| 📜 API contract | **202 paths · 230 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
 | 🐍 Stack | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · SQLite (WAL) and PostgreSQL, both proven by the same suite |
 | 🏠 Born for | The Meta Global AI Developer Hackathon — a team entry, built Oct 26 → Nov 4, 2026 |
 
@@ -421,8 +421,9 @@ section comes straight out of it.
 
 ## 📜 The API at a glance
 
-The frozen contract is [`OPENAPI.json`](OPENAPI.json) — **201 paths, 229
-schemas** at the Phase 17 gate — with generated TypeScript types in
+The frozen contract is [`OPENAPI.json`](OPENAPI.json) — **202 paths, 230
+schemas** at the Phase 19 seat-equality slices (201 paths, 229
+schemas at the Phase 17 gate) — with generated TypeScript types in
 [`frontend_types.ts`](frontend_types.ts) and a ready-to-fire Bruno
 collection in [`collections/`](collections/). The frontend crew builds
 against these files, never against our intentions.

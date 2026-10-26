@@ -8,7 +8,8 @@ This module is that test made into code:
 
 * ``ACTIONS`` is the machine-readable register of every
   user-facing action the backend serves today -- one entry per
-  live API operation (256 at this slice). Each entry names the
+  live API operation (258 since B-202 added the seat profile
+  doors). Each entry names the
   action, its external API route (method + path template), and
   the internal operation that backs it: the route handler that
   implements it, resolved by dotted path at check time.
@@ -169,6 +170,8 @@ ACTIONS: tuple[ParityAction, ...] = (
     ParityAction("list_resources", "GET", "/api/v1/groups/{group_id}/resources", "gpa.routers.nonprofit:list_resources", ""),
     ParityAction("search", "GET", "/api/v1/groups/{group_id}/search", "gpa.routers.planning:search", ""),
     ParityAction("list_seats", "GET", "/api/v1/groups/{group_id}/seats", "gpa.routers.groups:list_seats", ""),
+    ParityAction("read_seat", "GET", "/api/v1/groups/{group_id}/seats/{seat_id}", "gpa.routers.groups:read_seat", ""),
+    ParityAction("update_seat_profile", "PATCH", "/api/v1/groups/{group_id}/seats/{seat_id}", "gpa.routers.groups:update_seat_profile", ""),
     ParityAction("read_settings", "GET", "/api/v1/groups/{group_id}/settings", "gpa.routers.nonprofit:read_settings", ""),
     ParityAction("shift_gaps", "GET", "/api/v1/groups/{group_id}/shift-gaps", "gpa.routers.nonprofit:shift_gaps", ""),
     ParityAction("list_sources", "GET", "/api/v1/groups/{group_id}/sources", "gpa.routers.sources:list_sources", ""),

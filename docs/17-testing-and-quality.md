@@ -362,6 +362,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_runbook.py` | RUNBOOK.md, reproduced (roadmap B-155). |
 | `tests/test_samtal_calendar.py` | Samtal calendar return path (roadmap B-124). |
 | `tests/test_samtal_connector.py` | Samtal source connector (roadmap B-123). |
+| `tests/test_seat_equality.py` | Seat equality + the one approval law (roadmap B-202/B-203): the role matrix for both kinds of citizen, seat profile, participation, distinct-approver counting. |
 | `tests/test_search_digest.py` | Search across planning (B-092) + planning digest data |
 | `tests/test_second_wave_sources.py` | Second-wave live sources (roadmap B-158): Discord + Slack. |
 | `tests/test_secrets_audit.py` | Secrets + config audit (roadmap B-145). |

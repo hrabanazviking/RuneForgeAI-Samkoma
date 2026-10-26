@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **395 Python code files**: migrations 22, scripts 21, src 189, tests 163. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **397 Python code files**: migrations 23, scripts 21, src 189, tests 164. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -809,7 +809,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 
 - **Purpose:** Group routes (roadmap B-015 → B-019).
 - **Module:** routers family of the groups domain · **Layer:** routers
-- **Public symbols:** `create_group`, `read_group`, `update_group`, `list_members`, `invite_member`, `accept_invite`, `decline_invite`, `change_role`, `remove_member`, `leave_group`, `create_seat`, `list_seats`, `create_candidate`, `approve_candidate`, `read_audit`, `verify_audit_chain`
+- **Public symbols:** `create_group`, `read_group`, `update_group`, `list_members`, `invite_member`, `accept_invite`, `decline_invite`, `change_role`, `remove_member`, `leave_group`, `create_seat`, `list_seats`, `read_seat`, `update_seat_profile`, `create_candidate`, `approve_candidate`, `read_audit`, `verify_audit_chain`
 - **Dependencies (imports):** `fastapi`, `gpa.db`, `gpa.deps`, `gpa.errors`, `gpa.schemas.core`, `gpa.schemas.groups`, `gpa.services`, `gpa.services.identity`, `json`, `sqlalchemy.orm`
 - **Allowed / forbidden:** May import: deps (the only door), schemas, services' public surface. Forbidden: direct model writes outside the pinned projection reads; business rules of its own.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
@@ -946,7 +946,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: deps (the only door), schemas, services' public surface. Forbidden: direct model writes outside the pinned projection reads; business rules of its own.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals come from the service layer as AppError; the router itself only shapes the response.
-- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_change_alerts_invites.py`, `tests/test_privacy_surfaces.py`, `tests/test_rsvps.py`, `tests/test_tombstones.py`
+- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_change_alerts_invites.py`, `tests/test_privacy_surfaces.py`, `tests/test_rsvps.py`, `tests/test_seat_equality.py`
 - **Created by:** B-062 — Phase 4 (part 4): phase gate + contract + handoff (B-062)
 
 ### `src/gpa/routers/sources.py`
@@ -1085,7 +1085,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 
 - **Purpose:** Group schemas: groups, memberships, seats, candidates (Phase 1).
 - **Module:** schemas family of the groups domain · **Layer:** schemas
-- **Public symbols:** `GroupCreateRequest`, `ReminderRule`, `GroupUpdateRequest`, `GroupResponse`, `InviteRequest`, `RoleChangeRequest`, `MembershipResponse`, `SeatCreateRequest`, `SeatResponse`, `CandidateCreateRequest`, `CandidateResponse`
+- **Public symbols:** `GroupCreateRequest`, `ReminderRule`, `GroupUpdateRequest`, `GroupResponse`, `InviteRequest`, `RoleChangeRequest`, `MembershipResponse`, `SeatCreateRequest`, `SeatProfileUpdateRequest`, `SeatResponse`, `CandidateCreateRequest`, `CandidateResponse`
 - **Dependencies (imports):** `pydantic`
 - **Allowed / forbidden:** May import: stdlib, pydantic, models (pure helpers only). Forbidden: services, routers.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
@@ -1577,7 +1577,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 
 - **Purpose:** Group services (roadmap B-015 → B-018).
 - **Module:** groups · **Layer:** services
-- **Public symbols:** `slugify`, `create_group`, `get_group`, `update_group`, `active_membership`, `invite_member`, `accept_invite`, `decline_invite`, `change_role`, `remove_member`, `leave_group`, `list_members`, `create_seat`, `list_seats`, `create_candidate`, `approvals_recorded`, `review_progress`, `approve_candidate`
+- **Public symbols:** `slugify`, `create_group`, `get_group`, `update_group`, `active_membership`, `invite_member`, `accept_invite`, `decline_invite`, `change_role`, `remove_member`, `leave_group`, `list_members`, `create_seat`, `list_seats`, `get_seat`, `update_seat_profile`, `create_candidate`, `approvals_recorded`, `review_progress`, `approve_candidate`
 - **Dependencies (imports):** `gpa.errors`, `gpa.internal.client`, `gpa.models.groups`, `gpa.models.identity`, `gpa.models.nonprofit`, `gpa.services`, `gpa.services.identity`, `gpa.services.notifications`, `json`, `re`, `sqlalchemy.orm`
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
@@ -1906,8 +1906,8 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
-- **Tests that name it:** `tests/conftest.py`, `tests/test_internal_profiles.py`, `tests/test_job_race.py`, `tests/test_parity.py`, `tests/test_postgres_parity.py`
-- **Created by:** pre-git or generated (see git history)
+- **Tests that name it:** `tests/conftest.py`, `tests/test_internal_profiles.py`, `tests/test_job_race.py`, `tests/test_parity.py`, `tests/test_postgres_parity.py`, `tests/test_seat_equality.py`
+- **Created by:** B-201 — B-201 API parity audit + checker: 256-action register (route + internal operation per acti
 
 ### `src/gpa/services/paste.py`
 
@@ -1925,7 +1925,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 
 - **Purpose:** Planning: tasks, decisions, open questions (roadmap B-083, B-085, B-086), plus the cross-cutting reads — the event gaps view (B-086), planning search (B-092), and the digest data (B-093).
 - **Module:** planning · **Layer:** services
-- **Public symbols:** `parse_draft`, `draft_field`, `member_label`, `get_task`, `get_decision`, `get_question`, `visible_event`, `mint_task_from_candidate`, `create_task`, `list_tasks`, `update_task`, `mint_decision_from_candidate`, `create_decision`, `list_decisions`, `decision_chain`, `mint_question_from_candidate`, `create_question`, `list_questions`, `update_question`, `resolve_question`, `event_gaps`, `search_planning`, `week_window`, `planning_digest`
+- **Public symbols:** `parse_draft`, `draft_field`, `member_label`, `owner_display`, `get_task`, `get_decision`, `get_question`, `visible_event`, `mint_task_from_candidate`, `create_task`, `list_tasks`, `update_task`, `mint_decision_from_candidate`, `create_decision`, `list_decisions`, `decision_chain`, `mint_question_from_candidate`, `create_question`, `list_questions`, `update_question`, `resolve_question`, `event_gaps`, `search_planning`, `week_window`, `planning_digest`
 - **Dependencies (imports):** `datetime`, `gpa.errors`, `gpa.models.events`, `gpa.models.groups`, `gpa.models.identity`, `gpa.models.planning`, `gpa.services`, `gpa.services.groups`, `json`, `sqlalchemy.orm`, `zoneinfo`
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
@@ -1954,7 +1954,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
-- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_docs_gate.py`, `tests/test_quality_gate.py`, `tests/test_quality_report.py`
+- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_docs_gate.py`, `tests/test_permissions.py`, `tests/test_quality_gate.py`, `tests/test_quality_report.py`
 - **Created by:** B-043 — Phase 3 (part 5): review queue, extraction jobs, budget (B-043/044/045/047)
 
 ### `src/gpa/services/reconcile.py`
@@ -2062,7 +2062,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
-- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_change_alerts_invites.py`, `tests/test_privacy_surfaces.py`, `tests/test_rsvps.py`, `tests/test_tombstones.py`
+- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_change_alerts_invites.py`, `tests/test_privacy_surfaces.py`, `tests/test_rsvps.py`, `tests/test_seat_equality.py`
 - **Created by:** B-062 — Phase 4 (part 4): phase gate + contract + handoff (B-062)
 
 ### `src/gpa/services/samtal.py`
@@ -2608,6 +2608,18 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-174 — B-174 Advanced account security: TOTP MFA (sealed secret, single-use steps, 5-min challeng
 
+### `migrations/versions/0022_phase19_seat_equality.py`
+
+- **Purpose:** Phase 19 agent-seat equality schema (roadmap B-202).
+- **Module:** migrations · **Layer:** migrations
+- **Public symbols:** `upgrade`, `downgrade`
+- **Dependencies (imports):** `alembic`, `sqlalchemy`, `typing`
+- **Allowed / forbidden:** May import: Alembic, SQLAlchemy, the models' metadata (0001 only). Forbidden: application services.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failed migration leaves the previous revision stamped; guarded revisions are idempotent by inspector checks.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
+
 
 ## Files under `scripts/`
 
@@ -2753,7 +2765,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
 - **Tests that name it:** `tests/test_parity.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-201 — B-201 API parity audit + checker: 256-action register (route + internal operation per acti
 
 ### `scripts/platform_audit.py`
 
@@ -4028,7 +4040,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-201 — B-201 API parity audit + checker: 256-action register (route + internal operation per acti
 
 ### `tests/test_paste.py`
 
@@ -4051,7 +4063,7 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
-- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Tests that name it:** `tests/test_seat_equality.py`
 - **Created by:** Tests, frozen contract, and project docs
 
 ### `tests/test_phase10_gate.py`
@@ -4497,6 +4509,18 @@ The tree at generation time holds **395 Python code files**: migrations 22, scri
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-092 — B-092/B-093 tests: search golden ranking + source links; digest golden snapshot at fixed m
+
+### `tests/test_seat_equality.py`
+
+- **Purpose:** Seat equality + the one approval law (roadmap B-202/B-203, Phase 19).
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `ROLES`, `ALL_SCOPES`, `world`, `seat_headers`, `perform`, `test_role_matrix_runs_for_people`, `test_role_matrix_runs_unchanged_for_seats`, `test_organiser_seat_approval_is_attributed_to_the_seat`, `test_draft_scoped_organiser_seat_stops_at_the_scope_door`, `test_seat_counts_as_a_distinct_approver`, `test_seat_profile_lifecycle`, `test_seat_participates_rsvp_poll_discussion_task_feed`, `test_seat_cannot_create_seats_or_invite_people`
+- **Dependencies (imports):** `conftest`, `pytest`, `test_groups`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** `tests/test_permissions.py`
+- **Created by:** pre-git or generated (see git history)
 
 ### `tests/test_second_wave_sources.py`
 

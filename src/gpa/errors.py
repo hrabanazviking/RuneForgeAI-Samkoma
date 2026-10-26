@@ -28,7 +28,7 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "token_reused": (401, "That token was already used"),
     "forbidden": (403, "You are not allowed to do that"),
     "insufficient_scope": (403, "This key does not have the needed scope"),
-    "seat_cannot_approve": (403, "Agent seats can draft, but a person must approve"),
+    "seat_cannot_approve": (403, "This seat's role cannot approve — approval follows the one approval law for every principal (B-203)"),
     "not_found": (404, "That could not be found"),
     "conflict": (409, "That conflicts with the current state"),
     "stale_version": (409, "That version is out of date"),

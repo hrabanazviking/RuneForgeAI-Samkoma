@@ -9,7 +9,7 @@ told honestly, the Bruno walkthrough, and the mock-mode
 guide.*
 
 *Verified against the live tree at this slice: the contract
-is `OPENAPI.json` (201 paths, 229 schemas) with generated
+is `OPENAPI.json` (202 paths, 230 schemas) with generated
 TypeScript types in `frontend_types.ts`; the error registry
 is `src/gpa/errors.py` (B-004); the auth doors are
 `src/gpa/routers/auth.py` (B-011 → B-014, B-174); the stream

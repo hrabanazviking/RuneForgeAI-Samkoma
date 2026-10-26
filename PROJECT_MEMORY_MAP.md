@@ -2149,6 +2149,81 @@ parses the model so it cannot drift from the code.
   Phase 19 green is the B-220 gate's to prove (Phase 18
   precedent). Contract unchanged: 201 paths / 229 schemas.
   No ZIP at this slice. Progress: **201/350. Next: B-202.**
+- **B-202 agent-seat equality pack** ✅ (timer crew,
+  2026-10-26): seats stand as full participants at their
+  role. PROFILE: `AgentSeat` gained `description` +
+  `avatar_url` (migration 0022, guarded in the house style);
+  settable at creation, readable by members
+  (`GET …/seats/{seat_id}`, member+), editable by the seat
+  ITSELF under its own key or by an admin person
+  (`PATCH …/seats/{seat_id}`) — anyone else 403, and role /
+  scopes are never profile. PARTICIPATION (already seat-
+  shaped since B-061/B-084/B-087, now proven end to end in
+  one suite): RSVP in the seat's name, poll vote, discussion
+  post (`author_label = seat:<id>`), calendar feed issue
+  (organiser seat). TASK OWNERSHIP was the real gap:
+  `planning.owner_display` is now the one owner-resolution
+  door — an active member person OR a seat of this group —
+  used by direct create, PATCH assignment, and the approval
+  mint (a reviewer naming a seat in an edited draft assigns
+  it; the draft's own words still never assign — the owner
+  law is unchanged). ATTRIBUTION: every seat act lands in
+  audit and projections under `seat:<id>`, never its
+  creator's (profile edits included). ACCEPTANCE:
+  `tests/test_seat_equality.py` runs the B-022 matrix's
+  participation actions (read_group / list_members /
+  create_candidate / approve_candidate) against BOTH a
+  person and a seat principal under ONE expectation table —
+  40 cases per kind, identical outcomes. STANDING PERSON-
+  ONLY DOORS, asserted as refusals not parity failures (the
+  docs-set law, Doc 02 A.5): a seat creating seats, and a
+  seat inviting a person (account acts, not participation);
+  announcements (B-106) and live-chat grants (B-032) keep
+  their person rules likewise. Parity register grew to 258
+  actions (the two seat-profile doors); contract
+  regenerated: **202 paths / 230 schemas**. Next: B-203.
+- **B-203 the one approval law, restated for agents** ✅
+  (timer crew, 2026-10-26, same commit as B-202 — the two
+  share the seat doors): **B-018's blanket seat ban is
+  SUPERSEDED**, by the roadmap's own Phase 19 text and the
+  docs set (Doc 12 FAQ, Doc 13 §queue): equality is of
+  standing, not of bypass. `groups.approve_candidate` now
+  refuses a seat ONLY where a person would also fail: a seat
+  below the group's `review_min_role` meets
+  `seat_cannot_approve` (kept as the seat form of that
+  refusal, with the reason in the detail); a draft-scoped
+  seat stops at the door's publish-scope check with
+  `insufficient_scope`, exactly like a person's draft key;
+  an organiser seat holding publish approves through this
+  same operation, audited as the seat, `approved_by =
+  seat:<id>`. Multi-approver counting (B-111) counts
+  DISTINCT PRINCIPALS: `CandidateApproval` rows key a seat
+  by its seat id (the column never had an FK — the label
+  beside it says which kind acted); a seat's repeat is the
+  same 409 a person's repeat is. No agent-only override
+  exists anywhere: grep finds no second approval door.
+  Superseded assertions updated with the phase (the house
+  discipline): `test_permissions.test_seat_can_draft_cannot_approve`
+  now pins the surviving half (member seat + publish →
+  seat_cannot_approve); the B-129 scope guide's publish
+  wording is restated; the secretary example (a MEMBER seat)
+  passes unchanged. Papers that still state the old law in
+  absolute words — docs/ chapters from Phase 18 and
+  THREAT_MODEL.md's seat row — are NOT silently rewritten
+  here; their restatement belongs to the B-220 gate's docs
+  pass, and the discrepancy is recorded here so it is not
+  lost. Regression, from the runs' own logs: batch 1 (seat
+  equality + permissions + agent pack + parity + settings
+  pack) **104 passed**; batch 2 (candidates + groups +
+  tasks + polls + rsvps + discussion + calendar + archi-
+  tecture + docs gate + Phase 18 gate + Phase 17 migra-
+  tions) 87 passed + 1 failed — the Phase 18 gate's
+  contract-size claim (201/229), fixed by restating the
+  CURRENT contract in docs/15 + README (in place) at
+  202/230, gate re-run **30 passed**; comment gate passes.
+  Full suite NOT re-run — a full Phase 19 green is the
+  B-220 gate's to prove. Progress: **203/350. Next: B-204
+  (MCP server core).**
 
 ## Decisions & deviations (from the roadmap defaults)
 
