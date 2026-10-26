@@ -1705,6 +1705,50 @@ parses the model so it cannot drift from the code.
   suite NOT re-run — docs/tests only, no src changes
   (Phase 18 precedent); a full Phase 18 green is the
   B-200 gate's to prove. Next: B-191.
+- **B-191 internal encrypted API document** ✅:
+  `docs/10-internal-encrypted-api.md` — the §6A.4 protocol
+  in full, verified against the live internal package:
+  the envelope field by field (`InternalRequest` /
+  `InternalResult`, wire form with `payload_sealed` and
+  the nonce-bound result), signing and encryption steps
+  in the door's real checking order (shape → signature
+  before any decryption → caller-is-signer → replay →
+  GCM open → registration/scope in the one dispatch
+  path), AES-256-GCM with canonical-header AAD and the
+  Ed25519 / HMAC-SHA256 channel profiles (never mixed),
+  the four transport profiles (in-process B-166 with
+  sealed-at-rest job payloads; Unix socket; loopback TCP
+  + mutual TLS with the internal CA; Windows named pipe
+  honestly NOT RUN), the identity + scope registry (the
+  seven operations with owners/scopes, the nine caller
+  grants, key ids, directory vs derived identity
+  custody), the replay defence (300 s window + seen-nonce
+  store, with replay.py's own restart bound stated), and
+  key rotation (identity overlap via `.pub.prev`; the AES
+  comms key honestly non-overlapping — a coordinated
+  restart-window act; data keys a separate family).
+  Three sequence diagrams with prose: a publish
+  (`events.publish` by `core`), an AI extraction
+  submission (`ai.submit_job`; worker identity holds no
+  `ai:submit` by design), and a rejected impersonation
+  attempt (caller≠signer → `internal_bad_signature`, then
+  as-itself → `internal_scope_denied`). Closes with the
+  B-165 audit shape (never the payload) and the full
+  refusal table (all seven `internal_*` codes). Honesty
+  markers at the point of use: the roadmap's example
+  operation names (`ai.extract`,
+  `integrations.facebook.create_event`) exist as families
+  folded into `ai.submit_job` / `integrations.emit`; the
+  Phase 28 bus reuses this machinery and is not built yet.
+  Mermaid gate now 31 diagrams in docs/. Pinned by a new
+  docs-gate test (protocol vocabulary + three sequence
+  diagrams); docs gate now 16 tests. Regression batch
+  (docs gate + architecture + internal API/audit/
+  identity/profiles/transport + submission pack + threat
+  model) 69 passed. Full suite NOT re-run — docs/tests
+  only, no src changes (Phase 18 precedent); a full
+  Phase 18 green is the B-200 gate's to prove.
+  Next: B-192.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

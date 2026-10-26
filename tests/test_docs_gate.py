@@ -289,6 +289,39 @@ def test_module_atlas_covers_every_module():
     assert "09-module-atlas.md" in index
 
 
+def test_internal_api_document_covers_the_protocol():
+    """B-191: the internal encrypted API chapter specifies the
+    §6A.4 protocol in full — envelope field by field, signing
+    and encryption, transport profiles, identity and scope
+    registry, replay defence, key rotation — with sequence
+    diagrams for a publish, an AI extraction, and a rejected
+    impersonation attempt."""
+    chapter = ROOT / "docs" / "10-internal-encrypted-api.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "operation", "caller", "scope", "payload", "nonce",
+        "timestamp", "idempotency_key", "signature",
+        "aes-256-gcm", "ed25519", "hmac-sha256", "canonical",
+        "candidates.create", "events.publish", "notify.request",
+        "notify.rsvp_promotion", "jobs.enqueue", "ai.submit_job",
+        "integrations.emit",
+        "internal_unknown_operation", "internal_scope_denied",
+        "internal_bad_payload", "internal_tampered",
+        "internal_bad_signature", "internal_replayed",
+        "internal_bad_key",
+        "replay", "5 minutes", "key rotation", "pub.prev",
+        "unix domain socket", "mutual tls", "named pipe",
+        "in-process", "never the payload", "not run",
+    ):
+        assert topic in text, f"B-191 chapter is missing its topic: {topic}"
+    # The three sequence diagrams its roadmap line names.
+    assert text.count("sequencediagram") >= 3
+    assert "impersonation" in text
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "10-internal-encrypted-api.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"
