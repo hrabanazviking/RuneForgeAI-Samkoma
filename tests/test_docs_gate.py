@@ -436,3 +436,33 @@ def test_sound_diagram_passes(tmp_path):
         encoding="utf-8",
     )
     assert checker.check_file(good) == []
+
+
+def test_security_document_covers_threat_crypto_account_audit():
+    """B-194: the security + cryptography chapter covers the
+    threat model in prose, the key hierarchy, encryption at
+    rest and inside, account security, and the audit chain,
+    including the honest-boundaries chapter (no member-to-
+    member E2E claimed)."""
+    chapter = ROOT / "docs" / "13-security-and-cryptography.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "threat model", "case #1", "argon2id", "enc:v1:",
+        "aes-256-gcm", "ed25519", "hmac-sha256", "key hierarchy",
+        "master key", "group_keys", "wrapped_key",
+        "recovery escrow", "scrypt", "gpae1", "blind index",
+        "audit chain", "row_hash", "prev_hash", "genesis",
+        "seat_cannot_approve", "no member-to-member",
+        "end-to-end", "not claimed", "refresh", "totp",
+        "mfa_challenge", "account_locked", "shown once",
+        "token_hash", "key_hash", "ssrf", "rate",
+        "redacted", "internal_tampered", "totp_secret",
+        "config_sealed", "secret_sealed",
+    ):
+        assert topic in text, f"B-194 chapter is missing its topic: {topic}"
+    # Key hierarchy + at-rest + account sequence diagrams.
+    assert text.count("```mermaid") >= 4
+    assert "sequencediagram" in text
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "13-security-and-cryptography.md" in index

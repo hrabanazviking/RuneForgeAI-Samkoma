@@ -1852,6 +1852,54 @@ parses the model so it cannot drift from the code.
   re-run — docs/tests only, no src changes (Phase 18
   precedent); a full Phase 18 green is the B-200 gate's to
   prove. Next: B-194. Progress: **193/350**.
+- **B-194 security + cryptography document** ✅:
+  `docs/13-security-and-cryptography.md` — the threat
+  model in prose (assets in order, eight actors, Case #1:
+  unapproved content becoming public truth, decided at the
+  review queue where `seat_cannot_approve` refuses seats in
+  the service; per-family answers: rate limit, refresh-family
+  revocation, SSRF guarded fetch, content sniffing, hashed
+  tokens), the key hierarchy diagram with walking tour
+  (master key in the environment only, never in the DB;
+  wraps per-group data keys in `group_keys.wrapped_key` and
+  per-file keys in GPAE1 headers; domain-separated
+  derivations for the internal comms key and the blind
+  index; recovery escrow — scrypt seals of the master,
+  row-finding check keyed by the app secret, mint =
+  revocation, backups grep clean for key material),
+  encryption at rest told by layer (field-sealed `enc:v1:`
+  AES-256-GCM bound to group+field: chunk text/sender,
+  provenance + event-link quotes, flyer transcript;
+  whole-sealed `config_sealed` / `secret_sealed` /
+  `totp_secret`; GPAE1 encrypted storage with the recorded
+  master-not-group deviation; sealed job payloads; hashed
+  never sealed credentials — Argon2id + `token_hash` /
+  `key_hash` families, shown once), encryption inside
+  (chapter 10's signed-before-decrypted envelope, replay
+  window, proxy TLS + log redaction), account security
+  (12-char + local breached-list policy, 15-minute HS256
+  access + rotating refresh families, hand-rolled RFC 6238
+  TOTP MFA with `mfa_challenge` and spent steps, progressive
+  lockout `account_locked`, per-device sessions, new-device
+  notice), and the audit chain (HMAC-SHA256 `row_hash` /
+  `prev_hash` from GENESIS, head read FOR UPDATE, link-walk
+  verify naming the wound). The honest-boundaries chapter
+  closes it, per its roadmap line: NO member-to-member
+  end-to-end encryption is claimed, most ordinary group
+  content rests plain (candidate drafts + discussion named
+  next adopters), a compromised running server is out of
+  scope, the chain is keyed evidence not magic (database +
+  app secret recompute it), and metadata is structural.
+  Mermaid gate now 47 diagrams in docs/. Pinned by a new
+  docs-gate test (security vocabulary + at least four
+  diagrams incl. a sequence diagram); docs gate now 20
+  tests. Regression batch (docs gate + threat model +
+  field encryption + encrypted storage + key management +
+  audit chain + account security + secrets audit +
+  architecture + internal transport) 80 passed. Full suite
+  NOT re-run — docs/tests only, no src changes (Phase 18
+  precedent); a full Phase 18 green is the B-200 gate's to
+  prove. Next: B-195. Progress: **194/350**.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
