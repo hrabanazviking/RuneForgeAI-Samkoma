@@ -2103,6 +2103,57 @@ Phase 16 begins at B-157.
   prompt, unexplained setting block, restating docstring).
   Regression batch with architecture + threat model +
   submission pack: 23 passed. Progress: **176/350**.
+- **B-177 cross-platform verification matrix** ✅ (timer crew,
+  2026-10-25): `scripts/platform_audit.py` — the §6A.2 law as
+  tooling (pathlib-only path building, explicit `encoding=` on
+  every text read/write, no `sys.platform`/`os.name` branching
+  in domain code; URL joins pinned with reasons — main.py's
+  log-redaction join, the webcal/https builders). Its first
+  runs earned their keep: three `read_text()` calls in
+  `internal/identity.py` gained explicit UTF-8, and four
+  apparent `open()` findings proved to be Pillow/urllib doors
+  (the audit now scopes to the bare builtin). Fixtures
+  (`tests/test_platform_matrix.py`, 9 tests): audit green on
+  the tree + fails an unportable fixture by file/line; BOM +
+  CRLF + non-ASCII round-trips (pinning the universal-newline
+  law text reads apply on every OS); DST fixtures from
+  zoneinfo (the lockfile already carries `tzdata` for
+  Windows); loopback TCP everywhere + the AF_UNIX door probed
+  where offered; filesystem case-sensitivity PROBED, with the
+  defences asserted (lowercase-hex content keys, storage
+  depth < 80 chars against MAX_PATH). CI matrix
+  (`.github/workflows/test.yml`) runs the identical suite on
+  ubuntu/windows/macos. **Named waivers** in
+  `PLATFORM_MATRIX.md`: the Windows and macOS columns are
+  CI-defined but NOT RUN here (no such machines reachable;
+  the manual real-Windows run stays NOT RUN), Windows named
+  pipes stay unproven (B-163's record; mTLS door carries
+  Windows), MAX_PATH + case-insensitivity defended by
+  construction. Progress: **177/350**.
+- **B-178 production-quality pipeline** ✅ (timer crew,
+  2026-10-25): ruff, mypy, pytest-cov, pre-commit added as
+  locked dev dependencies. **Enforced today**: ruff E9+F
+  (syntax + pyflakes) on `src/gpa` at ZERO — 33 findings fixed
+  at root, incl. a real undefined-name annotation
+  (`InternalResult` in `internal/client.py`, now a top-level
+  import) and dead imports across 20 files; the autofix's one
+  casualty, the load-bearing `services.events.etag_of`
+  re-export (routers call it), was restored with its noqa —
+  the regression batch (events + internal suites, 51 passed)
+  proves the tree still runs. **The ratchet** (B-176's
+  pattern, in `scripts/quality_gate.py` + CI + pre-commit):
+  `mypy --strict` over services/ai/internal/crypto stands at
+  **722** (type-arg 391, no-untyped-def 171 dominate); the
+  ceiling may only fall. **Named deviations** in
+  `QUALITY_PIPELINE.md`: wider ruff families (1,189 findings,
+  945 of them FastAPI's B008 Depends idiom) and `ruff format`
+  (137 files) are NOT enforced — a mass reformat would bury
+  the D-26 house style; coverage floors are measured at the
+  B-180 full gate, none stated before measured, with the
+  security/durability suites excluded from averages by
+  policy. In-suite: `tests/test_quality_gate.py` (3 passed;
+  the mypy half runs via the gate's --mypy mode, green at the
+  ceiling). Progress: **178/350**.
 
 ## Standing laws in force here
 
