@@ -505,6 +505,53 @@ def test_durability_document_covers_recovery_machinery():
     assert "14-durability-and-recovery.md" in index
 
 
+def test_file_atlas_covers_every_code_file():
+    """B-197: the per-file atlas documents EVERY code file —
+    the tree <-> atlas diff its roadmap line orders. Every
+    Python file under src/, migrations/, scripts/, tests/ has
+    an entry with all eight fields (purpose, module, public
+    symbols, dependencies, allowed/forbidden, data, failure
+    behaviour, tests, creating slice), and no entry names a
+    file that no longer exists."""
+    import re
+
+    chapter = ROOT / "docs" / "16-per-file-atlas.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8")
+    lowered = text.lower()
+    for topic in (
+        "build_file_atlas", "checker", "layer law",
+        "walking tour", "scope honesty",
+    ):
+        assert topic in lowered, f"B-197 chapter is missing its topic: {topic}"
+    entries = re.findall(r"^### `([^`]+\.py)`", text, flags=re.M)
+    assert len(entries) == len(set(entries)), "atlas entries must be unique"
+    live = {
+        str(p.relative_to(ROOT))
+        for base in ("src", "migrations", "scripts", "tests")
+        for p in (ROOT / base).rglob("*.py")
+        if "__pycache__" not in p.parts
+    }
+    missing = sorted(live - set(entries))
+    stale = sorted(set(entries) - live)
+    assert missing == [], f"code files missing from the B-197 atlas: {missing}"
+    assert stale == [], f"atlas entries for files that are gone: {stale}"
+    # Every entry carries the eight roadmap fields.
+    blocks = re.split(r"^### `[^`]+\.py`", text, flags=re.M)[1:]
+    assert len(blocks) == len(entries)
+    for field in (
+        "**Purpose:**", "**Module:**", "**Public symbols:**",
+        "**Dependencies (imports):**", "**Allowed / forbidden:**",
+        "**Data:**", "**Failure behaviour:**",
+        "**Tests that name it:**", "**Created by:**",
+    ):
+        bad = [e for e, b in zip(entries, blocks) if field not in b]
+        assert bad == [], f"atlas entries missing {field}: {bad[:5]}"
+    assert text.count("```mermaid") >= 1
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "16-per-file-atlas.md" in index
+
+
 def test_api_frontend_guide_covers_its_roadmap_topics():
     """B-196: the API + frontend chapter covers auth flows as
     sequence diagrams, pagination, every error code in a

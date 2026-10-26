@@ -49,7 +49,7 @@ each reader meets what they need before what they merely want.
 | 14 | [AI pipeline documents](12-ai-pipeline.md) | B-193 | ✅ built |
 | 15 | [Security + cryptography](13-security-and-cryptography.md) | B-194 | ✅ built |
 | 16 | [Durability + recovery](14-durability-and-recovery.md) | B-195 | ✅ built |
-| 17 | Per-code-file atlas | B-197 | planned |
+| 17 | [Per-code-file atlas](16-per-file-atlas.md) | B-197 | ✅ built |
 | 18 | Testing + quality | B-198 | planned |
 
 ## Docs-as-code rules (binding on every Phase 18 slice)
