@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **429 Python code files**: migrations 23, scripts 22, src 203, tests 181. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **430 Python code files**: migrations 23, scripts 22, src 204, tests 181. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -270,7 +270,7 @@ The tree at generation time holds **429 Python code files**: migrations 23, scri
 - **Purpose:** External-queue worker entry point (roadmap B-157).
 - **Module:** composition / foundation · **Layer:** root
 - **Public symbols:** `main`
-- **Dependencies (imports):** `arq.worker`, `gpa.config`, `gpa.internal`, `gpa.services.jobqueue`
+- **Dependencies (imports):** `arq.worker`, `gpa`, `gpa.config`, `gpa.internal`, `gpa.services.jobqueue`
 - **Allowed / forbidden:** Composition and foundation files: may wire any module's public surface (reviewed as composition). Forbidden: business rules that belong in a service.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Startup refusals are plain-words and fatal by design (prod secret law, half-configured mail); request-time failures ride the problem+json chassis.
@@ -654,7 +654,7 @@ The tree at generation time holds **429 Python code files**: migrations 23, scri
 - **Purpose:** The MCP server core (roadmap B-204, Phase 19).
 - **Module:** mcp · **Layer:** mcp
 - **Public symbols:** `SERVER_NAME`, `INSTRUCTIONS`, `supported_protocol_versions`, `build_server`, `bridge_of`, `create_http_app`, `main`
-- **Dependencies (imports):** `__future__`, `argparse`, `gpa.config`, `gpa.errors`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.elicitation`, `gpa.mcp.prompts`, `gpa.mcp.resources`, `gpa.mcp.sampling`, `gpa.mcp.security`, `gpa.mcp.structured`, `gpa.mcp.subscriptions`, `gpa.mcp.tools`, `mcp.server.auth.middleware.auth_context`, `mcp.server.auth.settings`, `mcp.server.fastmcp`, `mcp.server.lowlevel.server`, `mcp.shared.version`, `mcp.types`, `typing`
+- **Dependencies (imports):** `__future__`, `argparse`, `gpa`, `gpa.config`, `gpa.errors`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.elicitation`, `gpa.mcp.prompts`, `gpa.mcp.resources`, `gpa.mcp.sampling`, `gpa.mcp.security`, `gpa.mcp.structured`, `gpa.mcp.subscriptions`, `gpa.mcp.tools`, `mcp.server.auth.middleware.auth_context`, `mcp.server.auth.settings`, `mcp.server.fastmcp`, `mcp.server.lowlevel.server`, `mcp.shared.version`, `mcp.types`, `typing`
 - **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
@@ -1368,6 +1368,18 @@ The tree at generation time holds **429 Python code files**: migrations 23, scri
 - **Failure behaviour:** Invalid input is refused as a 422 problem+json body by the validation door before any service runs.
 - **Tests that name it:** `tests/test_ask.py`, `tests/test_checklists.py`, `tests/test_decisions.py`, `tests/test_docs_gate.py`, `tests/test_google_calendar.py`, `tests/test_internal_api.py`
 - **Created by:** B-078 — Phase 6 (part 4): re-announce drafts, tombstones, quality report (B-078, B-080, B-081)
+
+### `src/gpa/seal.py`
+
+- **Purpose:** The build seal (roadmap D-46).
+- **Module:** composition / foundation · **Layer:** root
+- **Public symbols:** `seal_text`, `speak_seal`
+- **Dependencies (imports):** `__future__`, `base64`, `gpa`, `hashlib`, `sys`
+- **Allowed / forbidden:** Composition and foundation files: may wire any module's public surface (reviewed as composition). Forbidden: business rules that belong in a service.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** Startup refusals are plain-words and fatal by design (prod secret law, half-configured mail); request-time failures ride the problem+json chassis.
+- **Tests that name it:** `tests/conftest.py`, `tests/test_architecture.py`, `tests/test_digest.py`, `tests/test_docs_gate.py`, `tests/test_encrypted_storage.py`, `tests/test_erasure.py`
+- **Created by:** pre-git or generated (see git history)
 
 ### `src/gpa/security.py`
 
@@ -2502,7 +2514,7 @@ The tree at generation time holds **429 Python code files**: migrations 23, scri
 - **Purpose:** Background worker entry point (roadmap B-008).
 - **Module:** composition / foundation · **Layer:** root
 - **Public symbols:** `main`
-- **Dependencies (imports):** `gpa.ai`, `gpa.config`, `gpa.crypto`, `gpa.db`, `gpa.internal`, `gpa.services`, `gpa.storage`, `gpa.storage.encrypted`, `time`, `uuid`
+- **Dependencies (imports):** `gpa`, `gpa.ai`, `gpa.config`, `gpa.crypto`, `gpa.db`, `gpa.internal`, `gpa.services`, `gpa.storage`, `gpa.storage.encrypted`, `time`, `uuid`
 - **Allowed / forbidden:** Composition and foundation files: may wire any module's public surface (reviewed as composition). Forbidden: business rules that belong in a service.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Startup refusals are plain-words and fatal by design (prod secret law, half-configured mail); request-time failures ride the problem+json chassis.
@@ -4508,7 +4520,7 @@ The tree at generation time holds **429 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-220 — B-220 Phase 19 gate (built; full-suite proof DEFERRED) + build HALT at Volmarr's order 202
 
 ### `tests/test_phase3_gate.py`
 

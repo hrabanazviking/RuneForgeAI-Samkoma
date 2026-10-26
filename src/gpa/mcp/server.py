@@ -1989,6 +1989,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     settings = get_settings()
+    # The build seal sounds as the server starts (D-46) — on
+    # stderr, because stdout is the stdio protocol wire.
+    from gpa import seal
+
+    seal.speak_seal(to_stderr=True)
     overrides: dict[str, Any] = {}
     if args.host is not None:
         overrides["mcp_http_host"] = args.host

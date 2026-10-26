@@ -18,6 +18,10 @@ from gpa.config import get_settings
 
 def main() -> None:
     """Run the arq worker until stopped."""
+    # The build seal sounds as the worker starts (D-46).
+    from gpa import seal
+
+    seal.speak_seal()
     try:
         from arq.worker import create_worker
     except ImportError as err:

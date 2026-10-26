@@ -117,6 +117,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     _configure_logging(settings)
     logging.getLogger().addFilter(_RequestIdFilter())
+    # The build seal sounds as the app assembles (D-46).
+    from gpa import seal
+
+    seal.speak_seal()
 
     app = FastAPI(
         title="Group Planning Assistant",

@@ -33,6 +33,10 @@ from gpa.storage import set_storage
 def main() -> None:
     """Poll the queue forever, processing jobs as they come due."""
     settings = get_settings()
+    # The build seal sounds as the worker starts (D-46).
+    from gpa import seal
+
+    seal.speak_seal()
     # The internal API's audit hook (B-165), as in the API
     # process: the worker's internal calls keep the same story.
     from gpa.internal import auditing
