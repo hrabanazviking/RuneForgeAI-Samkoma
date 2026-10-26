@@ -209,6 +209,28 @@ def test_user_guide_6_covers_reminders_digests_memory():
     assert "06-user-guide-reminders-digests-memory.md" in index
 
 
+def test_admin_guide_8_covers_dangerous_buttons_consequence_first():
+    """B-188: the admin + operator guide covers group
+    administration, agent seats, integrations (Facebook,
+    Google, Samtal, webhooks), the AI budget, audit reading,
+    data export, group erasure, and member data requests —
+    dangerous buttons with consequences before instructions."""
+    chapter = ROOT / "docs" / "07-admin-and-operator-guide.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "settings pack", "agent seats", "shown once",
+        "seat_cannot_approve", "integrations", "facebook",
+        "google", "samtal", "webhooks", "health-board",
+        "reconcile", "ai_daily_budget_micros", "audit/verify",
+        "users/me/data", "export", "erase", "exact name",
+        "irreversible", "consequence first",
+    ):
+        assert topic in text, f"B-188 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "07-admin-and-operator-guide.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"

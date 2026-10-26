@@ -1593,6 +1593,36 @@ parses the model so it cannot drift from the code.
   against the live memory/notifications routers. Pinned by
   a new docs-gate test; regression batch 18 passed. Next:
   B-188.
+- **B-188 admin + operator guide** ✅:
+  `docs/07-admin-and-operator-guide.md` — every dangerous
+  button with its consequence BEFORE its instructions, per
+  the roadmap line: the settings pack (one validated
+  transaction, one bad dial changes nothing, per-field
+  old→new audit; the review-policy and null-budget dials'
+  consequences named), agent seats (key shown once, hashed
+  after; acts attributed to the seat; `seat_cannot_approve`
+  in-service), integrations (config sealed whole, key NAMES
+  only on reads; health board reads records, pings nothing;
+  Facebook/Google press is a person's, Google one-way out
+  with edits returning as change candidates; reconcile
+  NEVER writes outward; Samtal edits return as candidates;
+  webhook tokens shown once/hashed, derived signing secret,
+  300 s window, replay refused; outbound secrets sealed,
+  deliveries die at the attempt cap), the AI budget dial
+  (ledger, deferral at cap, no run-it-anyway button), audit
+  reading (same-transaction writer, hash chain + verify
+  door, failure = incident), member data requests
+  (`/users/me/data` with no hashes by construction, import
+  arrives invited + dry-run rolls back), data export
+  (owner + live person session only, no API key can; secrets
+  withheld by column rule; audit commits before the answer),
+  and group erasure (hard, total, irreversible — FK-fixpoint
+  plan, storage sweep, compacted DB greps clean, one audit
+  row keeps only the fact; double confirmation = exact name
+  + ERASE, a mismatch erases nothing). Routes verified
+  against the live privacy/groups/integrations routers.
+  Pinned by a new docs-gate test; regression batch 19
+  passed. Next: B-189.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
