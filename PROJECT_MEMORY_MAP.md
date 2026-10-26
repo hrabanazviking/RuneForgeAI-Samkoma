@@ -2227,7 +2227,7 @@ parses the model so it cannot drift from the code.
 - **B-204 MCP server core** ✅ (timer crew, 2026-10-26):
   new package `src/gpa/mcp/` as its own module (D-30) on the
   **official MCP Python SDK** (`mcp>=1.25,<2`, locked at
-  1.29.1; the SDK is a runtime dependency and the
+  1.30.0; the SDK is a runtime dependency and the
   `gpa-mcp` script is the serving entry). **The bridge law**:
   `mcp/bridge.py` is the package's ONLY backend door — an
   `InternalClient` speaking as caller **`mcp`** (a new
