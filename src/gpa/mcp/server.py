@@ -37,6 +37,14 @@ What this module builds, and what it deliberately does not:
   role, plus the product's own OpenAPI document and docs
   set. Their guard is this module's principal resolution
   plus the read-scope law, checked per read.
+* **Prompts (B-215)** — curated, versioned workflow
+  templates in ``gpa.mcp.prompts``, registered on this same
+  server: five named jobs (plan an event, brief before an
+  event, recap last night, what is still undecided, prepare
+  the weekly digest draft), each composing this group's
+  resources and tools in its text and stating in its text
+  that drafts go to the queue. A prompt holds no capability
+  of its own — rendering one calls nothing.
 * **Subscriptions + notifications (B-214)** — the shelf's
   watch, in ``gpa.mcp.subscriptions``: protocol handlers
   for ``resources/subscribe`` / ``resources/unsubscribe``
@@ -86,6 +94,7 @@ from gpa.mcp.auth import (
     seat_key_provider,
 )
 from gpa.mcp.bridge import InternalBridge, package_version
+from gpa.mcp.prompts import register_prompts
 from gpa.mcp.resources import register_resources
 from gpa.mcp.structured import get_logger, log_event, timed
 from gpa.mcp.subscriptions import SubscriptionStore, dispatch_frame
@@ -1426,6 +1435,16 @@ def build_server(
     # plus the read-scope law — so a resource read is checked
     # exactly as freshly as a tool call, by the same hand.
     register_resources(server, bridge, _resource_guard)
+
+    # --- B-215: the curated prompt set -----------------------
+    #
+    # Registered on the same server object, beside the shelf:
+    # five versioned workflow templates (gpa.mcp.prompts).
+    # They need neither the bridge nor a guard — a prompt is
+    # text that composes resources and tools, and holds no
+    # capability of its own; the resources and tools it names
+    # carry their own scope law when the agent acts on them.
+    register_prompts(server)
 
     # --- B-214: subscriptions + change notifications -----------
     #

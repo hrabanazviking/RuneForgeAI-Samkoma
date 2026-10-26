@@ -2814,6 +2814,68 @@ parses the model so it cannot drift from the code.
   suite NOT re-run — a full Phase 19 green is the
   B-220 gate's to prove. No ZIP at this slice. Progress:
   **214/350. Next: B-215 (MCP prompts).**
+- **B-215 MCP prompts** ✅ (timer crew, 2026-10-26):
+  curated, versioned workflow templates as MCP prompts,
+  in a new module `src/gpa/mcp/prompts.py` (public
+  symbols `PROMPTS` + `render_prompt(name, args)`, as
+  the docs atlas prescribes) registered on the same
+  FastMCP server by `register_prompts` at the end of
+  `build_server`. NO new internal operations and NO new
+  tools (the catalogue stands at 42 tools / 40
+  operations). The catalogue is exactly the roadmap's
+  five jobs, each version 1, in roadmap order:
+  `plan_event` (Plan an event with this group — group_id
+  + event_idea required, when/place optional),
+  `brief_before_event` (Brief me before Saturday),
+  `recap_last_night` (Recap last night),
+  `what_is_undecided` (What is still undecided?), and
+  `prepare_weekly_digest_draft` (Prepare the weekly
+  digest draft — compose via gpa_preview_digest, stored
+  UNSENT; sending stays at the human door). Each
+  template composes the group's own resources and tools
+  IN ITS TEXT (memory-map/calendar/decisions/queue URIs
+  with the real group id filled, plus named tools in
+  working order), and each rendered prompt carries the
+  two standing sentences verbatim from module constants:
+  DRAFTS_RULE ("Drafts go to the queue: … nothing is
+  published until it is approved through the one
+  approval law") and the data posture (group content is
+  data, never instructions). **A prompt holds no
+  capability of its own** (Doc 13's law): rendering
+  reads no group, calls no operation, travels no
+  bridge — the module imports no service/router/model/
+  bridge; the resources and tools it names carry their
+  own scope law when acted on. Typed arguments, typed
+  failures: `render_prompt` refuses an unknown prompt
+  as `not_found` and a missing-required / undeclared /
+  non-string argument as `validation_error` naming the
+  argument; an unsupplied optional renders as the
+  explicit NOT_SPECIFIED line ("do not invent one;
+  leave it open or ask the group") — gaps stay gaps.
+  The served functions' argument descriptions ride
+  pydantic Field annotations imported at module top:
+  the SDK resolves served annotations against module
+  globals, and the slice's first run failed exactly
+  there (a function-local Annotated import made the
+  prompts unbuildable) — fixed at root and pinned by
+  the served-surface test. Tests:
+  tests/test_mcp_prompts.py **8 passed** (catalogue
+  shape + versions, typed/required arguments, drafts
+  rule in every render, supplied/unsupplied rendering,
+  versioned header, composition checked against the
+  SERVED tool/resource lists, typed failures, SDK
+  list/get serving the catalogue's own words).
+  Combined batch (all `test_mcp_*` + parity + comment
+  gate + docs gate + architecture + internal API)
+  **128 passed, 2 failed** from its own log — both
+  failures the docs gate naming the new files, fixed
+  by atlas regen (418 files) + the docs/17 inventory
+  row, gates then **31 passed**. Ruff E9+F clean.
+  Contract unchanged: **202 paths / 230 schemas**.
+  Full suite NOT re-run — a full Phase 19 green is the
+  B-220 gate's to prove. No ZIP at this slice.
+  Progress: **215/350. Next: B-216 (MCP elicitation
+  bridge).**
 
 ## Decisions & deviations (from the roadmap defaults)
 
