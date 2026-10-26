@@ -18,7 +18,7 @@ each reader meets what they need before what they merely want.
 
 | Order | Chapter | Slice | State |
 |---|---|---|---|
-| 1 | User guide I — start + groups | B-182 | next slice |
+| 1 | [User guide I — start + groups](01-user-guide-start-and-groups.md) | B-182 | ✅ built |
 | 2 | User guide II — sources | B-183 | planned |
 | 3 | User guide III — the review queue | B-184 | planned |
 | 4 | User guide IV — calendar + events | B-185 | planned |

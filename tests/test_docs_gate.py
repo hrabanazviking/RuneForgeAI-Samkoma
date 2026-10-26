@@ -85,6 +85,31 @@ def test_unterminated_fence_fails_by_file(tmp_path):
     assert failures and str(bad) in failures[0]
 
 
+def test_user_guide_1_covers_its_roadmap_topics():
+    """B-182: the start + groups chapter exists and covers every
+    topic its roadmap line names — account, sign-in incl. MFA,
+    creating a group, inviting, roles, group settings,
+    notification preferences, quiet hours — as tasks."""
+    chapter = ROOT / "docs" / "01-user-guide-start-and-groups.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "register", "magic link", "two-factor", "create a group",
+        "invite", "roles", "group settings", "notification preferences",
+        "quiet hours", "last-owner",
+    ):
+        assert topic in text, f"B-182 chapter is missing its topic: {topic}"
+    # Task-shaped, per the B-181 rules: a completable checklist.
+    assert "first success" in text and "- [ ]" in text
+    # Honesty markers the code demands: no MFA recovery codes
+    # exist in this build, and the Messenger driver is unavailable.
+    assert "no mfa recovery codes" in text
+    assert "driver_unavailable" in text
+    # The index links the built chapter.
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "01-user-guide-start-and-groups.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"
