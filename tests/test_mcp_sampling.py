@@ -175,7 +175,7 @@ def test_a_disabled_server_refuses_and_records_nothing(client, app, settings):
         _call(
             server,
             "gpa_request_sampling",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "prompt": "Summarise the bonfire plan.",
                 "actor": "seat:scout-1",
@@ -227,7 +227,7 @@ def test_an_authorised_call_is_ledgered_and_audited_without_words(
     result = _call(
         server,
         "gpa_request_sampling",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "prompt": "Summarise the bonfire plan in one line.",
             "actor": "seat:scout-1",
@@ -254,14 +254,14 @@ def test_the_day_cap_refuses_the_call_after_the_last_one(
     first = _call(
         server,
         "gpa_request_sampling",
-        {"group_id": group["id"], "prompt": "One.", "actor": "seat:scout-1"},
+        {"consent": True, "group_id": group["id"], "prompt": "One.", "actor": "seat:scout-1"},
     )
     assert first["calls_today"] == 1
     with pytest.raises(Exception) as caught:
         _call(
             server,
             "gpa_request_sampling",
-            {"group_id": group["id"], "prompt": "Two.", "actor": "seat:scout-1"},
+            {"consent": True, "group_id": group["id"], "prompt": "Two.", "actor": "seat:scout-1"},
         )
     assert "sampling_budget_exceeded" in str(caught.value)
     assert len(_rows(app, AiUsage, operation="mcp_sampling")) == 1
@@ -282,7 +282,7 @@ def test_a_group_at_its_ai_budget_cap_may_not_sample(client, app, settings):
         _call(
             server,
             "gpa_request_sampling",
-            {"group_id": group["id"], "prompt": "One.", "actor": "seat:scout-1"},
+            {"consent": True, "group_id": group["id"], "prompt": "One.", "actor": "seat:scout-1"},
         )
     assert "sampling_budget_exceeded" in str(caught.value)
     assert _rows(app, AiUsage, operation="mcp_sampling") == []
@@ -303,6 +303,7 @@ def test_a_capable_client_answers_and_the_text_is_data(client, app, settings):
             prompt="Summarise the bonfire plan.",
             actor="seat:scout-1",
             max_tokens=9999,
+            consent=True,
             ctx=ctx,
         )
     )
@@ -330,7 +331,7 @@ def test_a_principal_without_publish_cannot_sample(client, app, settings):
         _call(
             server,
             "gpa_request_sampling",
-            {"group_id": group["id"], "prompt": "One.", "actor": "user:drafter-1"},
+            {"consent": True, "group_id": group["id"], "prompt": "One.", "actor": "user:drafter-1"},
         )
     assert "insufficient_scope" in str(caught.value)
     assert _rows(app, AiUsage, operation="mcp_sampling") == []

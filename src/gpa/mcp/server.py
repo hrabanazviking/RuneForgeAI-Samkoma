@@ -67,6 +67,18 @@ What this module builds, and what it deliberately does not:
   and authorised + audit-logged through the
   ``sampling.sample`` operation BEFORE the client is
   asked. Sampled text returns marked as data.
+* **Security hardening (B-218)** — policy in
+  ``gpa.mcp.security``: every served tool carries truthful
+  MCP annotations (read-only / destructive / idempotent /
+  open-world) derived from the registry; destructive and
+  gated open-world tools require the caller's explicit
+  per-call ``consent`` at the gateway, checked before the
+  bridge; every call is counted against its principal
+  under the per-minute rate limit; and every operation
+  result returns marked ``is_data`` — group content is
+  data, never instructions (B-142's law at this boundary).
+  Operation calls remain audited through the bridge's
+  B-165 hash-chained hook, as they have been since B-204.
 * **Subscriptions + notifications (B-214)** — the shelf's
   watch, in ``gpa.mcp.subscriptions``: protocol handlers
   for ``resources/subscribe`` / ``resources/unsubscribe``
@@ -130,6 +142,13 @@ from gpa.mcp.sampling import (
     sampling_policy,
 )
 from gpa.mcp.resources import register_resources
+from gpa.mcp.security import (
+    ToolRateLimiter,
+    mark_as_data,
+    principal_key,
+    require_consent,
+    tool_annotations,
+)
 from gpa.mcp.structured import get_logger, log_event, timed
 from gpa.mcp.subscriptions import SubscriptionStore, dispatch_frame
 from gpa.mcp.tools import all_tool_specs
@@ -196,6 +215,24 @@ def build_server(
     # the registry's words, the same words the signed release
     # manifest carries, never a second hand-typed copy here.
     specs = {spec.name: spec for spec in all_tool_specs()}
+
+    def _annotations(name: str):
+        """One tool's served MCP annotations (B-218).
+
+        Built from the registry spec through the security
+        module's derivation, so the wire carries the same
+        hints the manifest stamps and the tests assert —
+        one derivation, three surfaces, no drift.
+        """
+        from mcp.types import ToolAnnotations
+
+        return ToolAnnotations(**tool_annotations(specs[name]))
+
+    # The B-218 rate brake: one limiter per built server,
+    # keyed per principal, its ceiling read from settings
+    # at build time (an operator's change is a restart's
+    # deliberate act, like every other MCP setting here).
+    rate_limiter = ToolRateLimiter(settings.mcp_rate_limit_per_minute)
     fastmcp_kwargs: dict[str, Any] = {}
     if authenticated_http:
         # The resource-server profile: our verifier answers the
@@ -222,6 +259,7 @@ def build_server(
     # factory and tests can reach the one door this server
     # speaks through, without a second construction.
     server._gpa_bridge = bridge  # type: ignore[attr-defined]
+    server._gpa_rate_limiter = rate_limiter  # type: ignore[attr-defined]
 
     def _principal(tool: str) -> McpPrincipal:
         """Resolve this call's principal and check its scope.
@@ -265,6 +303,13 @@ def build_server(
             principal = LOCAL_PRINCIPAL
         if tool is not None:
             require_tool_scope(principal, tool)
+            # B-218: the per-principal rate brake, counted
+            # AFTER the scope check so an under-scoped call
+            # is refused for its scope, and counted exactly
+            # once here — every tool road (operation, meta,
+            # elicitation, sampling) resolves through this
+            # one function with its tool named.
+            rate_limiter.check(principal_key(principal))
         return principal
 
     def _resource_guard() -> McpPrincipal:
@@ -304,25 +349,32 @@ def build_server(
         except AppError as exc:
             raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
 
-    def _call(operation: str, payload: dict, *, tool: str) -> dict:
+    def _call(operation: str, payload: dict, *, tool: str, consent: bool = False) -> dict:
         """Run one tool's internal call, logging its outcome.
 
         AppError refusals are re-raised as plain tool errors
         whose message LEADS with the backend's problem code —
         the MCP wire carries the message, and an agent must be
         able to tell a scope refusal from a missing group.
+
+        B-218's gates ride this one road: the consent check
+        runs after the scope check and BEFORE the bridge, so
+        a gated act without consent writes nothing; and the
+        result returns marked as data — group content is
+        never instructions to the calling agent.
         """
         with timed(logger, "mcp.tool", tool=tool, operation=operation, caller=bridge.caller) as done:
             try:
                 _principal(tool)
+                require_consent(tool, consent)
                 data = bridge.call(operation, payload)
             except AppError as exc:
                 done(result="error", error_code=exc.code)
                 raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
             done(result="ok")
-            return data
+            return mark_as_data(data)
 
-    @server.tool(description=specs["gpa_server_info"].description)
+    @server.tool(description=specs["gpa_server_info"].description, annotations=_annotations("gpa_server_info"))
     def gpa_server_info() -> dict[str, Any]:
         """Report this server's identity and negotiated capabilities.
 
@@ -342,7 +394,7 @@ def build_server(
                 **bridge.info(),
             }
 
-    @server.tool(description=specs["gpa_list_internal_operations"].description)
+    @server.tool(description=specs["gpa_list_internal_operations"].description, annotations=_annotations("gpa_list_internal_operations"))
     def gpa_list_internal_operations() -> dict[str, Any]:
         """List the internal operations this surface may call.
 
@@ -362,12 +414,13 @@ def build_server(
                 "operation": spec.operation,
                 "credential_scope": spec.credential_scope,
                 "kind": spec.kind,
+                "annotations": tool_annotations(spec),
             }
             for spec in specs.values()
         ]
         return {"operations": operations, "count": len(operations), "tools": tools}
 
-    @server.tool(description=specs["gpa_create_candidate_draft"].description)
+    @server.tool(description=specs["gpa_create_candidate_draft"].description, annotations=_annotations("gpa_create_candidate_draft"))
     def gpa_create_candidate_draft(
         group_id: str,
         kind: str,
@@ -395,8 +448,8 @@ def build_server(
             tool="gpa_create_candidate_draft",
         )
 
-    @server.tool(description=specs["gpa_publish_event"].description)
-    def gpa_publish_event(group_id: str, event_id: str, actor: str) -> dict[str, Any]:
+    @server.tool(description=specs["gpa_publish_event"].description, annotations=_annotations("gpa_publish_event"))
+    def gpa_publish_event(group_id: str, event_id: str, actor: str, consent: bool = False) -> dict[str, Any]:
         """Publish one draft event through the internal operation.
 
         The same ``events.publish`` operation a human
@@ -409,6 +462,7 @@ def build_server(
             "events.publish",
             {"group_id": group_id, "event_id": event_id, "actor": actor},
             tool="gpa_publish_event",
+            consent=consent,
         )
 
     # --- B-209 family: events, RSVPs, the calendar ----------------------------
@@ -456,7 +510,7 @@ def build_server(
     # DO carry the event's version, so a future edit family
     # has honest ground to stand on.
 
-    @server.tool(description=specs["gpa_list_events"].description)
+    @server.tool(description=specs["gpa_list_events"].description, annotations=_annotations("gpa_list_events"))
     def gpa_list_events(
         group_id: str, role: str, status: str | None = None
     ) -> dict[str, Any]:
@@ -472,7 +526,7 @@ def build_server(
             payload["status"] = status
         return _call("events.list", payload, tool="gpa_list_events")
 
-    @server.tool(description=specs["gpa_get_event"].description)
+    @server.tool(description=specs["gpa_get_event"].description, annotations=_annotations("gpa_get_event"))
     def gpa_get_event(
         group_id: str, event_id: str, role: str
     ) -> dict[str, Any]:
@@ -487,13 +541,14 @@ def build_server(
             tool="gpa_get_event",
         )
 
-    @server.tool(description=specs["gpa_cancel_event"].description)
+    @server.tool(description=specs["gpa_cancel_event"].description, annotations=_annotations("gpa_cancel_event"))
     def gpa_cancel_event(
         group_id: str,
         event_id: str,
         actor: str,
         role: str,
         reason: str | None = None,
+        consent: bool = False,
     ) -> dict[str, Any]:
         """Cancel one event with the canceller's reason.
 
@@ -509,9 +564,9 @@ def build_server(
         }
         if reason is not None:
             payload["reason"] = reason
-        return _call("events.cancel", payload, tool="gpa_cancel_event")
+        return _call("events.cancel", payload, tool="gpa_cancel_event", consent=consent)
 
-    @server.tool(description=specs["gpa_list_rsvps"].description)
+    @server.tool(description=specs["gpa_list_rsvps"].description, annotations=_annotations("gpa_list_rsvps"))
     def gpa_list_rsvps(group_id: str, event_id: str) -> dict[str, Any]:
         """List one event's answers with the summary counts.
 
@@ -525,7 +580,7 @@ def build_server(
             tool="gpa_list_rsvps",
         )
 
-    @server.tool(description=specs["gpa_set_rsvp"].description)
+    @server.tool(description=specs["gpa_set_rsvp"].description, annotations=_annotations("gpa_set_rsvp"))
     def gpa_set_rsvp(
         group_id: str,
         event_id: str,
@@ -559,7 +614,7 @@ def build_server(
             payload["note"] = note
         return _call("rsvps.set", payload, tool="gpa_set_rsvp")
 
-    @server.tool(description=specs["gpa_get_agenda"].description)
+    @server.tool(description=specs["gpa_get_agenda"].description, annotations=_annotations("gpa_get_agenda"))
     def gpa_get_agenda(
         group_id: str,
         window_start: str,
@@ -623,7 +678,7 @@ def build_server(
     # a product decision with pipeline consequences, not a
     # string a caller may coin at the door.
 
-    @server.tool(description=specs["gpa_list_sources"].description)
+    @server.tool(description=specs["gpa_list_sources"].description, annotations=_annotations("gpa_list_sources"))
     def gpa_list_sources(group_id: str) -> dict[str, Any]:
         """List a group's sources (metadata + chunk counts).
 
@@ -635,7 +690,7 @@ def build_server(
             "sources.list", {"group_id": group_id}, tool="gpa_list_sources"
         )
 
-    @server.tool(description=specs["gpa_get_source"].description)
+    @server.tool(description=specs["gpa_get_source"].description, annotations=_annotations("gpa_get_source"))
     def gpa_get_source(group_id: str, source_id: str) -> dict[str, Any]:
         """Read one source in full, chunks opened in order."""
         return _call(
@@ -644,7 +699,7 @@ def build_server(
             tool="gpa_get_source",
         )
 
-    @server.tool(description=specs["gpa_create_source"].description)
+    @server.tool(description=specs["gpa_create_source"].description, annotations=_annotations("gpa_create_source"))
     def gpa_create_source(
         group_id: str,
         actor: str,
@@ -672,7 +727,7 @@ def build_server(
             payload["chunks"] = chunks
         return _call("sources.create", payload, tool="gpa_create_source")
 
-    @server.tool(description=specs["gpa_append_source_chunks"].description)
+    @server.tool(description=specs["gpa_append_source_chunks"].description, annotations=_annotations("gpa_append_source_chunks"))
     def gpa_append_source_chunks(
         group_id: str, source_id: str, chunks: list
     ) -> dict[str, Any]:
@@ -688,7 +743,7 @@ def build_server(
             tool="gpa_append_source_chunks",
         )
 
-    @server.tool(description=specs["gpa_request_extraction"].description)
+    @server.tool(description=specs["gpa_request_extraction"].description, annotations=_annotations("gpa_request_extraction"))
     def gpa_request_extraction(
         group_id: str,
         source_id: str,
@@ -753,7 +808,7 @@ def build_server(
     # table in gpa.mcp.auth states the same reasoning where
     # a reviewer widening rungs must read it.
 
-    @server.tool(description=specs["gpa_list_tasks"].description)
+    @server.tool(description=specs["gpa_list_tasks"].description, annotations=_annotations("gpa_list_tasks"))
     def gpa_list_tasks(
         group_id: str, status: str | None = None, event_id: str | None = None
     ) -> dict[str, Any]:
@@ -769,7 +824,7 @@ def build_server(
             payload["event_id"] = event_id
         return _call("planning.list_tasks", payload, tool="gpa_list_tasks")
 
-    @server.tool(description=specs["gpa_list_decisions"].description)
+    @server.tool(description=specs["gpa_list_decisions"].description, annotations=_annotations("gpa_list_decisions"))
     def gpa_list_decisions(
         group_id: str, current_only: bool | None = None
     ) -> dict[str, Any]:
@@ -786,7 +841,7 @@ def build_server(
             "planning.list_decisions", payload, tool="gpa_list_decisions"
         )
 
-    @server.tool(description=specs["gpa_get_decision_chain"].description)
+    @server.tool(description=specs["gpa_get_decision_chain"].description, annotations=_annotations("gpa_get_decision_chain"))
     def gpa_get_decision_chain(
         group_id: str, decision_id: str
     ) -> dict[str, Any]:
@@ -801,7 +856,7 @@ def build_server(
             tool="gpa_get_decision_chain",
         )
 
-    @server.tool(description=specs["gpa_list_questions"].description)
+    @server.tool(description=specs["gpa_list_questions"].description, annotations=_annotations("gpa_list_questions"))
     def gpa_list_questions(
         group_id: str, status: str | None = None
     ) -> dict[str, Any]:
@@ -818,7 +873,7 @@ def build_server(
             "planning.list_questions", payload, tool="gpa_list_questions"
         )
 
-    @server.tool(description=specs["gpa_update_task"].description)
+    @server.tool(description=specs["gpa_update_task"].description, annotations=_annotations("gpa_update_task"))
     def gpa_update_task(
         group_id: str, task_id: str, actor: str, changes: dict
     ) -> dict[str, Any]:
@@ -839,7 +894,7 @@ def build_server(
             tool="gpa_update_task",
         )
 
-    @server.tool(description=specs["gpa_resolve_question"].description)
+    @server.tool(description=specs["gpa_resolve_question"].description, annotations=_annotations("gpa_resolve_question"))
     def gpa_resolve_question(
         group_id: str,
         question_id: str,
@@ -895,7 +950,7 @@ def build_server(
     # backend. Its scope law is unchanged: ``_principal``
     # runs the same call-time check (draft) as every tool.
 
-    @server.tool(description=specs["gpa_ask_for_missing_fact"].description)
+    @server.tool(description=specs["gpa_ask_for_missing_fact"].description, annotations=_annotations("gpa_ask_for_missing_fact"))
     async def gpa_ask_for_missing_fact(
         group_id: str,
         question: str,
@@ -1007,12 +1062,13 @@ def build_server(
     # The tool is async because sampling, like elicitation,
     # is a server -> client request inside the call.
 
-    @server.tool(description=specs["gpa_request_sampling"].description)
+    @server.tool(description=specs["gpa_request_sampling"].description, annotations=_annotations("gpa_request_sampling"))
     async def gpa_request_sampling(
         group_id: str,
         prompt: str,
         actor: str,
         max_tokens: int | None = None,
+        consent: bool = False,
         ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Request one sampling generation from the client's model (B-217).
@@ -1030,6 +1086,11 @@ def build_server(
             try:
                 # Step 1: the call-time scope check.
                 _principal(tool)
+                # Step 1b (B-218): sampling is a gated
+                # open-world act — the caller's explicit
+                # per-call consent, checked before any
+                # authorisation writes its record.
+                require_consent(tool, consent)
                 # Step 2: authorise + record before the ask.
                 # AppError refusals (disabled, budget, unknown
                 # group, blank prompt) propagate to the outer
@@ -1151,7 +1212,7 @@ def build_server(
     # or seat form of it, and the rows returned are the
     # person's own, never a neighbour's.
 
-    @server.tool(description=specs["gpa_list_announcements"].description)
+    @server.tool(description=specs["gpa_list_announcements"].description, annotations=_annotations("gpa_list_announcements"))
     def gpa_list_announcements(
         group_id: str, role: str, include_expired: bool | None = None
     ) -> dict[str, Any]:
@@ -1168,7 +1229,7 @@ def build_server(
             "announcements.list", payload, tool="gpa_list_announcements"
         )
 
-    @server.tool(description=specs["gpa_create_announcement"].description)
+    @server.tool(description=specs["gpa_create_announcement"].description, annotations=_annotations("gpa_create_announcement"))
     def gpa_create_announcement(
         group_id: str,
         actor: str,
@@ -1202,7 +1263,7 @@ def build_server(
             "announcements.create", payload, tool="gpa_create_announcement"
         )
 
-    @server.tool(description=specs["gpa_get_inbox"].description)
+    @server.tool(description=specs["gpa_get_inbox"].description, annotations=_annotations("gpa_get_inbox"))
     def gpa_get_inbox(
         user_id: str, unread_only: bool | None = None
     ) -> dict[str, Any]:
@@ -1218,7 +1279,8 @@ def build_server(
         return _call("notifications.inbox", payload, tool="gpa_get_inbox")
 
     @server.tool(
-        description=specs["gpa_get_notification_preferences"].description
+        description=specs["gpa_get_notification_preferences"].description,
+        annotations=_annotations("gpa_get_notification_preferences"),
     )
     def gpa_get_notification_preferences(
         group_id: str, user_id: str
@@ -1235,7 +1297,7 @@ def build_server(
             tool="gpa_get_notification_preferences",
         )
 
-    @server.tool(description=specs["gpa_list_digests"].description)
+    @server.tool(description=specs["gpa_list_digests"].description, annotations=_annotations("gpa_list_digests"))
     def gpa_list_digests(group_id: str) -> dict[str, Any]:
         """List the group's stored digests, newest first.
 
@@ -1246,7 +1308,7 @@ def build_server(
             "digests.list", {"group_id": group_id}, tool="gpa_list_digests"
         )
 
-    @server.tool(description=specs["gpa_preview_digest"].description)
+    @server.tool(description=specs["gpa_preview_digest"].description, annotations=_annotations("gpa_preview_digest"))
     def gpa_preview_digest(group_id: str, role: str) -> dict[str, Any]:
         """Compose this week's digest; store it UNSENT.
 
@@ -1292,7 +1354,7 @@ def build_server(
     # these generated tools are the registry's guarantee that
     # no operation waits for its family slice to be reachable.
 
-    @server.tool(description=specs["gpa_request_notification"].description)
+    @server.tool(description=specs["gpa_request_notification"].description, annotations=_annotations("gpa_request_notification"))
     def gpa_request_notification(
         kind: str,
         subject: str,
@@ -1320,7 +1382,7 @@ def build_server(
             tool="gpa_request_notification",
         )
 
-    @server.tool(description=specs["gpa_notify_rsvp_promotion"].description)
+    @server.tool(description=specs["gpa_notify_rsvp_promotion"].description, annotations=_annotations("gpa_notify_rsvp_promotion"))
     def gpa_notify_rsvp_promotion(
         group_id: str, event_id: str, rsvp_id: str
     ) -> dict[str, Any]:
@@ -1333,7 +1395,7 @@ def build_server(
             tool="gpa_notify_rsvp_promotion",
         )
 
-    @server.tool(description=specs["gpa_enqueue_job"].description)
+    @server.tool(description=specs["gpa_enqueue_job"].description, annotations=_annotations("gpa_enqueue_job"))
     def gpa_enqueue_job(
         kind: str,
         payload: dict[str, Any] | None = None,
@@ -1353,7 +1415,7 @@ def build_server(
             tool="gpa_enqueue_job",
         )
 
-    @server.tool(description=specs["gpa_submit_ai_job"].description)
+    @server.tool(description=specs["gpa_submit_ai_job"].description, annotations=_annotations("gpa_submit_ai_job"))
     def gpa_submit_ai_job(
         kind: str,
         payload: dict[str, Any] | None = None,
@@ -1373,13 +1435,14 @@ def build_server(
             tool="gpa_submit_ai_job",
         )
 
-    @server.tool(description=specs["gpa_emit_integration_event"].description)
+    @server.tool(description=specs["gpa_emit_integration_event"].description, annotations=_annotations("gpa_emit_integration_event"))
     def gpa_emit_integration_event(
         group_id: str,
         kind: str,
         data: dict[str, Any] | None = None,
         event_id: str | None = None,
         event_extra: dict[str, Any] | None = None,
+        consent: bool = False,
     ) -> dict[str, Any]:
         """Announce one act via integrations.emit.
 
@@ -1396,7 +1459,7 @@ def build_server(
             payload["event_id"] = event_id
         if event_extra is not None:
             payload["event_extra"] = event_extra
-        return _call("integrations.emit", payload, tool="gpa_emit_integration_event")
+        return _call("integrations.emit", payload, tool="gpa_emit_integration_event", consent=consent)
 
     # --- The B-207 family: groups, members, profile -------------------------
     #
@@ -1454,12 +1517,12 @@ def build_server(
     # codes are kept distinct here precisely so they stay
     # distinguishable on the wire.
 
-    @server.tool(description=specs["gpa_get_group"].description)
+    @server.tool(description=specs["gpa_get_group"].description, annotations=_annotations("gpa_get_group"))
     def gpa_get_group(group_id: str) -> dict[str, Any]:
         """Read one group's plain facts via groups.get."""
         return _call("groups.get", {"group_id": group_id}, tool="gpa_get_group")
 
-    @server.tool(description=specs["gpa_list_members"].description)
+    @server.tool(description=specs["gpa_list_members"].description, annotations=_annotations("gpa_list_members"))
     def gpa_list_members(group_id: str) -> dict[str, Any]:
         """List a group's full roster via groups.list_members:
         person memberships and agent seats, each kind labelled."""
@@ -1467,7 +1530,7 @@ def build_server(
             "groups.list_members", {"group_id": group_id}, tool="gpa_list_members"
         )
 
-    @server.tool(description=specs["gpa_update_group"].description)
+    @server.tool(description=specs["gpa_update_group"].description, annotations=_annotations("gpa_update_group"))
     def gpa_update_group(
         group_id: str,
         actor: str,
@@ -1501,7 +1564,7 @@ def build_server(
             tool="gpa_update_group",
         )
 
-    @server.tool(description=specs["gpa_get_profile"].description)
+    @server.tool(description=specs["gpa_get_profile"].description, annotations=_annotations("gpa_get_profile"))
     def gpa_get_profile(
         user_id: str | None = None,
         seat_id: str | None = None,
@@ -1523,7 +1586,7 @@ def build_server(
             payload["group_id"] = group_id
         return _call("profile.get", payload, tool="gpa_get_profile")
 
-    @server.tool(description=specs["gpa_update_profile"].description)
+    @server.tool(description=specs["gpa_update_profile"].description, annotations=_annotations("gpa_update_profile"))
     def gpa_update_profile(
         actor: str,
         user_id: str | None = None,
@@ -1625,7 +1688,7 @@ def build_server(
     # over the approver's own facts, so it is the only one
     # whose payload carries them.
 
-    @server.tool(description=specs["gpa_list_candidates"].description)
+    @server.tool(description=specs["gpa_list_candidates"].description, annotations=_annotations("gpa_list_candidates"))
     def gpa_list_candidates(
         group_id: str,
         kind: str | None = None,
@@ -1643,7 +1706,7 @@ def build_server(
             payload["min_confidence"] = min_confidence
         return _call("candidates.list", payload, tool="gpa_list_candidates")
 
-    @server.tool(description=specs["gpa_get_candidate"].description)
+    @server.tool(description=specs["gpa_get_candidate"].description, annotations=_annotations("gpa_get_candidate"))
     def gpa_get_candidate(group_id: str, candidate_id: str) -> dict[str, Any]:
         """Read one candidate in full via candidates.get:
         draft, flags, provenance, approval progress."""
@@ -1653,7 +1716,7 @@ def build_server(
             tool="gpa_get_candidate",
         )
 
-    @server.tool(description=specs["gpa_approve_candidate"].description)
+    @server.tool(description=specs["gpa_approve_candidate"].description, annotations=_annotations("gpa_approve_candidate"))
     def gpa_approve_candidate(
         group_id: str,
         candidate_id: str,
@@ -1661,6 +1724,7 @@ def build_server(
         role: str,
         seat_id: str | None = None,
         user_id: str | None = None,
+        consent: bool = False,
     ) -> dict[str, Any]:
         """Approve one candidate via candidates.approve — the
         one approval law applies inside the operation: role
@@ -1676,11 +1740,11 @@ def build_server(
             payload["seat_id"] = seat_id
         if user_id is not None:
             payload["user_id"] = user_id
-        return _call("candidates.approve", payload, tool="gpa_approve_candidate")
+        return _call("candidates.approve", payload, tool="gpa_approve_candidate", consent=consent)
 
-    @server.tool(description=specs["gpa_reject_candidate"].description)
+    @server.tool(description=specs["gpa_reject_candidate"].description, annotations=_annotations("gpa_reject_candidate"))
     def gpa_reject_candidate(
-        group_id: str, candidate_id: str, actor: str
+        group_id: str, candidate_id: str, actor: str, consent: bool = False
     ) -> dict[str, Any]:
         """Reject one candidate via candidates.reject; the
         row and its draft stay, as a decision, not an erasure."""
@@ -1688,9 +1752,10 @@ def build_server(
             "candidates.reject",
             {"group_id": group_id, "candidate_id": candidate_id, "actor": actor},
             tool="gpa_reject_candidate",
+            consent=consent,
         )
 
-    @server.tool(description=specs["gpa_edit_candidate"].description)
+    @server.tool(description=specs["gpa_edit_candidate"].description, annotations=_annotations("gpa_edit_candidate"))
     def gpa_edit_candidate(
         group_id: str,
         candidate_id: str,

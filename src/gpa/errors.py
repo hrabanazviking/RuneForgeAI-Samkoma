@@ -60,6 +60,11 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     # commission more model work through the client's model.
     "sampling_disabled": (403, "Server-initiated sampling is switched off"),
     "sampling_budget_exceeded": (422, "That would exceed the sampling budget"),
+    # MCP security hardening (Phase 19, B-218): a destructive
+    # or open-world tool call that arrives without the
+    # caller's explicit per-call consent is refused at the
+    # gateway, before anything is written or spent.
+    "consent_required": (403, "That tool needs the caller's explicit consent for this call"),
     # Advanced account security (Phase 17, B-174).
     "account_locked": (423, "This account is temporarily locked"),
     "mfa_code_invalid": (401, "That authentication code did not match"),

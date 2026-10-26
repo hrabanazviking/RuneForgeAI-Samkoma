@@ -170,6 +170,15 @@ class Settings(BaseSettings):
     mcp_sampling_max_tokens: int = 512
     mcp_sampling_max_calls_per_day: int = 20
 
+    # MCP security hardening (B-218, Phase 19): the most MCP
+    # tool calls ONE principal (a seat, a person, the local
+    # operator) may make per minute at the gateway — a brake
+    # against a runaway agent loop, counted per principal in
+    # the server's memory (gpa.mcp.security). 600 is headroom
+    # for a busy legitimate agent; 0 disables the brake as an
+    # operator's deliberate posture, never a silent default.
+    mcp_rate_limit_per_minute: int = 600
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

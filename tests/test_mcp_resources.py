@@ -101,7 +101,7 @@ def _publish(server, group, event_id, owner):
     return _call(
         server,
         "gpa_publish_event",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "event_id": event_id,
             "actor": f"user:{owner['user_id']}",

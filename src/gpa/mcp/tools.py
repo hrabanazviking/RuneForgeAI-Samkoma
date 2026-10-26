@@ -966,6 +966,13 @@ def tool_manifest(specs: list[ToolSpec] | None = None) -> list[dict]:
     release manifest; :func:`manifest_digest` gives the one
     hash a verifier recomputes to prove no description moved.
     """
+    # Annotations ride the manifest too (B-218): a release's
+    # per-tool hints are signed facts like its descriptions,
+    # imported lazily here because the security module reads
+    # this module's specs — the same lazy seam the checker
+    # uses for the auth table.
+    from gpa.mcp.security import tool_annotations
+
     return [
         {
             "name": spec.name,
@@ -974,6 +981,7 @@ def tool_manifest(specs: list[ToolSpec] | None = None) -> list[dict]:
             "kind": spec.kind,
             "description": spec.description,
             "description_sha256": description_sha256(spec.description),
+            "annotations": tool_annotations(spec),
         }
         for spec in (specs or all_tool_specs())
     ]

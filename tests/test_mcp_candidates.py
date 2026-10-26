@@ -135,7 +135,7 @@ def test_approve_tool_mints_through_the_one_approval_law(client, app, settings):
     data = _call(
         server,
         "gpa_approve_candidate",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "candidate_id": first_id,
             "actor": f"user:{owner['user_id']}",
@@ -160,7 +160,7 @@ def test_approve_tool_applies_the_seat_law_identically(client, app, settings):
         _call(
             server,
             "gpa_approve_candidate",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "candidate_id": first_id,
                 "actor": f"seat:{member_seat['id']}",
@@ -173,7 +173,7 @@ def test_approve_tool_applies_the_seat_law_identically(client, app, settings):
     data = _call(
         server,
         "gpa_approve_candidate",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "candidate_id": first_id,
             "actor": f"seat:{organiser_seat['id']}",
@@ -208,7 +208,7 @@ def test_edit_marks_edited_and_reject_decides_once(client, app, settings):
     rejected = _call(
         server,
         "gpa_reject_candidate",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "candidate_id": second_id,
             "actor": f"user:{owner['user_id']}",
@@ -219,7 +219,7 @@ def test_edit_marks_edited_and_reject_decides_once(client, app, settings):
         _call(
             server,
             "gpa_reject_candidate",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "candidate_id": second_id,
                 "actor": f"user:{owner['user_id']}",
@@ -248,7 +248,7 @@ def test_decision_tools_refuse_a_draft_scoped_principal(client, app, settings):
     for name, args in (
         (
             "gpa_approve_candidate",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "candidate_id": first_id,
                 "actor": "seat:s1",
@@ -258,7 +258,7 @@ def test_decision_tools_refuse_a_draft_scoped_principal(client, app, settings):
         ),
         (
             "gpa_reject_candidate",
-            {"group_id": group["id"], "candidate_id": first_id, "actor": "seat:s1"},
+            {"consent": True, "group_id": group["id"], "candidate_id": first_id, "actor": "seat:s1"},
         ),
         (
             "gpa_edit_candidate",

@@ -2987,6 +2987,82 @@ parses the model so it cannot drift from the code.
   re-run — a full Phase 19 green is the B-220 gate's to
   prove. No ZIP at this slice. Progress: **217/350.
   Next: B-218 (MCP security hardening).**
+- **B-218 MCP security hardening** ✅ (timer crew,
+  2026-10-26): the hardening law lives in a new module
+  `src/gpa/mcp/security.py` (public symbols
+  `DESTRUCTIVE_TOOLS`, `OPEN_WORLD_TOOLS`, `CONSENT_TOOLS`,
+  `IDEMPOTENT_WRITE_TOOLS`, `INJECTION_POSTURE`,
+  `tool_annotations`, `all_annotations`,
+  `check_annotations`, `consent_required`,
+  `require_consent`, `principal_key`, `ToolRateLimiter`,
+  `mark_as_data`) — no new operation and no new tool, so
+  the catalogue stands at **44 tools / 42 operations**.
+  **Annotations**: every served tool now carries the four
+  MCP hints, derived truthfully — readOnlyHint is exactly
+  the read credential scope; destructiveHint is the
+  curated set {approve, reject, publish, cancel};
+  openWorldHint is {emit, sampling, elicitation};
+  idempotentHint is every read plus the curated upsert
+  set {set_rsvp, update_task, update_profile,
+  update_group, edit_candidate}. The server passes them
+  at every `@server.tool` registration, the operations
+  listing carries them, and the B-206 manifest stamps
+  them beside each description (a swapped annotation is
+  now detectable like a swapped description).
+  **Consent gates**: destructive tools plus the gated
+  open-world tools {emit, sampling} require the caller's
+  explicit per-call `consent=true`, checked in `_call`
+  (and in the sampling tool) after the scope check and
+  BEFORE the bridge — a refusal is the new error code
+  `consent_required` (403, docs/15 row + Doc 13 section)
+  and writes nothing. Elicitation is the one stated
+  exception: open-world but NOT consent-gated, because
+  its external act IS a human consent interaction.
+  Consent replaces neither scope nor role. Twenty
+  existing gated call sites in the MCP tests (candidates,
+  events, planning, sampling, resources) were updated in
+  place to state consent — the laws they test are
+  unchanged, and the seat/scope refusal tests still meet
+  their original codes because scope is checked first.
+  **Rate limits**: `GPA_MCP_RATE_LIMIT_PER_MINUTE`
+  (default 600, 0 disables deliberately) — a fixed-window
+  per-principal brake (`ToolRateLimiter`, keyed by
+  `principal_key`) counted once per call in
+  `_resolve_principal`, after the scope check; past the
+  ceiling is the existing `rate_limited` (429).
+  **Injection posture**: `_call` returns every operation
+  result through `mark_as_data` (`is_data: True` first) —
+  group content is data, never instructions (B-142's law
+  at this boundary); the acceptance test plants an
+  instruction in a source and proves it returns verbatim
+  as inert data with the queue untouched. **Full audit**:
+  operation calls keep travelling the bridge's B-165
+  hash-chained hook (asserted: a consented approve lands
+  its `internal.candidates.approve` row, actor
+  `module:mcp`, result ok; a consent refusal lands none);
+  gateway refusals are recorded in the structured log
+  with their error code. Tests:
+  tests/test_mcp_security.py **7 passed** (run3.log,
+  after two test-shape fixes at root: the valid source
+  kind is `chat_paste`, and source rows key on
+  `source_id`). Combined batch: the first full run's log
+  was truncated in delivery (its summary read 155 passed
+  / 5 failed with no readable failure names), so the
+  batch was re-run in three chunks read from their own
+  logs — chunk1 (core+auth+registry+parity) **30
+  passed**, chunk2 (candidates+events+planning+groups+
+  sources+notifications) **34 passed**, chunk3 (security+
+  sampling+elicitation+subscriptions+resources+prompts+
+  comment gate+docs gate+architecture+internal API)
+  **90 passed / 3 failed** — all three the resources
+  suite's publish helper missing the new consent,
+  fixed in place; the affected files re-ran **25
+  passed**. Atlas regenerated 424 files; docs/17
+  inventory row added. Ruff E9+F clean. Contract
+  unchanged: **202 paths / 230 schemas**. Full suite NOT
+  re-run — a full Phase 19 green is the B-220 gate's to
+  prove. No ZIP at this slice. Progress: **218/350.
+  Next: B-219 (MCP conformance + client pack).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

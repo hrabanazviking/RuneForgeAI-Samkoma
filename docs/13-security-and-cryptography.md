@@ -440,6 +440,50 @@ never advertised the sampling capability cannot be asked,
 and there is no fallback: no other model is substituted
 for the client's, ever.
 
+## MCP security hardening (B-218)
+
+The MCP surface's hardening, in `gpa.mcp.security`, binds
+every tool the server serves. **Annotations tell the
+truth**: each tool carries the four MCP hints
+(`readOnlyHint`, `destructiveHint`, `idempotentHint`,
+`openWorldHint`), derived from its registry facts — the
+read credential scope is exactly the read-only line; the
+destructive set is the four decision/state tools
+(approve, reject, publish, cancel); the open-world set is
+the three tools whose reach leaves this backend (webhook
+emission, sampling, elicitation). The hints are stamped
+into the signed release manifest beside the descriptions,
+so a swapped annotation is detectable like a swapped
+description. **Consent gates at the gateway**: a
+destructive tool, and the gated open-world tools
+(emission and sampling), must arrive with the caller's
+explicit per-call `consent=true`, checked before the
+bridge — without it the call meets `consent_required`
+and nothing is written, queued, or spent. Consent
+replaces neither scope nor role; it states that the
+caller means THIS call. Elicitation is the one stated
+exception: its external act is itself a human consent
+interaction (the human may decline), so no boolean gate
+stands in front of the real one. **Per-seat rate
+limits**: every tool call is counted against its
+principal in a one-minute window
+(`GPA_MCP_RATE_LIMIT_PER_MINUTE`, default 600; 0 disables
+deliberately), and a principal past its ceiling meets
+`rate_limited` — a brake against a runaway agent loop,
+kept per server in memory, while durable spend stays on
+B-047's ledger. **Prompt-injection posture** (B-142's law
+at this boundary): tool results carrying group content
+are marked `is_data`, the server's instructions say the
+same to the agent, and the server never executes an
+instruction found in a source, a candidate, or a sampled
+text — content is material for review, never a command.
+**Full audit**: every operation-backed call travels the
+bridge's B-165 hook into the hash-chained audit log
+(`module:mcp`, the operation, the result) inside its own
+transaction; gateway refusals (scope, consent, rate) are
+recorded in the server's structured log with their error
+code, the honest record for an act that did not happen.
+
 ## Honest boundaries — what is not claimed
 
 This chapter closes where the threat model closes: with

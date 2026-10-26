@@ -294,6 +294,7 @@ omission without them.
 | `password_too_weak` | 422 | Under 12 characters, breached/common, or the email name; explain all three rules |
 | `sampling_disabled` | 403 | MCP server-initiated sampling is switched off (it is off by default, B-217); only the operator can enable it |
 | `sampling_budget_exceeded` | 422 | The group's daily AI budget is spent, or its sampling calls for today are used up; sampling resumes at UTC midnight |
+| `consent_required` | 403 | A destructive or open-world MCP tool was called without the caller's explicit per-call consent (B-218); call again with `consent=true` to mean this specific call |
 | `recovery_code_invalid` | 401 | An operator recovery code is not valid; a frontend never sends these |
 | `uncommitted_writes` | 500 | The server caught its own handler answering with uncommitted writes and rolled back; report it |
 | `draft_conflict` | 409 | An autosave's `base_version` is stale; the answer carries both versions — show the conflict, keep both |

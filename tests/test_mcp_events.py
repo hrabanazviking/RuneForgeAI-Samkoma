@@ -73,7 +73,7 @@ def _publish(server, group, event_id, owner):
     return _call(
         server,
         "gpa_publish_event",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "event_id": event_id,
             "actor": f"user:{owner['user_id']}",
@@ -164,7 +164,7 @@ def test_cancel_needs_the_organiser_role_and_stays_visible(client, app, settings
         _call(
             server,
             "gpa_cancel_event",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "event_id": event_id,
                 "actor": f"user:{owner['user_id']}",
@@ -175,7 +175,7 @@ def test_cancel_needs_the_organiser_role_and_stays_visible(client, app, settings
     cancelled = _call(
         server,
         "gpa_cancel_event",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "event_id": event_id,
             "actor": f"user:{owner['user_id']}",
@@ -195,7 +195,7 @@ def test_cancel_needs_the_organiser_role_and_stays_visible(client, app, settings
         _call(
             server,
             "gpa_cancel_event",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "event_id": event_id,
                 "actor": f"user:{owner['user_id']}",
@@ -307,7 +307,7 @@ def test_family_scopes_are_checked_at_call_time(client, app, settings):
         _call(
             drafter,
             "gpa_cancel_event",
-            {
+            {"consent": True, 
                 "group_id": group["id"],
                 "event_id": event_id,
                 "actor": "seat:s1",

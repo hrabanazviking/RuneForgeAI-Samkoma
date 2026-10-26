@@ -61,7 +61,7 @@ def _mint(server, group, owner, kind, title):
     return _call(
         server,
         "gpa_approve_candidate",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "candidate_id": drafted["candidate_id"],
             "actor": f"user:{owner['user_id']}",
@@ -142,7 +142,7 @@ def test_a_suggested_owner_is_not_an_assignment(client, app, settings):
     _call(
         server,
         "gpa_approve_candidate",
-        {
+        {"consent": True, 
             "group_id": group["id"],
             "candidate_id": drafted["candidate_id"],
             "actor": f"user:{owner['user_id']}",
