@@ -324,6 +324,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_openapi_snapshot.py` | Contract snapshot (B-006): the committed OPENAPI.json must equal |
 | `tests/test_outbound_webhooks.py` | Outbound webhooks (roadmap B-128): delivery + retry golden. |
 | `tests/test_packaging.py` | Native service packaging contracts (roadmap B-153). |
+| `tests/test_parity.py` | API parity register + checker (roadmap B-201). |
 | `tests/test_paste.py` | Paste ingest golden files (B-024): one realistic export per |
 | `tests/test_permissions.py` | Phase gate material (B-014/B-017/B-018/B-022): the role matrix, |
 | `tests/test_phase10_gate.py` | Phase 10 gate (roadmap B-122): the three memory demos. |

@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **392 Python code files**: migrations 22, scripts 20, src 188, tests 162. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **395 Python code files**: migrations 22, scripts 21, src 189, tests 163. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -454,7 +454,7 @@ The tree at generation time holds **392 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
-- **Tests that name it:** `tests/test_chaos.py`, `tests/test_internal_api.py`, `tests/test_internal_identity.py`, `tests/test_internal_profiles.py`, `tests/test_phase18_gate.py`
+- **Tests that name it:** `tests/test_chaos.py`, `tests/test_internal_api.py`, `tests/test_internal_identity.py`, `tests/test_internal_profiles.py`, `tests/test_parity.py`, `tests/test_phase18_gate.py`
 - **Created by:** B-162 — B-162 Internal API core: typed envelope, operation registry with caller scopes, handlers i
 
 ### `src/gpa/internal/identity.py`
@@ -1897,6 +1897,18 @@ The tree at generation time holds **392 Python code files**: migrations 22, scri
 - **Tests that name it:** `tests/test_architecture.py`, `tests/test_google_inbound.py`, `tests/test_migrations_phase11.py`, `tests/test_outbound_webhooks.py`
 - **Created by:** B-128 — B-128: outbound webhooks — group acts (event.published/changed/cancelled, candidate.pendin
 
+### `src/gpa/services/parity.py`
+
+- **Purpose:** API parity register + checker (roadmap B-201, Phase 19).
+- **Module:** platform · **Layer:** services
+- **Public symbols:** `ParityAction`, `check_parity`, `parity_report`, `format_parity_report`
+- **Dependencies (imports):** `__future__`, `dataclasses`, `fastapi.routing`, `gpa.internal`, `importlib`
+- **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
+- **Tests that name it:** `tests/conftest.py`, `tests/test_internal_profiles.py`, `tests/test_job_race.py`, `tests/test_parity.py`, `tests/test_postgres_parity.py`
+- **Created by:** pre-git or generated (see git history)
+
 ### `src/gpa/services/paste.py`
 
 - **Purpose:** Paste ingest: chat exports and plain text (roadmap B-024).
@@ -2730,6 +2742,18 @@ The tree at generation time holds **392 Python code files**: migrations 22, scri
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
 - **Tests that name it:** `tests/test_postgres_parity.py`
 - **Created by:** B-152 — Phase 15 / B-152: PostgreSQL promotion — real parity suite, verified mover
+
+### `scripts/parity_report.py`
+
+- **Purpose:** Print the B-201 API parity report for the test report.
+- **Module:** scripts · **Layer:** scripts
+- **Public symbols:** `main`
+- **Dependencies (imports):** `__future__`, `gpa.config`, `gpa.main`, `gpa.services.parity`, `pathlib`, `sys`
+- **Allowed / forbidden:** Operator tools: may import the package and stdlib. Forbidden: shipping in the request path; secrets in output.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
+- **Tests that name it:** `tests/test_parity.py`
+- **Created by:** pre-git or generated (see git history)
 
 ### `scripts/platform_audit.py`
 
@@ -3994,6 +4018,18 @@ The tree at generation time holds **392 Python code files**: migrations 22, scri
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-153 — Phase 15 / B-153: native service packaging — systemd units + plain installer
 
+### `tests/test_parity.py`
+
+- **Purpose:** API parity register + checker (roadmap B-201, Phase 19).
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `test_every_registered_action_has_its_route_and_operation`, `test_register_covers_every_live_route`, `test_ui_only_fixture_action_fails_by_name`, `test_missing_internal_operation_fails_by_name`, `test_bus_backed_actions_name_registered_operations`, `test_parity_report_counts_and_pending_surfaces`
+- **Dependencies (imports):** `gpa.services`, `gpa.services.parity`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
+
 ### `tests/test_paste.py`
 
 - **Purpose:** Paste ingest golden files (B-024): one realistic export per format — WhatsApp (both shapes), Discord, Slack, Messenger, generic Name: lines, and plain text — plus the never-drop law and one end-to-end paste through the API.
@@ -4076,7 +4112,7 @@ The tree at generation time holds **392 Python code files**: migrations 22, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-200 — B-200 Documentation proof — Phase 18 gate: three cold reads as executable/audit legs (guid
 
 ### `tests/test_phase3_gate.py`
 

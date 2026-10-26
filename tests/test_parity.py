@@ -1,0 +1,80 @@
+"""API parity register + checker (roadmap B-201, Phase 19).
+
+- Every registered user-facing action exists as an external
+  API route on the live app, served by the handler the
+  register names, and that handler resolves as a callable
+  internal operation;
+- the reverse direction holds too: no live API route stands
+  outside the register;
+- a deliberately UI-only fixture action fails the checker
+  BY NAME (the slice's acceptance test), as does a fixture
+  whose internal operation does not exist;
+- the parity report counts from the live app, names the
+  B-162-backed actions, and reports the not-yet-built MCP
+  and terminal surfaces as pending, never as passed.
+"""
+
+from gpa.services import parity
+from gpa.services.parity import ParityAction
+
+
+def test_every_registered_action_has_its_route_and_operation(app):
+    failures = parity.check_parity(app)
+    assert failures == [], f"parity failures: {failures[:5]}"
+
+
+def test_register_covers_every_live_route(app):
+    live = parity._live_routes(app)
+    registered = {(a.method, a.path) for a in parity.ACTIONS}
+    assert registered == set(live)
+    assert len(parity.ACTIONS) == len(live) == len(registered)
+
+
+def test_ui_only_fixture_action_fails_by_name(app):
+    fixture = ParityAction(
+        "dance_the_ui_only_dance",
+        "POST",
+        "/api/v1/groups/{group_id}/ui-only-dance",
+        "gpa.routers.groups:ui_only_dance",
+        "",
+    )
+    failures = parity.check_parity(app, parity.ACTIONS + (fixture,))
+    named = [f for f in failures if "dance_the_ui_only_dance" in f]
+    # Both legs name it: no API route, and no internal operation.
+    assert len(named) == 2, failures
+
+
+def test_missing_internal_operation_fails_by_name(app):
+    # A real route wearing a handler that does not exist: the
+    # route leg passes on path alone only if the handler also
+    # matches, so this fails on the handler legs, by name.
+    real = next(a for a in parity.ACTIONS if a.name == "read_group")
+    broken = ParityAction(
+        real.name, real.method, real.path,
+        "gpa.routers.groups:no_such_handler", "",
+    )
+    actions = tuple(broken if a.name == real.name else a for a in parity.ACTIONS)
+    failures = parity.check_parity(app, actions)
+    assert any("read_group" in f and "no_such_handler" in f for f in failures)
+
+
+def test_bus_backed_actions_name_registered_operations(app):
+    backed = [a for a in parity.ACTIONS if a.internal_api]
+    assert {a.internal_api for a in backed} == {
+        "candidates.create", "events.publish",
+    }
+    # check_parity already verified each name is registered on
+    # the B-162 bus (it imports the handlers to register them).
+
+
+def test_parity_report_counts_and_pending_surfaces(app):
+    report = parity.parity_report(app)
+    assert report["parity_ok"] is True
+    assert report["actions_registered"] == len(parity.ACTIONS)
+    assert report["api_routes_live"] == len(parity.ACTIONS)
+    assert report["internal_api_backed"] == 2
+    text = parity.format_parity_report(report)
+    assert "PASS" in text
+    # Later surfaces are reported pending, never passed.
+    assert "Pending surface, not yet built: mcp (B-204)" in text
+    assert "Pending surface, not yet built: terminal (B-221)" in text

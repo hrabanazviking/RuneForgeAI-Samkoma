@@ -2112,8 +2112,43 @@ parses the model so it cannot drift from the code.
   train point is the roadmap's). **Phase 18 COMPLETE:
   200/350. Next: Phase 19, B-201.**
 
-### Later phases: NOT STARTED (per roadmap order)
-Phase 16 begins at B-157.
+### Phase 19 — Equal principals, API parity, MCP (B-201 → B-220): IN PROGRESS
+- **B-201 API parity audit + checker** ✅ (timer crew,
+  2026-10-26): `src/gpa/services/parity.py` (module
+  `platform` in the B-161 map) — a machine-readable register
+  of every user-facing action: 256 entries, one per live API
+  operation, each naming its API route (method + path) and
+  the internal operation behind it (the route handler,
+  resolved by dotted path at check time). `check_parity`
+  fails BY NAME on a missing route, a missing/mismatched
+  handler, or a claimed B-162 operation that is not
+  registered — and in reverse on any live route with no
+  register entry, so the register and the app cannot drift.
+  Acceptance pinned in `tests/test_parity.py` (6 tests): a
+  deliberately UI-only fixture action fails the checker by
+  name on both legs. `scripts/parity_report.py` prints the
+  report for TEST_REPORT and exits 1 on failure. HONEST
+  BOUNDARIES, in the module header and the report itself:
+  only 2 actions are backed by a registered B-162 bus
+  operation (`candidates.create` on candidate creation,
+  `events.publish` on event publish) — the rest are
+  module-internal service operations behind their handlers
+  and are NOT claimed to travel the encrypted bus; MCP
+  (B-204) and terminal (B-221) coverage is zero at this
+  slice and is reported as pending surfaces, never passed —
+  B-206/B-222 extend this same register to them. One real
+  bug found by the slice's own cold run: registration on
+  the B-162 bus is lazy, so the checker now calls
+  `handlers.register_all()` itself before verifying bus
+  claims (the standalone script failed before that fix,
+  the in-suite test had passed only because earlier tests
+  had registered them). Atlas regenerated (395 files);
+  B-198 inventory gained the parity test. Regression batch
+  (parity + architecture + comment gate + docs gate) 40
+  passed. Full suite NOT re-run at this slice — a full
+  Phase 19 green is the B-220 gate's to prove (Phase 18
+  precedent). Contract unchanged: 201 paths / 229 schemas.
+  No ZIP at this slice. Progress: **201/350. Next: B-202.**
 
 ## Decisions & deviations (from the roadmap defaults)
 

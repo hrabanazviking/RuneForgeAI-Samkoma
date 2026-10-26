@@ -1051,3 +1051,12 @@ here and in the gate commit.
   Stated plainly rather than implied.
 - Contract: **201 paths / 229 schemas** (unchanged).
 - Progress: **200/350 slices, Phases 0–18 complete.**
+
+## Phase 19 addendum — B-201 API parity (2026-10-26)
+
+- API parity (B-201): 256 actions registered, 256 API routes live, 2 actions backed by a registered internal-API operation (B-162).
+- Parity check: PASS — every registered action has its API route and its internal operation. A deliberately UI-only fixture action fails the checker by name (pinned in `tests/test_parity.py`, 6 tests).
+- Pending surface, not yet built: mcp (B-204) — reported pending, never passed.
+- Pending surface, not yet built: terminal (B-221) — reported pending, never passed.
+- Regression batch at this slice (parity + architecture + comment gate + docs gate): 40 passed. Full suite NOT re-run at this slice; a full Phase 19 green is the B-220 gate's to prove.
+- Progress: 201/350 slices, Phase 19 in progress.
