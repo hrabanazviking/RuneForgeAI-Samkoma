@@ -336,6 +336,80 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "window_end, soonest first. Pass next_cursor back "
         "unchanged for the following page; it is opaque.",
     ),
+    # B-210's family (sources / extraction requests): filing
+    # is "draft" (handing the group material is a member act
+    # at its door), reading is "read", and commissioning a
+    # run is "publish" — the split is the family's law, and
+    # the annotations say which side of it each tool stands
+    # on, including the request tool's honest limit: it
+    # QUEUES the run; the candidates arrive when the worker
+    # runs it, not when this call returns.
+    #
+    # The create annotation carries the permission record
+    # explicitly because it is the one argument set in this
+    # family an agent might otherwise treat as boilerplate:
+    # granted_by and granted_scope are not bookkeeping ABOUT
+    # the filing, they are part of the filing's legitimacy —
+    # the record a later provenance question ("who said we
+    # could use this chat?") is answered from. An agent
+    # filing on a member's behalf must carry THEIR grant, in
+    # their words, not invent a scope to fill the field.
+    #
+    # The append annotation's "never number chunks yourself"
+    # is load-bearing guidance, not style: provenance (B-208's
+    # reads) cites chunks BY position, so a caller-assigned
+    # numbering that forked from the service's would corrupt
+    # every quote pointing into the source. The service owns
+    # positions for exactly the reason the registry owns tool
+    # generation: one numbering, stated in one place.
+    "sources.list": (
+        "gpa_list_sources",
+        "read",
+        "List a group's sources through the internal "
+        "sources.list operation: kind, title, status, who "
+        "granted the material and under what scope, and how "
+        "many chunks each holds. Metadata only — no chunk "
+        "text is opened to build the list.",
+    ),
+    "sources.get": (
+        "gpa_get_source",
+        "read",
+        "Read one source in full through the internal "
+        "sources.get operation: its metadata plus every "
+        "chunk in position order, text and sender opened as "
+        "the group may read them. Positions are the order "
+        "provenance quotes point into.",
+    ),
+    "sources.create": (
+        "gpa_create_source",
+        "draft",
+        "File one new source through the internal "
+        "sources.create operation, with its chunks in order. "
+        "The permission record is part of the act: granted_by "
+        "is your actor label and granted_scope travels "
+        "verbatim onto the row — a source never exists "
+        "without the record of who granted the group its "
+        "material.",
+    ),
+    "sources.append": (
+        "gpa_append_source_chunks",
+        "draft",
+        "Append chunks to an existing source through the "
+        "internal sources.append operation. Positions "
+        "continue the source's one true order; you hand over "
+        "an ordered list and never number chunks yourself.",
+    ),
+    "extraction.request": (
+        "gpa_request_extraction",
+        "publish",
+        "Ask for an extraction run over one source through "
+        "the internal extraction.request operation "
+        "(organiser role and above). A durable job is QUEUED "
+        "and its id returned; the run itself is the worker's, "
+        "and the candidates it drafts land in the review "
+        "queue when it runs — this call commissions the work, "
+        "it does not perform it.",
+    ),
     "events.publish": (
         "gpa_publish_event",
         "publish",

@@ -2552,6 +2552,52 @@ parses the model so it cannot drift from the code.
   gate's to prove. No ZIP at this slice. Progress:
   **209/350. Next: B-210 (MCP tools — sources and
   extraction requests).**
+- **B-210 MCP tools — sources and extraction requests** ✅
+  (timer crew, 2026-10-26): the fourth domain family. Five
+  new internal operations (owner extraction): `sources.list`
+  + `sources.get` (`sources:read` → the read rung; metadata
+  + chunk counts for the list — no chunk opened — and the
+  full read opening chunks through the sources service's
+  one funnel, sealed at rest B-167, in position order);
+  `sources.create` + `sources.append` (`sources:write` →
+  **draft**: filing material is a member act at its door;
+  the create carries the permission record — granted_by =
+  the actor, granted_scope verbatim on the row — and append
+  continues the one true order, the operation committing
+  since the service's HTTP callers own their transactions);
+  and `extraction.request` (`extraction:request` →
+  **publish** rung + the organiser role law stated in the
+  operation, as at its door): it QUEUES the durable job
+  through the extraction service and returns its id — the
+  run is the worker's, and the family's tests assert the
+  queue is still empty after a request, so the
+  queued-vs-done distinction is pinned, not just described.
+  Source deletion is deliberately out of family (tombstone
+  law B-080 stays at the human doors; no agent surface
+  carries erasure first). The server serves 30 tools.
+  Superseded assertions updated in place (operations
+  23→28, parity 25/23→30/28, grants, auth scope set,
+  parity bus note). Tests: tests/test_mcp_sources.py
+  **6 passed** (permission record + chunk count on create,
+  list opens nothing, full read opened in order + missing
+  source not_found, append continues positions 0,1,2,
+  unnamed kind refused validation_error, request's two
+  gates + queued-not-done, draft principal files but
+  cannot commission); family batch (all four MCP families
+  + registry + auth + parity + sources API) **52 passed**;
+  core + internal batch **44 passed**; gates batch
+  (comment — mcp density repaired to 45.1% by
+  documentation — docs, architecture, signed releases,
+  release-zip, registry, parity, OpenAPI snapshot) + the
+  sources/core suites **70 passed** in the final combined
+  run. Ruff E9+F clean on every touched file except the
+  pre-existing F841 in tests/test_mcp_core.py (left as
+  found, as before). Atlas regenerated (410 files),
+  B-198 inventory row added. Contract unchanged:
+  **202 paths / 230 schemas**. Full suite NOT re-run — a
+  full Phase 19 green is the B-220 gate's to prove. No
+  ZIP at this slice. Progress: **210/350. Next: B-211
+  (MCP tools — planning: tasks, decisions, questions).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

@@ -39,9 +39,11 @@ from gpa.internal.registry import Operation
 from gpa.models.events import Event, Rsvp
 from gpa.models.groups import Group, role_at_least
 from gpa.models.identity import User
+from gpa.models.sources import Source
 from gpa.services import calendar_views as calendar_service
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
+from gpa.services import sources as source_service
 from gpa.services import rsvps as rsvp_service
 from gpa.services import groups as group_service
 from gpa.services import identity as identity_service
@@ -827,6 +829,154 @@ def _calendar_agenda(db: Session, payload: dict, ctx: CallContext) -> dict:
     return {"group_id": group.id, "items": items, "next_cursor": next_cursor}
 
 
+# --- sources / extraction family (B-210) -----------------------------------------
+#
+# The fourth domain family: the group's raw material and
+# the asking for work over it. Sources are what extraction
+# drafts FROM; the queue (B-208) is what it drafts INTO —
+# the two families meet at the extraction request, which is
+# this family's one consequential act.
+#
+# * READS are metadata-shaped except sources.get, which
+#   returns the chunks OPENED through the sources service's
+#   one read funnel (chunks are sealed at rest, B-167; the
+#   funnel is where they open, and an agent reading a source
+#   is reading it for its words). Positions are the service's
+#   own order — the order provenance quotes point into.
+# * CREATION states its permission record on the row
+#   (granted_by = the payload's actor, granted_scope
+#   verbatim), as the service writes it at every door: a
+#   source never exists without the record of who granted
+#   the group its material.
+# * The extraction REQUEST is publish-grade + organiser at
+#   its HTTP door (it spends the group's AI budget and
+#   commissions judgement over people's words), so the
+#   operation states the same two gates as events.cancel
+#   does: the credential mapping for the scope, the role
+#   law here. The run itself stays the worker's: this
+#   operation QUEUES, exactly as the door does (202 there;
+#   the queued job's id here).
+# * DELETION is not in this family, deliberately: a source's
+#   delete/restore lives with the tombstone law (B-080) at
+#   the human doors for now, and no agent tool should be
+#   the first surface to carry an erasure.
+
+
+def _source_data(db: Session, source: Source) -> dict:
+    """Serialise one source row for the bus, with its chunk
+    count — the count a list view needs without opening a
+    single sealed chunk."""
+    return {
+        "source_id": source.id,
+        "group_id": source.group_id,
+        "kind": source.kind,
+        "title": source.title,
+        "status": source.status,
+        "stage": source.stage,
+        "progress": source.progress,
+        "granted_by": source.granted_by,
+        "granted_scope": source.granted_scope,
+        "url": source.url,
+        "chunk_count": source_service.chunk_count(db, source),
+    }
+
+
+def _sources_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """List the group's sources (metadata only — no chunk is
+    opened to build a list)."""
+    _need(payload, "group_id")
+    group = _group(db, payload["group_id"])
+    sources = source_service.list_sources(db, group)
+    return {
+        "group_id": group.id,
+        "sources": [_source_data(db, source) for source in sources],
+        "count": len(sources),
+    }
+
+
+def _sources_get(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Read one source in full: its metadata plus its chunks
+    in position order, opened through the service's funnel —
+    text and sender as the group may read them."""
+    _need(payload, "group_id", "source_id")
+    group = _group(db, payload["group_id"])
+    source = source_service.get_source(db, group, payload["source_id"])
+    data = _source_data(db, source)
+    data["chunks"] = [
+        {
+            "position": chunk.position,
+            "text": chunk.text,
+            "sender": chunk.sender,
+            "sent_at": chunk.sent_at.isoformat() if chunk.sent_at else None,
+        }
+        for chunk in source_service.list_chunks(db, source)
+    ]
+    return data
+
+
+def _sources_create(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """File one new source with its chunks, in order. The
+    permission record is the payload's: granted_by is the
+    actor label, granted_scope travels verbatim (including
+    empty — an unscoped grant is a stated fact, not an
+    oversight this operation papers over)."""
+    _need(payload, "group_id", "actor", "kind")
+    group = _group(db, payload["group_id"])
+    source = source_service.create_source(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        kind=payload["kind"],
+        title=payload.get("title") or "",
+        granted_scope=payload.get("granted_scope") or "",
+        chunks=payload.get("chunks") or [],
+    )
+    return _source_data(db, source)
+
+
+def _sources_append(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Append chunks to an existing source (positions are
+    the service's to assign, continuing its order). The
+    service deliberately does not commit — its HTTP callers
+    own sync transactions — so this operation, whose whole
+    act the append is, commits it."""
+    _need(payload, "group_id", "source_id", "chunks")
+    group = _group(db, payload["group_id"])
+    source = source_service.get_source(db, group, payload["source_id"])
+    source_service.append_chunks(db, source=source, chunks=payload["chunks"])
+    db.commit()
+    return _source_data(db, source)
+
+
+def _extraction_request(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Ask for an extraction run over one source: the role
+    law (organiser and above) is stated here as at the door;
+    the act queues the durable job through the extraction
+    service (which submits it over ai.submit_job and stamps
+    the job's id into its payload), and returns the job's
+    id — the run itself is the worker's, never this call's."""
+    _need(payload, "group_id", "source_id", "actor", "role")
+    if not role_at_least(payload["role"], "organiser"):
+        raise AppError(
+            "forbidden",
+            detail="Only an organiser or above may request an extraction run.",
+        )
+    group = _group(db, payload["group_id"])
+    job = extraction_service.request_extraction(
+        db,
+        ctx.settings,
+        actor_label=payload["actor"],
+        group=group,
+        source_id=payload["source_id"],
+        kinds=payload.get("kinds"),
+    )
+    return {
+        "job_id": job.id,
+        "source_id": payload["source_id"],
+        "kinds": payload.get("kinds") or extraction_service.ALL_KINDS,
+    }
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -1036,4 +1186,49 @@ def register_all() -> None:
             "Read one page of a group's agenda over a time window.",
         ),
         _calendar_agenda,
+    )
+    registry.register(
+        Operation(
+            "sources.list",
+            "extraction",
+            "sources:read",
+            "List a group's sources (metadata and chunk counts).",
+        ),
+        _sources_list,
+    )
+    registry.register(
+        Operation(
+            "sources.get",
+            "extraction",
+            "sources:read",
+            "Read one source in full, chunks opened in order.",
+        ),
+        _sources_get,
+    )
+    registry.register(
+        Operation(
+            "sources.create",
+            "extraction",
+            "sources:write",
+            "File one new source with its chunks and permission record.",
+        ),
+        _sources_create,
+    )
+    registry.register(
+        Operation(
+            "sources.append",
+            "extraction",
+            "sources:write",
+            "Append chunks to an existing source, continuing its order.",
+        ),
+        _sources_append,
+    )
+    registry.register(
+        Operation(
+            "extraction.request",
+            "extraction",
+            "extraction:request",
+            "Queue an extraction run over one source (organiser and above).",
+        ),
+        _extraction_request,
     )

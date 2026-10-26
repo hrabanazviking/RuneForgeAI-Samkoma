@@ -325,6 +325,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_mcp_events.py` | MCP events / RSVPs / calendar tool tests (roadmap B-209, Phase 19). |
 | `tests/test_mcp_groups.py` | MCP groups / members / profile tool tests (roadmap B-207, Phase 19). |
 | `tests/test_mcp_registry.py` | MCP tool registry tests (roadmap B-206, Phase 19). |
+| `tests/test_mcp_sources.py` | MCP sources / extraction-request tool tests (roadmap B-210, Phase 19). |
 | `tests/test_newsletter.py` | Newsletter ingest tests (roadmap B-026). |
 | `tests/test_notifications_core.py` | Notification core: the outbox (roadmap B-095) + deliverability |
 | `tests/test_openapi_snapshot.py` | Contract snapshot (B-006): the committed OPENAPI.json must equal |

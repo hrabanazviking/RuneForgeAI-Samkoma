@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **409 Python code files**: migrations 23, scripts 21, src 195, tests 170. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **410 Python code files**: migrations 23, scripts 21, src 195, tests 171. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -450,7 +450,7 @@ The tree at generation time holds **409 Python code files**: migrations 23, scri
 - **Purpose:** Operation handlers — the internal API's composition root (B-162).
 - **Module:** internal · **Layer:** internal
 - **Public symbols:** `AI_JOB_KINDS`, `register_all`
-- **Dependencies (imports):** `__future__`, `datetime`, `gpa.errors`, `gpa.internal`, `gpa.internal.client`, `gpa.internal.registry`, `gpa.models.events`, `gpa.models.groups`, `gpa.models.identity`, `gpa.services`, `sqlalchemy.orm`
+- **Dependencies (imports):** `__future__`, `datetime`, `gpa.errors`, `gpa.internal`, `gpa.internal.client`, `gpa.internal.registry`, `gpa.models.events`, `gpa.models.groups`, `gpa.models.identity`, `gpa.models.sources`, `gpa.services`, `sqlalchemy.orm`
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
@@ -3896,7 +3896,7 @@ The tree at generation time holds **409 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-209 — B-209 MCP tools — events, RSVPs, and the calendar: third domain family — six new internal 
 
 ### `tests/test_mcp_groups.py`
 
@@ -3921,6 +3921,18 @@ The tree at generation time holds **409 Python code files**: migrations 23, scri
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** `tests/test_mcp_core.py`
 - **Created by:** B-206 — B-206 MCP tool registry from one source of truth: catalogue generated from the internal op
+
+### `tests/test_mcp_sources.py`
+
+- **Purpose:** MCP sources / extraction-request tool tests (roadmap B-210).
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `CHUNKS`, `test_create_files_the_permission_record_and_chunks`, `test_get_returns_chunks_opened_in_position_order`, `test_append_continues_the_one_true_order`, `test_create_refuses_an_unnamed_kind`, `test_request_queues_a_job_and_needs_the_organiser_role`, `test_a_draft_principal_files_but_cannot_commission`
+- **Dependencies (imports):** `__future__`, `asyncio`, `conftest`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.server`, `pytest`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
 
 ### `tests/test_member_io.py`
 

@@ -125,6 +125,12 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             "events:read",
             "events:write",
             "rsvps:write",
+            # B-210: sources and extraction requests — reads,
+            # the filing writes, and the request scope
+            # (publish-grade at the credential mapping).
+            "sources:read",
+            "sources:write",
+            "extraction:request",
         }
     ),
 }

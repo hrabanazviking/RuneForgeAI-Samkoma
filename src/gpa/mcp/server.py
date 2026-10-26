@@ -490,6 +490,134 @@ def build_server(
             payload["limit"] = limit
         return _call("calendar.agenda", payload, tool="gpa_get_agenda")
 
+    # --- B-210 family: sources and extraction requests ------------------------
+    #
+    # Filing and reading are this family's ordinary acts; the
+    # request tool is its consequential one, and its shape
+    # says so: actor + role ride along (the role law is the
+    # operation's, as for cancellation), and what comes back
+    # is a JOB ID, not candidates — an agent that treats a
+    # queued run as a finished one would mislead its group,
+    # so the tool's contract makes the distinction structural.
+    #
+    # A word on the get tool and sealed material: chunks rest
+    # SEALED (B-167), and this surface opens them — through
+    # the sources service's one read funnel, the same funnel
+    # the human source view reads through, which installs the
+    # opened values in a way no later flush can write back
+    # over the seal. An MCP read therefore changes nothing at
+    # rest; it only ever sees what a member opening the
+    # source in the app would see. The list tool, by
+    # contrast, never opens a chunk: counts and metadata are
+    # its whole answer, which keeps listing cheap and keeps
+    # sealed text out of responses nobody asked for words in.
+    #
+    # The family's deliberate omission is deletion: a
+    # source's delete/restore lives under the tombstone law
+    # (B-080) at the human doors, and an agent surface should
+    # not be where erasure first becomes possible. Filing,
+    # growing, reading, and commissioning are the agent's
+    # whole relationship with raw material in this slice.
+    #
+    # Kinds are the service's closed vocabulary (chat pastes,
+    # flyers, emails, links, voice, files, and kin): an agent
+    # filing under an invented kind meets validation_error,
+    # which is the honest answer — a new kind of material is
+    # a product decision with pipeline consequences, not a
+    # string a caller may coin at the door.
+
+    @server.tool(description=specs["gpa_list_sources"].description)
+    def gpa_list_sources(group_id: str) -> dict[str, Any]:
+        """List a group's sources (metadata + chunk counts).
+
+        No chunk is opened to build this answer — it is the
+        cheap survey an agent runs before deciding which
+        source to actually read.
+        """
+        return _call(
+            "sources.list", {"group_id": group_id}, tool="gpa_list_sources"
+        )
+
+    @server.tool(description=specs["gpa_get_source"].description)
+    def gpa_get_source(group_id: str, source_id: str) -> dict[str, Any]:
+        """Read one source in full, chunks opened in order."""
+        return _call(
+            "sources.get",
+            {"group_id": group_id, "source_id": source_id},
+            tool="gpa_get_source",
+        )
+
+    @server.tool(description=specs["gpa_create_source"].description)
+    def gpa_create_source(
+        group_id: str,
+        actor: str,
+        kind: str,
+        title: str | None = None,
+        granted_scope: str | None = None,
+        chunks: list | None = None,
+    ) -> dict[str, Any]:
+        """File one new source with its chunks, in order.
+
+        ``chunks`` items are dicts with ``text`` and an
+        optional ``sender``; positions are assigned by the
+        service, in the order given.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "actor": actor,
+            "kind": kind,
+        }
+        if title is not None:
+            payload["title"] = title
+        if granted_scope is not None:
+            payload["granted_scope"] = granted_scope
+        if chunks is not None:
+            payload["chunks"] = chunks
+        return _call("sources.create", payload, tool="gpa_create_source")
+
+    @server.tool(description=specs["gpa_append_source_chunks"].description)
+    def gpa_append_source_chunks(
+        group_id: str, source_id: str, chunks: list
+    ) -> dict[str, Any]:
+        """Append chunks to a source, continuing its order.
+
+        For sources that grow — a live chat, a thread that
+        keeps arriving — never a second source for the same
+        material.
+        """
+        return _call(
+            "sources.append",
+            {"group_id": group_id, "source_id": source_id, "chunks": chunks},
+            tool="gpa_append_source_chunks",
+        )
+
+    @server.tool(description=specs["gpa_request_extraction"].description)
+    def gpa_request_extraction(
+        group_id: str,
+        source_id: str,
+        actor: str,
+        role: str,
+        kinds: list | None = None,
+    ) -> dict[str, Any]:
+        """Queue an extraction run over one source.
+
+        ``kinds`` narrows what the run drafts (the four
+        drafting kinds by default); the answer is the queued
+        job's id, and the queue fills when the worker runs
+        it.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "source_id": source_id,
+            "actor": actor,
+            "role": role,
+        }
+        if kinds is not None:
+            payload["kinds"] = kinds
+        return _call(
+            "extraction.request", payload, tool="gpa_request_extraction"
+        )
+
     # --- The B-206 generated operation tools --------------------------------
     #
     # The five operations B-204's core pair did not cover. Each

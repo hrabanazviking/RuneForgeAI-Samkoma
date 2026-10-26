@@ -207,8 +207,9 @@ def test_under_scoped_principal_fails_insufficient_scope():
     # meta tools; the scope table grew with it, and the registry
     # checker now asserts this set equals the registry's own.
     # Grown again by B-207 (groups / members / profile family),
-    # B-208 (candidates / review-queue family), and B-209
-    # (events / RSVPs / calendar family).
+    # B-208 (candidates / review-queue family), B-209
+    # (events / RSVPs / calendar family), and B-210
+    # (sources / extraction-request family).
     assert set(TOOL_SCOPES) == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -235,6 +236,11 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_list_rsvps",
         "gpa_set_rsvp",
         "gpa_get_agenda",
+        "gpa_list_sources",
+        "gpa_get_source",
+        "gpa_create_source",
+        "gpa_append_source_chunks",
+        "gpa_request_extraction",
     }
 
 

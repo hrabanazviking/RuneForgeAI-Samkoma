@@ -41,12 +41,14 @@ Honest boundaries, stated at the point of use
   ``profile.update``) for the MCP surface's domain tools,
   B-208 five more for the review queue (``candidates.list``,
   ``candidates.get``, ``candidates.approve``,
-  ``candidates.reject``, ``candidates.edit``), and B-209 six
+  ``candidates.reject``, ``candidates.edit``), B-209 six
   more for events (``events.list``, ``events.get``,
   ``events.cancel``, ``rsvps.list``, ``rsvps.set``,
-  ``calendar.agenda``); they back no action in this register
-  and are counted by the MCP leg below, not by the
-  ``internal_api`` field here.
+  ``calendar.agenda``), and B-210 five more for sources
+  (``sources.list``, ``sources.get``, ``sources.create``,
+  ``sources.append``, ``extraction.request``); they back no
+  action in this register and are counted by the MCP leg
+  below, not by the ``internal_api`` field here.
 * MCP and the terminal (Phase 20) are the other surfaces.
   B-206 extended this same checker with its MCP leg (below):
   the generated tool registry in ``gpa.mcp.tools`` is checked

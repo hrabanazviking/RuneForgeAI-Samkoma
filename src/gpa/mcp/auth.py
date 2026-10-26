@@ -71,6 +71,17 @@ Scopes, and the mapping onto internal scopes:
   HTTP door being publish-scoped and organiser-gated. The
   pattern to keep: a new scope's rung is decided by the
   HTTP door for the same act, never by convenience here.
+* B-210 splits the sources family along the same line its
+  HTTP doors draw: FILING material (create/append,
+  ``sources:write``) is draft — a member handing the group
+  their chat export is doing the group's ordinary work —
+  while COMMISSIONING the pipeline (``extraction:request``)
+  is publish: it spends the group's daily AI budget and
+  sets machine judgement loose on people's words, and its
+  door is organiser-gated besides. An agent that may file
+  but may not commission is a designed posture, not an
+  accident: sources arrive from many hands; runs are asked
+  for by few.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -141,6 +152,11 @@ INTERNAL_SCOPES = (
     "events:read",
     "events:write",
     "rsvps:write",
+    # B-210: source reads, the filing writes, and the
+    # extraction-request scope.
+    "sources:read",
+    "sources:write",
+    "extraction:request",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -154,13 +170,22 @@ INTERNAL_SCOPES = (
 # scope. Each rung carries the rungs below it, as the ladder
 # always has (publish already carried draft's candidates:write).
 _READ_INTERNAL = frozenset(
-    {"groups:read", "profile:read", "candidates:read", "events:read"}
+    {"groups:read", "profile:read", "candidates:read", "events:read", "sources:read"}
 )
 # B-209: drafting also carries the RSVP write — answering an
 # event is participation, and the HTTP door for it is
 # draft-scoped, so a seat's default key can answer for its
 # seat exactly as a member's session can answer for them.
-_DRAFT_INTERNAL = _READ_INTERNAL | {"candidates:write", "profile:write", "rsvps:write"}
+# B-210: drafting also carries the source-filing write —
+# handing the group material is a member act at its door
+# (member role + draft scope); COMMISSIONING work over it
+# is not (see the publish rung).
+_DRAFT_INTERNAL = _READ_INTERNAL | {
+    "candidates:write",
+    "profile:write",
+    "rsvps:write",
+    "sources:write",
+}
 EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     "read": _READ_INTERNAL,
     "draft": _DRAFT_INTERNAL,
@@ -170,7 +195,11 @@ EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     # NOT reach them (that asymmetry is the queue's whole law).
     # B-209: the same rung carries the cancellation write —
     # cancelling is an organiser act, publish-grade there too.
-    "publish": _DRAFT_INTERNAL | {"events:publish", "candidates:decide", "events:write"},
+    # B-210: and the extraction-request scope — asking the
+    # pipeline to judge people's words spends the group's AI
+    # budget, publish-grade at its door as here.
+    "publish": _DRAFT_INTERNAL
+    | {"events:publish", "candidates:decide", "events:write", "extraction:request"},
     "admin": frozenset(INTERNAL_SCOPES),
 }
 
@@ -225,6 +254,14 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_list_rsvps": "read",
     "gpa_set_rsvp": "draft",
     "gpa_get_agenda": "read",
+    # B-210's sources family: reads are "read"; filing and
+    # appending are "draft" (handing the group material is a
+    # member act at its door); requesting a run is "publish".
+    "gpa_list_sources": "read",
+    "gpa_get_source": "read",
+    "gpa_create_source": "draft",
+    "gpa_append_source_chunks": "draft",
+    "gpa_request_extraction": "publish",
 }
 
 

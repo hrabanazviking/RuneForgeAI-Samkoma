@@ -80,6 +80,12 @@ CORE_TOOLS = {
     "gpa_list_rsvps",
     "gpa_set_rsvp",
     "gpa_get_agenda",
+    # B-210: the sources / extraction-request family.
+    "gpa_list_sources",
+    "gpa_get_source",
+    "gpa_create_source",
+    "gpa_append_source_chunks",
+    "gpa_request_extraction",
 }
 
 
@@ -147,6 +153,10 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "events:read",
         "events:write",
         "rsvps:write",
+        # B-210: source reads/writes + the extraction request.
+        "sources:read",
+        "sources:write",
+        "extraction:request",
     ):
         assert registry.caller_may("mcp", scope), scope
     operations = {op["name"] for op in bridge.operations()}
@@ -177,6 +187,12 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "rsvps.list",
         "rsvps.set",
         "calendar.agenda",
+        # B-210: the sources family's operations.
+        "sources.list",
+        "sources.get",
+        "sources.create",
+        "sources.append",
+        "extraction.request",
     }
 
 
@@ -232,8 +248,8 @@ def test_server_builds_with_the_core_tools(app, settings):
     tools = asyncio.run(server.list_tools())
     assert {tool.name for tool in tools} == CORE_TOOLS
     info = bridge.info()
-    # B-207: 12 operations; B-208: 17; B-209: 23.
-    assert info["caller"] == "mcp" and info["operations_count"] == 23
+    # B-207: 12 operations; B-208: 17; B-209: 23; B-210: 28.
+    assert info["caller"] == "mcp" and info["operations_count"] == 28
 
 
 # --- structured logging: no payloads, ever ---------------------------------
