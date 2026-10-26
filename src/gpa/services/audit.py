@@ -17,6 +17,7 @@ chain extension with it.
 
 import json
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from gpa.models.core import AuditChainHead, AuditLog
@@ -75,17 +76,58 @@ def record(
     from gpa.services import audit_chain
 
     db.flush()
-    head = db.query(AuditChainHead).filter(AuditChainHead.id == 1).one_or_none()
-    prev = head.last_hash if head is not None else audit_chain.GENESIS
-    row.prev_hash = prev
-    row.row_hash = audit_chain.compute_hash(_chain_key(), prev, row)
-    if head is None:
-        db.add(
-            AuditChainHead(id=1, last_hash=row.row_hash, updated_at=now_utc())
+    # Chain extension, made race-safe at the Phase 17 gate.
+    # The head is ONE row (id=1) and extending is a dance —
+    # read prev, hash against it, advance the head. Two
+    # writers dancing at once on PostgreSQL (READ COMMITTED)
+    # could both read "no head yet" and both insert id=1, and
+    # the loser died on the primary key; or both hash against
+    # the same prev and silently FORK the chain (the verifier
+    # names that wound, but a fork prevented beats a fork
+    # detected). SQLite's database write lock had always
+    # serialised the dance, so only the PG gate suite ever
+    # saw it: B-003's concurrent-writers acceptance failed
+    # about half its PostgreSQL runs on the head's primary
+    # key. The fix has two halves:
+    #   * the head is read FOR UPDATE, which serialises
+    #     extenders on PostgreSQL — the second reader waits
+    #     for the first's commit and then sees the TRUE prev.
+    #     (SQLite renders FOR UPDATE as a no-op; its own lock
+    #     already serialises, so nothing changes there.)
+    #   * a missing head is created inside a nested
+    #     transaction, so losing the creation race is a
+    #     catchable IntegrityError — never a poisoned outer
+    #     transaction — and the loop simply re-reads the
+    #     winner's head and chains this row onto it instead.
+    for _attempt in range(3):
+        head = (
+            db.query(AuditChainHead)
+            .filter(AuditChainHead.id == 1)
+            .with_for_update()
+            .one_or_none()
         )
+        prev = head.last_hash if head is not None else audit_chain.GENESIS
+        row.prev_hash = prev
+        row.row_hash = audit_chain.compute_hash(_chain_key(), prev, row)
+        try:
+            with db.begin_nested():
+                if head is None:
+                    db.add(
+                        AuditChainHead(
+                            id=1,
+                            last_hash=row.row_hash,
+                            updated_at=now_utc(),
+                        )
+                    )
+                else:
+                    head.last_hash = row.row_hash
+                    head.updated_at = now_utc()
+                db.flush()
+        except IntegrityError:
+            continue  # lost the creation race; re-chain and retry
+        break
     else:
-        head.last_hash = row.row_hash
-        head.updated_at = now_utc()
+        raise RuntimeError("audit chain head contention: lost 3 races")
     db.flush()
     return row
 
