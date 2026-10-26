@@ -38,12 +38,15 @@ Honest boundaries, stated at the point of use
   encrypted bus -- claiming that would be inventing coverage.
   B-207 registered five more operations (``groups.get``,
   ``groups.list_members``, ``groups.update``, ``profile.get``,
-  ``profile.update``) for the MCP surface's domain tools, and
+  ``profile.update``) for the MCP surface's domain tools,
   B-208 five more for the review queue (``candidates.list``,
   ``candidates.get``, ``candidates.approve``,
-  ``candidates.reject``, ``candidates.edit``); they back no
-  action in this register and are counted by the MCP leg
-  below, not by the ``internal_api`` field here.
+  ``candidates.reject``, ``candidates.edit``), and B-209 six
+  more for events (``events.list``, ``events.get``,
+  ``events.cancel``, ``rsvps.list``, ``rsvps.set``,
+  ``calendar.agenda``); they back no action in this register
+  and are counted by the MCP leg below, not by the
+  ``internal_api`` field here.
 * MCP and the terminal (Phase 20) are the other surfaces.
   B-206 extended this same checker with its MCP leg (below):
   the generated tool registry in ``gpa.mcp.tools`` is checked

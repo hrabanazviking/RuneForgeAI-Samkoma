@@ -119,6 +119,12 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             # its decision doors (approve / reject / edit).
             "candidates:read",
             "candidates:decide",
+            # B-209: events and the calendar — reads, the
+            # cancellation write, and the RSVP write
+            # (participation-grade at the credential mapping).
+            "events:read",
+            "events:write",
+            "rsvps:write",
         }
     ),
 }

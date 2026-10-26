@@ -81,8 +81,9 @@ def test_parity_report_counts_and_pending_surfaces(app):
     # still reported pending, never passed.
     # Grown by B-207: the groups/members/profile family brought
     # the surface to 14 tools covering 12 operations; B-208's
-    # queue family brought it to 19 tools / 17 operations.
-    assert report["mcp_tools"] == 19
-    assert report["mcp_operations_covered"] == 17
+    # queue family to 19 tools / 17 operations; B-209's events
+    # family to 25 tools / 23 operations.
+    assert report["mcp_tools"] == 25
+    assert report["mcp_operations_covered"] == 23
     assert "MCP tool registry (B-206)" in text
     assert "Pending surface, not yet built: terminal (B-221)" in text

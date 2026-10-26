@@ -322,6 +322,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_mcp_auth.py` | MCP authentication + authorisation tests (roadmap B-205). |
 | `tests/test_mcp_candidates.py` | MCP candidates / review-queue tool tests (roadmap B-208, Phase 19). |
 | `tests/test_mcp_core.py` | MCP server core tests (roadmap B-204, Phase 19). |
+| `tests/test_mcp_events.py` | MCP events / RSVPs / calendar tool tests (roadmap B-209, Phase 19). |
 | `tests/test_mcp_groups.py` | MCP groups / members / profile tool tests (roadmap B-207, Phase 19). |
 | `tests/test_mcp_registry.py` | MCP tool registry tests (roadmap B-206, Phase 19). |
 | `tests/test_newsletter.py` | Newsletter ingest tests (roadmap B-026). |

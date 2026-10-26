@@ -44,16 +44,17 @@ from gpa.models.core import Job
 
 
 def test_every_operation_has_exactly_one_generated_tool():
-    """Generation is total: 17 operations, 17 operation tools,
+    """Generation is total: 23 operations, 23 operation tools,
     plus the 2 declared meta tools — and the checker is quiet.
     (B-206 landed at 7 operations; B-207's family grew the
-    registry to 12 and B-208's queue family to 17, and
-    generation stayed total over each growth.)"""
+    registry to 12, B-208's queue family to 17, and B-209's
+    events family to 23 — generation stayed total over each
+    growth.)"""
     specs = all_tool_specs()
     operation_tools = [s for s in specs if s.kind == "operation"]
     meta_tools = [s for s in specs if s.kind == "meta"]
     assert {s.operation for s in operation_tools} == set(registry.OPERATIONS)
-    assert len(operation_tools) == len(registry.OPERATIONS) == 17
+    assert len(operation_tools) == len(registry.OPERATIONS) == 23
     assert {s.name for s in meta_tools} == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -132,7 +133,7 @@ def test_manifest_entries_and_digest_detect_a_swapped_description():
     description (tool poisoning) breaks both its own hash and
     the whole-list digest a verifier checks."""
     entries = tool_manifest()
-    assert len(entries) == 19  # 17 operation tools + 2 meta (B-208)
+    assert len(entries) == 25  # 23 operation tools + 2 meta (B-209)
     for entry in entries:
         assert entry["description_sha256"] == description_sha256(entry["description"])
     digest = manifest_digest(entries)
@@ -191,7 +192,7 @@ def test_operations_listing_tool_reports_the_registry(app, settings):
 
     result = asyncio.run(call())
     data = result if isinstance(result, dict) else result[1]
-    assert data["count"] == 17  # B-207: 12, B-208: 17 operations
+    assert data["count"] == 23  # B-207: 12, B-208: 17, B-209: 23
     assert {t["name"] for t in data["tools"]} == {s.name for s in all_tool_specs()}
     covered = {t["operation"] for t in data["tools"] if t["operation"]}
     assert covered == set(registry.OPERATIONS)

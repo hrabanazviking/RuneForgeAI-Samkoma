@@ -60,6 +60,17 @@ Scopes, and the mapping onto internal scopes:
   once; the registry checker would still pass, which is why
   this sentence is written here, where a reviewer widening
   the table must read it.
+* B-209's three scopes land on three different rungs, one
+  per kind of act in the events family: ``events:read``
+  joins the read rung (events are the group's most-read
+  surface), ``rsvps:write`` joins DRAFT (answering is
+  participation — the HTTP RSVP door is draft-scoped, and a
+  seat answering for itself with its default key is the
+  family's ordinary case), and ``events:write`` (cancel)
+  joins publish beside the queue's decision scope, its
+  HTTP door being publish-scoped and organiser-gated. The
+  pattern to keep: a new scope's rung is decided by the
+  HTTP door for the same act, never by convenience here.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -125,6 +136,11 @@ INTERNAL_SCOPES = (
     # B-208: the review queue's read and decision scopes.
     "candidates:read",
     "candidates:decide",
+    # B-209: events/calendar reads, the cancellation write,
+    # and the RSVP (answering) write.
+    "events:read",
+    "events:write",
+    "rsvps:write",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -137,8 +153,14 @@ INTERNAL_SCOPES = (
 # a person's session (scopes=None in deps.py) carries every
 # scope. Each rung carries the rungs below it, as the ladder
 # always has (publish already carried draft's candidates:write).
-_READ_INTERNAL = frozenset({"groups:read", "profile:read", "candidates:read"})
-_DRAFT_INTERNAL = _READ_INTERNAL | {"candidates:write", "profile:write"}
+_READ_INTERNAL = frozenset(
+    {"groups:read", "profile:read", "candidates:read", "events:read"}
+)
+# B-209: drafting also carries the RSVP write — answering an
+# event is participation, and the HTTP door for it is
+# draft-scoped, so a seat's default key can answer for its
+# seat exactly as a member's session can answer for them.
+_DRAFT_INTERNAL = _READ_INTERNAL | {"candidates:write", "profile:write", "rsvps:write"}
 EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     "read": _READ_INTERNAL,
     "draft": _DRAFT_INTERNAL,
@@ -146,7 +168,9 @@ EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     # decision scope — approve / reject / edit are publish-grade
     # acts at the HTTP doors too, and a draft credential must
     # NOT reach them (that asymmetry is the queue's whole law).
-    "publish": _DRAFT_INTERNAL | {"events:publish", "candidates:decide"},
+    # B-209: the same rung carries the cancellation write —
+    # cancelling is an organiser act, publish-grade there too.
+    "publish": _DRAFT_INTERNAL | {"events:publish", "candidates:decide", "events:write"},
     "admin": frozenset(INTERNAL_SCOPES),
 }
 
@@ -192,6 +216,15 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_approve_candidate": "publish",
     "gpa_reject_candidate": "publish",
     "gpa_edit_candidate": "publish",
+    # B-209's events family: reads (events, one event, RSVPs,
+    # the agenda) are "read"; answering is "draft" (the HTTP
+    # door's scope for the same act); cancelling is "publish".
+    "gpa_list_events": "read",
+    "gpa_get_event": "read",
+    "gpa_cancel_event": "publish",
+    "gpa_list_rsvps": "read",
+    "gpa_set_rsvp": "draft",
+    "gpa_get_agenda": "read",
 }
 
 

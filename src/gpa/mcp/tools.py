@@ -255,6 +255,87 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "editing is not approving, and the queue still waits "
         "for a decision afterwards.",
     ),
+    # B-209's family (events / RSVPs / calendar): three rungs
+    # for three kinds of act, each decided by the HTTP door
+    # for the same act — reads at "read", answering at
+    # "draft" (participation; a seat's default key can answer
+    # for its seat), cancelling at "publish" (an organiser
+    # act). The read annotations say the bright line out loud:
+    # an agent reading as a member must not be surprised that
+    # drafts are absent rather than redacted.
+    #
+    # Note the asymmetry an agent will meet between the two
+    # list tools in this family: the EVENTS list is
+    # role-filtered (its rows depend on who asks), while the
+    # RSVP list is not — answers to a published event are
+    # group-common knowledge, the same for every member, so
+    # its tool takes no role. And the agenda's description
+    # promises occurrences, not events: a weekly supper asked
+    # about for November is five rows, not one, and the
+    # annotation says so before the caller counts them.
+    #
+    # The cancel annotation earns its length: it states the
+    # aftermath (the event stays, marked; the answered are
+    # told at once) and the refusal (below organiser), because
+    # cancellation is the one act in this family whose effects
+    # reach people who never called anything — an agent
+    # weighing it needs the whole shape of the act in the
+    # description it reads before deciding, not in an error
+    # afterwards.
+    "events.list": (
+        "gpa_list_events",
+        "read",
+        "List a group's events through the internal events.list "
+        "operation, as the given role may see them: published "
+        "and cancelled events for any member; drafts only at "
+        "organiser role and above — a draft below that role is "
+        "absent from the list, never shown redacted.",
+    ),
+    "events.get": (
+        "gpa_get_event",
+        "read",
+        "Read one event through the internal events.get "
+        "operation, under the same visibility law as the list: "
+        "a draft asked for below organiser role answers "
+        "not_found, exactly as if it did not exist.",
+    ),
+    "events.cancel": (
+        "gpa_cancel_event",
+        "publish",
+        "Cancel one event through the internal events.cancel "
+        "operation, with the canceller's reason. Cancellation "
+        "is a state, never a disappearance: the event stays, "
+        "marked cancelled everywhere it was shown, and the "
+        "people who answered are told at once. The operation "
+        "refuses a role below organiser.",
+    ),
+    "rsvps.list": (
+        "gpa_list_rsvps",
+        "read",
+        "List one event's RSVPs through the internal "
+        "rsvps.list operation, in arrival order, with the "
+        "summary counts (coming, waiting, maybe, can't) a "
+        "calendar surface shows.",
+    ),
+    "rsvps.set": (
+        "gpa_set_rsvp",
+        "draft",
+        "Set one principal's own RSVP answer through the "
+        "internal rsvps.set operation: 'coming', 'cant', or "
+        "'maybe', with guests and a note. Answering is the "
+        "principal's own act — the operation upserts their "
+        "answer and runs the waitlist rebalance, and a "
+        "cancelled event refuses answers in plain words.",
+    ),
+    "calendar.agenda": (
+        "gpa_get_agenda",
+        "read",
+        "Read one page of a group's agenda through the "
+        "internal calendar.agenda operation: occurrences "
+        "(recurrences expanded) between window_start and "
+        "window_end, soonest first. Pass next_cursor back "
+        "unchanged for the following page; it is opaque.",
+    ),
     "events.publish": (
         "gpa_publish_event",
         "publish",

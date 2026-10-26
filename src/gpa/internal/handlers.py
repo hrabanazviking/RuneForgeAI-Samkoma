@@ -37,10 +37,12 @@ from gpa.internal import registry
 from gpa.internal.client import CallContext
 from gpa.internal.registry import Operation
 from gpa.models.events import Event, Rsvp
-from gpa.models.groups import Group
+from gpa.models.groups import Group, role_at_least
 from gpa.models.identity import User
+from gpa.services import calendar_views as calendar_service
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
+from gpa.services import rsvps as rsvp_service
 from gpa.services import groups as group_service
 from gpa.services import identity as identity_service
 from gpa.services import jobs as job_service
@@ -630,6 +632,201 @@ def _candidates_edit(db: Session, payload: dict, ctx: CallContext) -> dict:
     return _candidate_data(candidate)
 
 
+# --- events / RSVPs / calendar family (B-209) -----------------------------------
+#
+# The third domain family: the group's events as an agent
+# reads and answers them. Three different laws meet here,
+# and the operations are shaped by which law governs each:
+#
+# * VISIBILITY is the events service's bright line (B-049):
+#   drafts exist only for organisers and above. The read
+#   operations therefore carry the viewer's ROLE in their
+#   payloads and delegate to the service's own visible forms
+#   (list_events / get_visible_event) — an agent holding a
+#   member's credential sees exactly what that member sees,
+#   and a draft asked for below organiser is a 404, never a
+#   redacted row. No viewer is named, so the B-105 sub-group
+#   scope (which is stated over persons) does not narrow
+#   further here — the same posture internal callers take.
+# * CANCELLATION is an organiser act at the HTTP door
+#   (publish scope + organiser role). The service states no
+#   role law of its own, so the operation states it: the
+#   payload's role must clear organiser, refused as
+#   forbidden — the one place in this registry where a role
+#   law lives in the handler, recorded here so a reader does
+#   not go hunting the service for it.
+# * ANSWERING (rsvps.set) is participation, not governance:
+#   the HTTP door is draft-scoped, the answer is the
+#   principal's own, and the service's upsert + waitlist
+#   rebalance + promotion notices all ride along unchanged.
+
+
+def _event_data(event: Event) -> dict:
+    """Serialise one event row for the bus: the core of the
+    HTTP projection (identity, when/where, status) without
+    its level machinery — an internal consumer asked for the
+    event, not for a rendering of it."""
+    return {
+        "event_id": event.id,
+        "group_id": event.group_id,
+        "title": event.title,
+        "description": event.description,
+        "starts_at": event.starts_at.isoformat() if event.starts_at else None,
+        "ends_at": event.ends_at.isoformat() if event.ends_at else None,
+        "timezone": event.timezone,
+        "all_day": event.all_day,
+        "place_name": event.place_name,
+        "place_address": event.place_address,
+        "status": event.status,
+        "host_label": event.host_label,
+        "capacity": event.capacity,
+        "cancelled_reason": event.cancelled_reason,
+        "version": event.version,
+    }
+
+
+def _rsvp_data(row: Rsvp) -> dict:
+    """Serialise one RSVP row for the bus (the HTTP response's
+    fields, keyed the bus's way)."""
+    return {
+        "rsvp_id": row.id,
+        "event_id": row.event_id,
+        "principal_label": row.principal_label,
+        "status": row.status,
+        "guests": row.guests,
+        "note": row.note,
+        "waitlisted": row.waitlisted,
+        "waitlist_position": row.waitlist_position,
+    }
+
+
+def _events_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """List the group's events as the payload's role may see
+    them, soonest first (the service's order), optionally
+    narrowed by status — the filter can narrow visibility,
+    never widen it."""
+    _need(payload, "group_id", "role")
+    group = _group(db, payload["group_id"])
+    events = event_service.list_events(
+        db, group, role=payload["role"], status=payload.get("status")
+    )
+    return {
+        "group_id": group.id,
+        "events": [_event_data(event) for event in events],
+        "count": len(events),
+    }
+
+
+def _events_get(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Read one event through the bright line: a draft asked
+    for below organiser is a 404 from the service itself."""
+    _need(payload, "group_id", "event_id", "role")
+    group = _group(db, payload["group_id"])
+    event = event_service.get_visible_event(
+        db, group, payload["event_id"], payload["role"]
+    )
+    return _event_data(event)
+
+
+def _events_cancel(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Cancel one event with the canceller's reason. The role
+    law (organiser and above) is stated HERE (see the family
+    note above); the act itself — the state change, the
+    change-history row, the urgent tell-everyone fan-out
+    through notify.request — is the service's, unchanged."""
+    _need(payload, "group_id", "event_id", "actor", "role")
+    if not role_at_least(payload["role"], "organiser"):
+        raise AppError(
+            "forbidden",
+            detail="Only an organiser or above may cancel an event.",
+        )
+    group = _group(db, payload["group_id"])
+    event = event_service.cancel_event(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        event_id=payload["event_id"],
+        reason=payload.get("reason") or "",
+    )
+    return _event_data(event)
+
+
+def _rsvps_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Every answer to one event, arrival order, plus the
+    service's summary counts a calendar surface shows."""
+    _need(payload, "group_id", "event_id")
+    group = _group(db, payload["group_id"])
+    event = event_service.get_event(db, group, payload["event_id"])
+    rows = rsvp_service.list_rsvps(db, group, payload["event_id"])
+    return {
+        "group_id": group.id,
+        "event_id": event.id,
+        "rsvps": [_rsvp_data(row) for row in rows],
+        "summary": rsvp_service.summary(db, event),
+    }
+
+
+def _rsvps_set(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Set the payload principal's own answer (the upsert is
+    the service's; the waitlist rebalance and promotion
+    notices ride along). The principal answers as itself:
+    label plus its seat or user id, at least one of which
+    the payload must carry."""
+    _need(payload, "group_id", "event_id", "principal_label", "status")
+    if not payload.get("seat_id") and not payload.get("user_id"):
+        raise AppError(
+            "internal_bad_payload",
+            detail="rsvps.set names a seat_id or a user_id: an answer belongs to someone.",
+        )
+    group = _group(db, payload["group_id"])
+    row = rsvp_service.set_rsvp(
+        db,
+        ctx.settings,
+        principal_label=payload["principal_label"],
+        user_id=payload.get("user_id"),
+        seat_id=payload.get("seat_id"),
+        group=group,
+        event_id=payload["event_id"],
+        status=payload["status"],
+        guests=payload.get("guests") or 0,
+        note=payload.get("note") or "",
+    )
+    return _rsvp_data(row)
+
+
+def _utc_naive(value: str) -> datetime:
+    """Parse a payload moment into the store's convention —
+    naive UTC — the same conversion the calendar HTTP door
+    applies to its window (an aware moment is converted; a
+    naive one is taken as UTC already)."""
+    moment = _moment(value)
+    if moment.tzinfo is not None:
+        from datetime import timezone
+
+        moment = moment.astimezone(timezone.utc).replace(tzinfo=None)
+    return moment
+
+
+def _calendar_agenda(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """One page of the group's agenda over a window: the
+    calendar service's occurrence expansion (recurrences
+    materialised), its cursor carried through opaquely —
+    the caller passes it back for the next page and never
+    reads inside it."""
+    _need(payload, "group_id", "window_start", "window_end")
+    group = _group(db, payload["group_id"])
+    items, next_cursor = calendar_service.agenda(
+        db,
+        group,
+        window_start=_utc_naive(payload["window_start"]),
+        window_end=_utc_naive(payload["window_end"]),
+        q=payload.get("q"),
+        cursor=payload.get("cursor"),
+        limit=payload.get("limit") or 50,
+    )
+    return {"group_id": group.id, "items": items, "next_cursor": next_cursor}
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -785,4 +982,58 @@ def register_all() -> None:
             "Edit one candidate's draft as a reviewer; it stays undecided.",
         ),
         _candidates_edit,
+    )
+    registry.register(
+        Operation(
+            "events.list",
+            "events",
+            "events:read",
+            "List a group's events as a role may see them (drafts are organiser-only).",
+        ),
+        _events_list,
+    )
+    registry.register(
+        Operation(
+            "events.get",
+            "events",
+            "events:read",
+            "Read one event through the visibility bright line.",
+        ),
+        _events_get,
+    )
+    registry.register(
+        Operation(
+            "events.cancel",
+            "events",
+            "events:write",
+            "Cancel one event with a reason (organiser and above).",
+        ),
+        _events_cancel,
+    )
+    registry.register(
+        Operation(
+            "rsvps.list",
+            "events",
+            "events:read",
+            "List one event's RSVPs with the summary counts.",
+        ),
+        _rsvps_list,
+    )
+    registry.register(
+        Operation(
+            "rsvps.set",
+            "events",
+            "rsvps:write",
+            "Set one principal's own RSVP answer to an event.",
+        ),
+        _rsvps_set,
+    )
+    registry.register(
+        Operation(
+            "calendar.agenda",
+            "events",
+            "events:read",
+            "Read one page of a group's agenda over a time window.",
+        ),
+        _calendar_agenda,
     )

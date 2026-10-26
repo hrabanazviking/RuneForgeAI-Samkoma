@@ -2499,6 +2499,59 @@ parses the model so it cannot drift from the code.
   gate's to prove. No ZIP at this slice. Progress:
   **208/350. Next: B-209 (MCP tools — events, RSVPs, and
   the calendar).**
+- **B-209 MCP tools — events, RSVPs, and the calendar** ✅
+  (timer crew, 2026-10-26): the third domain family. Six new
+  internal operations (owner events): `events.list` +
+  `events.get` (`events:read`) carrying the viewer's ROLE
+  and delegating to the service's visible forms, so the
+  B-049 bright line holds over this surface exactly — a
+  draft in an organiser's list, absent from a member's, and
+  not_found (never redacted) at the single read;
+  `rsvps.list` (`events:read`, answers + the summary
+  counts); `calendar.agenda` (`events:read`, occurrence
+  expansion with the opaque cursor carried through; window
+  moments converted at the operation to the store's
+  naive-UTC convention, the calendar door's own conversion);
+  `rsvps.set` (`rsvps:write` → **draft** rung: answering is
+  participation, the HTTP door's scope, so a seat's default
+  key can answer for its seat; the service's upsert +
+  waitlist rebalance + promotion notices ride along); and
+  `events.cancel` (`events:write` → **publish** rung),
+  doubly gated as at its HTTP door — publish credential at
+  the guard AND the organiser role stated in the operation
+  itself (the service states no role law; the one handler-
+  side role law in the registry, recorded in its family
+  note). Event editing is deliberately out (an ETag
+  conversation that deserves its own surface; the reads
+  carry `version` as honest ground for it). The server
+  serves 25 tools. Superseded assertions updated in place
+  (operations 17→23, parity 19/17→25/23, grants, auth scope
+  set, parity bus note). Two build faults were caught by
+  the family's own tests and fixed at root before landing:
+  the first tool draft used a non-existent bridge call
+  shape instead of the house `_call` form, and the agenda
+  window first travelled offset-aware into a naive-UTC
+  store. Tests: tests/test_mcp_events.py **5 passed**
+  (bright line in list + single read, seat RSVP set/list
+  with summary, cancel's two gates + stays-visible +
+  conflict + cancelled refuses answers, agenda window
+  in/out, call-time scopes incl. draft-can-answer /
+  draft-cannot-cancel); family batch (the three MCP
+  families + registry + auth + parity + events/RSVPs/
+  calendar APIs) **60 passed**; core + internal batch
+  **44 passed**; gates batch (comment — mcp density
+  repaired to 45.0% by documentation — docs, architecture,
+  signed releases, release-zip, registry, parity, OpenAPI
+  snapshot) + the family/core suites **69 passed** in the
+  final combined run. Ruff E9+F clean on every touched
+  file except the pre-existing F841 in
+  tests/test_mcp_core.py (left as found, as before). Atlas
+  regenerated (409 files), B-198 inventory row added.
+  Contract unchanged: **202 paths / 230 schemas**. Full
+  suite NOT re-run — a full Phase 19 green is the B-220
+  gate's to prove. No ZIP at this slice. Progress:
+  **209/350. Next: B-210 (MCP tools — sources and
+  extraction requests).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

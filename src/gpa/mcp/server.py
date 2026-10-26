@@ -314,6 +314,182 @@ def build_server(
             tool="gpa_publish_event",
         )
 
+    # --- B-209 family: events, RSVPs, the calendar ----------------------------
+    #
+    # The reads carry the viewer's ROLE because visibility is
+    # role law (the bright line): the same credential reading
+    # as a member and as an organiser honestly sees two
+    # different groups' worth of events, and the role in the
+    # call is what makes that auditable rather than ambient.
+    # Cancellation carries actor + role for the same reason
+    # approval did in B-208. Answering carries the answering
+    # principal's own facts (label + seat or user id) — an
+    # RSVP is meaningless unattributed, and the waitlist
+    # arithmetic keys on the principal.
+    #
+    # Cancellation is this family's doubly-gated act, and the
+    # two gates are different KINDS of check, which is why
+    # both exist: the credential gate (publish, re-checked at
+    # call time by the guard) says the caller's KEY may wield
+    # publish-grade tools at all; the role gate (organiser,
+    # stated in the operation itself) says the PERSON OR SEAT
+    # on whose behalf it acts stands high enough in THIS
+    # group to cancel its events. A borrowed publish key
+    # wielded for a mere member passes the first gate and is
+    # refused at the second — the acceptance tests pin both
+    # refusals separately so neither can quietly rot.
+    #
+    # The agenda tool's window is stated in the caller's own
+    # offsets and converted at the operation to the store's
+    # naive-UTC convention, exactly as the calendar's HTTP
+    # door converts its from/to — an agent never does timezone
+    # arithmetic of its own, which is the calendar law of this
+    # backend ("the frontend does zero date maths") extended
+    # to agents. The cursor is carried opaquely for the same
+    # reason: paging state is the service's business.
+    #
+    # What this family leaves out, deliberately: event EDITING
+    # (the HTTP door's ETag-guarded PATCH) and event creation
+    # beyond the draft/publish pair B-204 already serves.
+    # Editing is an optimistic-concurrency conversation — read
+    # the etag, state your changes against it, take the
+    # conflict honestly when the event moved — and it deserves
+    # its own considered surface rather than a rushed tool
+    # that hides the version from the caller. The reads here
+    # DO carry the event's version, so a future edit family
+    # has honest ground to stand on.
+
+    @server.tool(description=specs["gpa_list_events"].description)
+    def gpa_list_events(
+        group_id: str, role: str, status: str | None = None
+    ) -> dict[str, Any]:
+        """List a group's events as ``role`` may see them.
+
+        Soonest first. ``status`` narrows the list (draft /
+        published / cancelled) but can never widen what the
+        role may see — a member asking for drafts gets an
+        empty list, not an error and not the drafts.
+        """
+        payload: dict[str, Any] = {"group_id": group_id, "role": role}
+        if status is not None:
+            payload["status"] = status
+        return _call("events.list", payload, tool="gpa_list_events")
+
+    @server.tool(description=specs["gpa_get_event"].description)
+    def gpa_get_event(
+        group_id: str, event_id: str, role: str
+    ) -> dict[str, Any]:
+        """Read one event through the visibility bright line.
+
+        The single-read form of the list's law: below
+        organiser, a draft answers not_found.
+        """
+        return _call(
+            "events.get",
+            {"group_id": group_id, "event_id": event_id, "role": role},
+            tool="gpa_get_event",
+        )
+
+    @server.tool(description=specs["gpa_cancel_event"].description)
+    def gpa_cancel_event(
+        group_id: str,
+        event_id: str,
+        actor: str,
+        role: str,
+        reason: str | None = None,
+    ) -> dict[str, Any]:
+        """Cancel one event with the canceller's reason.
+
+        The reason travels in the canceller's own words and
+        is kept on the event; the service's urgent fan-out
+        tells everyone who answered, in the same act.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "event_id": event_id,
+            "actor": actor,
+            "role": role,
+        }
+        if reason is not None:
+            payload["reason"] = reason
+        return _call("events.cancel", payload, tool="gpa_cancel_event")
+
+    @server.tool(description=specs["gpa_list_rsvps"].description)
+    def gpa_list_rsvps(group_id: str, event_id: str) -> dict[str, Any]:
+        """List one event's answers with the summary counts.
+
+        Arrival order, waitlist positions included, plus the
+        counts (coming parties, confirmed seats, maybes,
+        can'ts) a calendar surface shows.
+        """
+        return _call(
+            "rsvps.list",
+            {"group_id": group_id, "event_id": event_id},
+            tool="gpa_list_rsvps",
+        )
+
+    @server.tool(description=specs["gpa_set_rsvp"].description)
+    def gpa_set_rsvp(
+        group_id: str,
+        event_id: str,
+        principal_label: str,
+        status: str,
+        seat_id: str | None = None,
+        user_id: str | None = None,
+        guests: int | None = None,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        """Set one principal's own answer to an event.
+
+        An upsert: answering again replaces the answer. The
+        waitlist rebalance runs inside the same act, so a
+        'cant' that frees a seat promotes the next party
+        before this call returns.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "event_id": event_id,
+            "principal_label": principal_label,
+            "status": status,
+        }
+        if seat_id is not None:
+            payload["seat_id"] = seat_id
+        if user_id is not None:
+            payload["user_id"] = user_id
+        if guests is not None:
+            payload["guests"] = guests
+        if note is not None:
+            payload["note"] = note
+        return _call("rsvps.set", payload, tool="gpa_set_rsvp")
+
+    @server.tool(description=specs["gpa_get_agenda"].description)
+    def gpa_get_agenda(
+        group_id: str,
+        window_start: str,
+        window_end: str,
+        q: str | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        """Read one agenda page over a time window.
+
+        Occurrences, not events: recurrences are expanded by
+        the calendar service. ``next_cursor`` is opaque —
+        pass it back unchanged for the following page.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "window_start": window_start,
+            "window_end": window_end,
+        }
+        if q is not None:
+            payload["q"] = q
+        if cursor is not None:
+            payload["cursor"] = cursor
+        if limit is not None:
+            payload["limit"] = limit
+        return _call("calendar.agenda", payload, tool="gpa_get_agenda")
+
     # --- The B-206 generated operation tools --------------------------------
     #
     # The five operations B-204's core pair did not cover. Each
