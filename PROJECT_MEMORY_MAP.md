@@ -3045,19 +3045,19 @@ parses the model so it cannot drift from the code.
   tests/test_mcp_security.py **7 passed** (run3.log,
   after two test-shape fixes at root: the valid source
   kind is `chat_paste`, and source rows key on
-  `source_id`). Combined batch: the first full run's log
-  was truncated in delivery (its summary read 155 passed
-  / 5 failed with no readable failure names), so the
-  batch was re-run in three chunks read from their own
-  logs — chunk1 (core+auth+registry+parity) **30
-  passed**, chunk2 (candidates+events+planning+groups+
-  sources+notifications) **34 passed**, chunk3 (security+
-  sampling+elicitation+subscriptions+resources+prompts+
-  comment gate+docs gate+architecture+internal API)
-  **90 passed / 3 failed** — all three the resources
-  suite's publish helper missing the new consent,
-  fixed in place; the affected files re-ran **25
-  passed**. Atlas regenerated 424 files; docs/17
+  `source_id`). Combined batch **154 passed / 3
+  failed** from its own log (batch.log, 427.16s) — all
+  three the resources suite's publish helper missing
+  the new consent, fixed in place; the affected files
+  re-ran **25 passed**. The batch was also re-run in
+  three chunks read from their own logs, which agree
+  exactly (30 + 34 + 90 passed, the same 3 resources
+  failures). CORRECTION (same run, on the batch's late
+  delivery): an early garbled delivery of the batch's
+  summary read "155 passed / 5 failed" and the first
+  writing of this entry repeated it; the batch's own
+  log is the authority and reads 154/3, as the chunks
+  showed. All other B-218 facts stand. Atlas regenerated 424 files; docs/17
   inventory row added. Ruff E9+F clean. Contract
   unchanged: **202 paths / 230 schemas**. Full suite NOT
   re-run — a full Phase 19 green is the B-220 gate's to
