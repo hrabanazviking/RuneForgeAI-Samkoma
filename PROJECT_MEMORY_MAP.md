@@ -2154,6 +2154,35 @@ Phase 16 begins at B-157.
   policy. In-suite: `tests/test_quality_gate.py` (3 passed;
   the mypy half runs via the gate's --mypy mode, green at the
   ceiling). Progress: **178/350**.
+- **B-179 signed releases + SBOM** ✅ (timer crew,
+  2026-10-25): `scripts/release_signing.py` — SBOM
+  (`sbom.spdx.json`, SPDX 2.3) generated from the committed
+  `uv.lock` by the real TOML parser (every pinned package,
+  exact version, per-artifact SHA-256 uv recorded; `uv sync`
+  verifies those same hashes at install — the lockfile law,
+  stated in the module). Train ZIPs (and the flat shape) now
+  carry the SBOM inside, the release manifest names the
+  signing key's fingerprint, and a detached Ed25519 signature
+  (``<zip>.sig``) + public key (``<zip>.pub``) land beside the
+  ZIP next to the existing ``.sha256`` sidecar. Key custody:
+  the private key comes only from
+  `GPA_RELEASE_PRIVATE_KEY_B64` / `GPA_RELEASE_KEY_FILE`
+  outside the repo — an in-repo key path REFUSES the build,
+  and `keygen` refuses to write inside the repo; with no key
+  configured the build signs with an EPHEMERAL key and the
+  manifest stamps `ephemeral: true` in plain sight (never a
+  silent unsigned or pretend-signed release).
+  `verify_release` checks, in order: sha256 sidecar, Ed25519
+  signature over the ZIP's exact bytes, SHA256SUMS against
+  every entry (no unlisted entries), SBOM package set ==
+  the shipped uv.lock's set, manifest key_id == the key that
+  verified. Acceptance (tests/test_signed_releases.py, 5
+  passed): a real train ZIP built with a throwaway key held
+  outside the repo verifies clean; **one flipped byte →
+  verification refuses** (signature + sha256 problems named);
+  in-repo key refused at both doors. Batch with release-zip,
+  comment-gate and quality-gate suites: 17 passed. Progress:
+  **179/350**.
 
 ## Standing laws in force here
 
