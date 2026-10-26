@@ -483,6 +483,153 @@ def _profile_update(db: Session, payload: dict, ctx: CallContext) -> dict:
     return _user_profile(updated)
 
 
+# --- candidates.list / candidates.get / the decision doors (B-208) --------
+#
+# The review-queue family. The queue is the product's centre
+# of gravity — everything AI drafts lands here, and only a
+# principal's decision moves it — so this family's law is the
+# strictest in the catalogue:
+#
+# * Reads (candidates:read) return the queue's own shapes: the
+#   list rows the HTTP queue serves, and for one candidate its
+#   full detail — draft, flags, per-field provenance, and the
+#   multi-approver progress (recorded / required, B-111).
+# * Decisions (candidates:decide) are the three reviewer acts
+#   — approve, reject, edit — and they delegate to the SAME
+#   services the HTTP doors call, under the SAME rules. Above
+#   all, candidates.approve travels groups.approve_candidate:
+#   the one approval law (B-203) lives inside that service
+#   (the group's review_min_role, its approvals-required
+#   count, seat standing exactly equal to a person's), so an
+#   approval arriving over this bus is checked identically to
+#   one arriving over HTTP — there is no second, weaker door
+#   for a surface to find. The payload therefore carries the
+#   approving principal's facts (label, role, and its user or
+#   seat id) exactly as the HTTP door's principal carries them.
+# * candidates:decide maps only from the publish credential
+#   rung (and admin): the HTTP decision doors are publish-scope
+#   doors, and a draft-scoped seat key — which tops out at
+#   draft — cannot decide, exactly as at those doors.
+
+
+def _candidate_data(candidate) -> dict:
+    """One candidate as plain data: the queue row's own fields.
+
+    Mirrors schemas' candidate_row (draft and flags decoded
+    from their JSON columns by the owning service's helpers),
+    with ids named for the wire (candidate_id, not a bare id).
+    """
+    return {
+        "candidate_id": candidate.id,
+        "group_id": candidate.group_id,
+        "kind": candidate.kind,
+        "title": candidate.title,
+        "status": candidate.status,
+        "created_by": candidate.created_by,
+        "approved_by": candidate.approved_by,
+        "draft": candidate_service.draft_of(candidate),
+        "confidence": candidate.confidence,
+        "flags": candidate_service.flags_of(candidate),
+        "source_id": candidate.source_id,
+        "prompt_name": candidate.prompt_name,
+        "prompt_version": candidate.prompt_version,
+        "job_id": candidate.job_id,
+        "merged_into_id": candidate.merged_into_id,
+        "resulting_entity_type": candidate.resulting_entity_type,
+        "resulting_entity_id": candidate.resulting_entity_id,
+    }
+
+
+def _candidates_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """The group's review queue, with the queue's own triage
+    filters (kind, status, minimum confidence), newest first."""
+    _need(payload, "group_id")
+    group = group_service.get_group(db, payload["group_id"])
+    rows = candidate_service.list_candidates(
+        db,
+        group,
+        kind=payload.get("kind"),
+        status=payload.get("status"),
+        min_confidence=payload.get("min_confidence"),
+    )
+    return {
+        "group_id": group.id,
+        "candidates": [_candidate_data(row) for row in rows],
+        "count": len(rows),
+    }
+
+
+def _candidates_get(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """One candidate in full: its row, its per-field provenance
+    (the evidence the queue renders), and its approval progress
+    under the group's multi-approver rule (recorded/required)."""
+    _need(payload, "group_id", "candidate_id")
+    group = group_service.get_group(db, payload["group_id"])
+    candidate = candidate_service.get_candidate(db, group, payload["candidate_id"])
+    recorded, required = group_service.review_progress(db, candidate)
+    return {
+        **_candidate_data(candidate),
+        "provenance": candidate_service.provenance_of(db, candidate),
+        "approvals_recorded": recorded,
+        "approvals_required": required,
+    }
+
+
+def _candidates_approve(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Approve one candidate through the one approval law.
+
+    The payload carries the approver's facts — ``actor`` label,
+    ``role`` in the group, and exactly one of ``seat_id`` /
+    ``user_id`` — and groups.approve_candidate applies the
+    whole law (role floor, distinct-approver counting, the
+    mint) in its own transaction. A seat below the group's
+    approver role meets seat_cannot_approve here, exactly as
+    at the HTTP door; below the approvals count the act is
+    recorded and the candidate stays pending, which the
+    returned row's status says plainly.
+    """
+    _need(payload, "group_id", "candidate_id", "actor", "role")
+    group = group_service.get_group(db, payload["group_id"])
+    candidate = group_service.approve_candidate(
+        db,
+        actor_label=payload["actor"],
+        actor_is_seat=bool(payload.get("seat_id")),
+        group=group,
+        candidate_id=payload["candidate_id"],
+        actor_user_id=payload.get("user_id"),
+        actor_role=payload["role"],
+        actor_seat_id=payload.get("seat_id"),
+    )
+    return _candidate_data(candidate)
+
+
+def _candidates_reject(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Reject one candidate (the row and its draft stay — a
+    rejection is a decision, not an erasure)."""
+    _need(payload, "group_id", "candidate_id", "actor")
+    group = group_service.get_group(db, payload["group_id"])
+    candidate = candidate_service.reject_candidate(
+        db, actor_label=payload["actor"], group=group, candidate_id=payload["candidate_id"]
+    )
+    return _candidate_data(candidate)
+
+
+def _candidates_edit(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Edit one candidate's draft (a reviewer's correction:
+    the draft is replaced, flags recomputed, the candidate
+    marked edited — still undecided, still the queue's)."""
+    _need(payload, "group_id", "candidate_id", "actor", "draft")
+    group = group_service.get_group(db, payload["group_id"])
+    candidate = candidate_service.edit_candidate(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        candidate_id=payload["candidate_id"],
+        draft=payload["draft"],
+    )
+    return _candidate_data(candidate)
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -593,4 +740,49 @@ def register_all() -> None:
             "Edit one principal's profile through its owning service.",
         ),
         _profile_update,
+    )
+    registry.register(
+        Operation(
+            "candidates.list",
+            "extraction",
+            "candidates:read",
+            "List a group's review queue with the triage filters.",
+        ),
+        _candidates_list,
+    )
+    registry.register(
+        Operation(
+            "candidates.get",
+            "extraction",
+            "candidates:read",
+            "Read one candidate in full: draft, provenance, approval progress.",
+        ),
+        _candidates_get,
+    )
+    registry.register(
+        Operation(
+            "candidates.approve",
+            "groups",
+            "candidates:decide",
+            "Approve one candidate through the one approval law (B-203).",
+        ),
+        _candidates_approve,
+    )
+    registry.register(
+        Operation(
+            "candidates.reject",
+            "extraction",
+            "candidates:decide",
+            "Reject one candidate; the row and its draft stay.",
+        ),
+        _candidates_reject,
+    )
+    registry.register(
+        Operation(
+            "candidates.edit",
+            "extraction",
+            "candidates:decide",
+            "Edit one candidate's draft as a reviewer; it stays undecided.",
+        ),
+        _candidates_edit,
     )

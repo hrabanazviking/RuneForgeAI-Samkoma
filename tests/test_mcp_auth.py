@@ -206,7 +206,8 @@ def test_under_scoped_principal_fails_insufficient_scope():
     # catalogue to one tool per internal operation plus the two
     # meta tools; the scope table grew with it, and the registry
     # checker now asserts this set equals the registry's own.
-    # Grown again by B-207 (groups / members / profile family).
+    # Grown again by B-207 (groups / members / profile family)
+    # and by B-208 (candidates / review-queue family).
     assert set(TOOL_SCOPES) == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -222,6 +223,11 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_update_group",
         "gpa_get_profile",
         "gpa_update_profile",
+        "gpa_list_candidates",
+        "gpa_get_candidate",
+        "gpa_approve_candidate",
+        "gpa_reject_candidate",
+        "gpa_edit_candidate",
     }
 
 

@@ -182,6 +182,79 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "approval law. Kinds are the queue's own (event, task, decision, "
         "question, and their kin).",
     ),
+    # B-208's queue family, annotated by the same rules: the
+    # reads take "read" (candidates:read is the read rung's),
+    # and the three decisions take "publish" — never "draft".
+    # That asymmetry is the queue's law stated in scopes: a
+    # seat's default key (read+draft) can draft INTO the queue
+    # and read it back, but deciding is a publish-grade act at
+    # every door this product has, and the one approval law
+    # (B-203) inside the approve operation checks the approver
+    # AGAIN — role floor and approver count — so this scope is
+    # the door, not the whole guard.
+    # A note on the approve annotation's wording, since these
+    # descriptions are release facts an agent acts on: it says
+    # the law applies and names its outcomes (recorded vs
+    # deciding, the mint), and it does NOT promise the caller
+    # their approval will decide — whether it does depends on
+    # the group's own rules and on who has already approved,
+    # which is exactly what gpa_get_candidate's progress fields
+    # exist to tell the caller BEFORE they act. The reject and
+    # edit descriptions likewise state what stays true after
+    # the act (the row stays; the candidate stays undecided),
+    # because a reviewer planning a sequence of calls needs
+    # the aftermath, not just the act.
+    "candidates.list": (
+        "gpa_list_candidates",
+        "read",
+        "List one group's review queue through the internal "
+        "candidates.list operation — newest first, with the "
+        "queue's own triage filters (kind, status, minimum "
+        "confidence). Rows only: drafts, flags, and who drafted "
+        "each; deciding anything on the list is a separate, "
+        "publish-grade act at the decision tools.",
+    ),
+    "candidates.get": (
+        "gpa_get_candidate",
+        "read",
+        "Read one candidate in full through the internal "
+        "candidates.get operation: its draft, its server-computed "
+        "flags, the per-field provenance (the quote and support "
+        "verdict behind every field), and its approval progress "
+        "under the group's multi-approver rule — everything a "
+        "reviewer weighs before a decision, and nothing decided.",
+    ),
+    "candidates.approve": (
+        "gpa_approve_candidate",
+        "publish",
+        "Approve one candidate through the internal "
+        "candidates.approve operation — the one approval law "
+        "(B-203), the same service act a human reviewer's "
+        "approval performs: the group's approver-role floor and "
+        "distinct-approver count apply to seats and people "
+        "identically, a below-count approval is recorded and "
+        "the candidate stays pending, and a deciding approval "
+        "mints what the draft becomes. No second door exists.",
+    ),
+    "candidates.reject": (
+        "gpa_reject_candidate",
+        "publish",
+        "Reject one candidate through the internal "
+        "candidates.reject operation. The row, its draft, and "
+        "its provenance all stay — a rejection is a decision "
+        "about the draft, never an erasure of it — and a decided "
+        "candidate cannot be decided again.",
+    ),
+    "candidates.edit": (
+        "gpa_edit_candidate",
+        "publish",
+        "Edit one candidate's draft through the internal "
+        "candidates.edit operation: a reviewer's correction, "
+        "replacing the draft and recomputing its flags. The "
+        "candidate is marked edited and stays UNDECIDED — "
+        "editing is not approving, and the queue still waits "
+        "for a decision afterwards.",
+    ),
     "events.publish": (
         "gpa_publish_event",
         "publish",

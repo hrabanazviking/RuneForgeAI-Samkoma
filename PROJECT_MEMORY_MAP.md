@@ -2446,6 +2446,59 @@ parses the model so it cannot drift from the code.
   green is the B-220 gate's to prove. No ZIP at this slice.
   Progress: **207/350. Next: B-208 (MCP tools — candidates
   and the review queue).**
+- **B-208 MCP tools — candidates and the review queue** ✅
+  (timer crew, 2026-10-26): the second domain family. Five
+  new internal operations: `candidates.list` +
+  `candidates.get` (`candidates:read` — the queue's rows with
+  its triage filters, and one candidate in full: draft,
+  flags, per-field provenance, and B-111 approval progress
+  recorded/required) and the three decision doors
+  `candidates.approve` (owner groups) + `candidates.reject`
+  + `candidates.edit` (owner extraction), all under one new
+  internal scope `candidates:decide`. **The load-bearing
+  placement**: `candidates:decide` maps ONLY from the
+  publish credential rung (and admin) in EXTERNAL_TO_INTERNAL
+  — a seat's default read+draft key is structurally unable
+  to decide over this surface, exactly as at the HTTP doors,
+  and the sentence saying so is written in auth.py where a
+  reviewer widening the table must read it. Approval travels
+  `groups.approve_candidate` itself: the one approval law
+  (B-203) — review_min_role floor, distinct-approver
+  counting, the mint — applies inside the service, so a
+  below-count approval over MCP is RECORDED (row stays
+  pending) and a deciding one mints, identically to HTTP;
+  the approve payload carries the approver's facts (label,
+  role, seat/user id) as the HTTP principal does. Reject and
+  edit delegate to the candidates service (row stays on
+  reject; edit marks edited and stays undecided). Merging
+  and extraction requests are deliberately NOT in this
+  family (recorded in server.py: merge weighs provenance
+  side by side at the human queue; extraction requests
+  belong to the sources family). The server serves 19
+  tools. Superseded assertions updated in place (core tool
+  set + operations 12→17 + grants, registry counts, auth
+  scope set, parity 14/12→19/17 + its bus-backed note).
+  Tests: tests/test_mcp_candidates.py **5 passed** (list +
+  filter + full read with honest empty provenance, owner
+  approval minting a decision, the seat law over the bus —
+  member seat `seat_cannot_approve`, organiser seat approves
+  as itself — edit-then-reject with the second decision a
+  conflict, and all three decision tools refusing a
+  read+draft principal at the guard); the family batch
+  (candidates + groups + registry + auth + parity +
+  candidates API + seat equality) **91 passed**; core +
+  internal batch **44 passed**; gates batch (comment — mcp
+  density repaired to 45.0% by documentation — docs,
+  architecture, signed releases, release-zip, registry,
+  parity, OpenAPI snapshot) **61 passed**. Ruff E9+F clean
+  on every touched file except the pre-existing F841 in
+  tests/test_mcp_core.py (left as found, as before). Atlas
+  regenerated (408 files), B-198 inventory row added.
+  Contract unchanged: **202 paths / 230 schemas**. Full
+  suite NOT re-run — a full Phase 19 green is the B-220
+  gate's to prove. No ZIP at this slice. Progress:
+  **208/350. Next: B-209 (MCP tools — events, RSVPs, and
+  the calendar).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

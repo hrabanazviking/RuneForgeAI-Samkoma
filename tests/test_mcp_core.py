@@ -67,6 +67,12 @@ CORE_TOOLS = {
     "gpa_update_group",
     "gpa_get_profile",
     "gpa_update_profile",
+    # B-208: the candidates / review-queue family.
+    "gpa_list_candidates",
+    "gpa_get_candidate",
+    "gpa_approve_candidate",
+    "gpa_reject_candidate",
+    "gpa_edit_candidate",
 }
 
 
@@ -127,6 +133,9 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "groups:write",
         "profile:read",
         "profile:write",
+        # B-208: the review queue's read + decision scopes.
+        "candidates:read",
+        "candidates:decide",
     ):
         assert registry.caller_may("mcp", scope), scope
     operations = {op["name"] for op in bridge.operations()}
@@ -144,6 +153,12 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "groups.update",
         "profile.get",
         "profile.update",
+        # B-208: the review-queue family's operations.
+        "candidates.list",
+        "candidates.get",
+        "candidates.approve",
+        "candidates.reject",
+        "candidates.edit",
     }
 
 
@@ -199,8 +214,8 @@ def test_server_builds_with_the_core_tools(app, settings):
     tools = asyncio.run(server.list_tools())
     assert {tool.name for tool in tools} == CORE_TOOLS
     info = bridge.info()
-    # B-207 grew the registry to twelve operations.
-    assert info["caller"] == "mcp" and info["operations_count"] == 12
+    # B-207 grew the registry to twelve operations; B-208 to 17.
+    assert info["caller"] == "mcp" and info["operations_count"] == 17
 
 
 # --- structured logging: no payloads, ever ---------------------------------

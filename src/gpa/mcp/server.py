@@ -625,6 +625,145 @@ def build_server(
         payload["changes"] = changes
         return _call("profile.update", payload, tool="gpa_update_profile")
 
+    # --- The B-208 family: candidates and the review queue ------------------
+    #
+    # The queue family, and the catalogue's most guarded tools.
+    # The reads are ordinary family reads; the three decision
+    # tools are publish-scoped and travel operations whose
+    # services carry the decision law themselves — above all
+    # approval, which travels groups.approve_candidate, the one
+    # approval law's own home (B-203). This layer adds no check
+    # of its own and removes none: the role floor, the
+    # distinct-approver count, and the seat rules are all the
+    # service's, applied identically however the act arrived.
+    #
+    # The approve tool's arguments carry the approver's facts
+    # (actor label, role, and the seat or user id) because the
+    # service's law is stated over exactly those facts — the
+    # door's principal at the HTTP door carries the same three.
+    # A caller that lies about its role here gains nothing the
+    # HTTP door would not also have to trust its session for;
+    # the credential scope (publish, re-checked at call time
+    # by the guard) is this surface's door, and the service's
+    # law is the room behind it.
+    #
+    # Two outcomes an agent must be able to tell apart, both
+    # of which arrive as a SUCCESSFUL approve call: a DECIDING
+    # approval (the returned row's status is "approved" and its
+    # resulting_entity_* names what the draft became) and a
+    # RECORDED approval under a multi-approver rule (the row
+    # stays "pending": this principal's assent is on record,
+    # and the queue waits for the remaining distinct approvers
+    # — a repeat by the SAME principal is a conflict, not a
+    # second vote). The tool returns the row either way and
+    # lets its status speak; dressing a recorded approval up as
+    # a decision would be the one unforgivable lie here.
+    #
+    # What this family deliberately leaves out: merging
+    # (candidates.merge and the merge-into-event door) stays
+    # at the human queue for now — a merge weighs two drafts'
+    # provenance side by side, and no B-208 acceptance case
+    # exercises it over this surface — and the extraction
+    # REQUEST doors (ask the pipeline to draft) belong to the
+    # sources family, not the queue family: the queue's tools
+    # review work that exists; they do not commission work.
+    #
+    # Reject and edit need no approver facts (no role, no
+    # principal id) in their payloads: their services' law is
+    # state, not standing — an open candidate may be edited or
+    # rejected, a decided one may not, and WHO may wield the
+    # door is this surface's credential check (publish) plus
+    # the HTTP-mirroring truth that the caller was handed a
+    # publish credential by someone with the right to grant
+    # one. Approval is the only decision whose law is stated
+    # over the approver's own facts, so it is the only one
+    # whose payload carries them.
+
+    @server.tool(description=specs["gpa_list_candidates"].description)
+    def gpa_list_candidates(
+        group_id: str,
+        kind: str | None = None,
+        status: str | None = None,
+        min_confidence: float | None = None,
+    ) -> dict[str, Any]:
+        """List a group's review queue via candidates.list,
+        with the queue's triage filters (all optional)."""
+        payload: dict[str, Any] = {"group_id": group_id}
+        if kind is not None:
+            payload["kind"] = kind
+        if status is not None:
+            payload["status"] = status
+        if min_confidence is not None:
+            payload["min_confidence"] = min_confidence
+        return _call("candidates.list", payload, tool="gpa_list_candidates")
+
+    @server.tool(description=specs["gpa_get_candidate"].description)
+    def gpa_get_candidate(group_id: str, candidate_id: str) -> dict[str, Any]:
+        """Read one candidate in full via candidates.get:
+        draft, flags, provenance, approval progress."""
+        return _call(
+            "candidates.get",
+            {"group_id": group_id, "candidate_id": candidate_id},
+            tool="gpa_get_candidate",
+        )
+
+    @server.tool(description=specs["gpa_approve_candidate"].description)
+    def gpa_approve_candidate(
+        group_id: str,
+        candidate_id: str,
+        actor: str,
+        role: str,
+        seat_id: str | None = None,
+        user_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Approve one candidate via candidates.approve — the
+        one approval law applies inside the operation: role
+        floor, distinct-approver count, and the mint are the
+        service's, identical for seats and people."""
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "candidate_id": candidate_id,
+            "actor": actor,
+            "role": role,
+        }
+        if seat_id is not None:
+            payload["seat_id"] = seat_id
+        if user_id is not None:
+            payload["user_id"] = user_id
+        return _call("candidates.approve", payload, tool="gpa_approve_candidate")
+
+    @server.tool(description=specs["gpa_reject_candidate"].description)
+    def gpa_reject_candidate(
+        group_id: str, candidate_id: str, actor: str
+    ) -> dict[str, Any]:
+        """Reject one candidate via candidates.reject; the
+        row and its draft stay, as a decision, not an erasure."""
+        return _call(
+            "candidates.reject",
+            {"group_id": group_id, "candidate_id": candidate_id, "actor": actor},
+            tool="gpa_reject_candidate",
+        )
+
+    @server.tool(description=specs["gpa_edit_candidate"].description)
+    def gpa_edit_candidate(
+        group_id: str,
+        candidate_id: str,
+        actor: str,
+        draft: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Edit one candidate's draft via candidates.edit: a
+        reviewer's correction; the candidate stays undecided."""
+        return _call(
+            "candidates.edit",
+            {
+                "group_id": group_id,
+                "candidate_id": candidate_id,
+                "actor": actor,
+                "draft": draft,
+            },
+            tool="gpa_edit_candidate",
+        )
+
     log_event(
         logger,
         "mcp.server.built",

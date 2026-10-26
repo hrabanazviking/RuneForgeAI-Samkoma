@@ -48,6 +48,18 @@ Scopes, and the mapping onto internal scopes:
   the rungs below it, and ``groups:write`` still maps only
   from ``admin``, which is why the family slice's settings
   tool is admin-scoped while its profile tool is draft-scoped.
+* B-208 added the queue's decision scope
+  (``candidates:decide``) to the publish rung only. That
+  placement is the load-bearing one in the whole table: a
+  seat's default key tops out at draft, so the mapping — not
+  a check in any tool — is what makes it structurally
+  impossible for a default seat key to approve, reject, or
+  edit a candidate over this surface, exactly as the HTTP
+  doors' publish scope makes it impossible there. Widen
+  ``draft`` to include this scope and both doors weaken at
+  once; the registry checker would still pass, which is why
+  this sentence is written here, where a reviewer widening
+  the table must read it.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -110,6 +122,9 @@ INTERNAL_SCOPES = (
     "groups:write",
     "profile:read",
     "profile:write",
+    # B-208: the review queue's read and decision scopes.
+    "candidates:read",
+    "candidates:decide",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -122,12 +137,16 @@ INTERNAL_SCOPES = (
 # a person's session (scopes=None in deps.py) carries every
 # scope. Each rung carries the rungs below it, as the ladder
 # always has (publish already carried draft's candidates:write).
-_READ_INTERNAL = frozenset({"groups:read", "profile:read"})
+_READ_INTERNAL = frozenset({"groups:read", "profile:read", "candidates:read"})
 _DRAFT_INTERNAL = _READ_INTERNAL | {"candidates:write", "profile:write"}
 EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     "read": _READ_INTERNAL,
     "draft": _DRAFT_INTERNAL,
-    "publish": _DRAFT_INTERNAL | {"events:publish"},
+    # B-208: the publish rung also carries the review queue's
+    # decision scope — approve / reject / edit are publish-grade
+    # acts at the HTTP doors too, and a draft credential must
+    # NOT reach them (that asymmetry is the queue's whole law).
+    "publish": _DRAFT_INTERNAL | {"events:publish", "candidates:decide"},
     "admin": frozenset(INTERNAL_SCOPES),
 }
 
@@ -165,6 +184,14 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_update_group": "admin",
     "gpa_get_profile": "read",
     "gpa_update_profile": "draft",
+    # B-208's queue family: reads are "read"; the three
+    # decision tools are "publish" — candidates:decide maps
+    # only from publish and admin, as the checker proves.
+    "gpa_list_candidates": "read",
+    "gpa_get_candidate": "read",
+    "gpa_approve_candidate": "publish",
+    "gpa_reject_candidate": "publish",
+    "gpa_edit_candidate": "publish",
 }
 
 

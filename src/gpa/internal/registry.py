@@ -115,6 +115,10 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             "groups:write",
             "profile:read",
             "profile:write",
+            # B-208: the review queue's scopes — its reads and
+            # its decision doors (approve / reject / edit).
+            "candidates:read",
+            "candidates:decide",
         }
     ),
 }
