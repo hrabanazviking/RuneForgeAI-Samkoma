@@ -30,7 +30,7 @@ each reader meets what they need before what they merely want.
 | Order | Chapter | Slice | State |
 |---|---|---|---|
 | 7 | [Admin + operator guide](07-admin-and-operator-guide.md) | B-188 | ✅ built |
-| 8 | Deployment + release | B-199 | planned |
+| 8 | [Deployment + release](18-deployment-and-release.md) | B-199 | ✅ built |
 
 ### 3. Frontend developers (Geoffrey + Henry's surface)
 

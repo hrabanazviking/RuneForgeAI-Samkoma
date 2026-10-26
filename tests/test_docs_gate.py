@@ -582,6 +582,33 @@ def test_testing_quality_document_covers_every_suite():
     assert "17-testing-and-quality.md" in index
 
 
+def test_deployment_release_document_covers_operations():
+    """B-199: the deployment + release chapter covers native
+    install on all three OSes (with the supervision honesty
+    marker), service supervision, TLS, backups in operations,
+    upgrades and rollback, and the ZIP's anatomy with its
+    signature check."""
+    chapter = ROOT / "docs" / "18-deployment-and-release.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8")
+    lowered = text.lower()
+    for topic in (
+        "install.sh", "no docker", "0640", "systemd",
+        "run.ps1", "macos", "not run", "gpa-worker",
+        "gpa-backup.timer", "03:15", "tls 1.3", "hsts",
+        "caddy", "nginx", "raw body", "verify-then-place",
+        "upgrade.py", ".previous-", "rollback",
+        "release-manifest.json", "sha256sums.txt",
+        "sbom.spdx.json", "ed25519", "fingerprint",
+        "release_signing.py verify", ".env",
+        "freeze drill", "known limits",
+    ):
+        assert topic in lowered, f"B-199 chapter is missing its topic: {topic}"
+    assert text.count("```mermaid") >= 1
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "18-deployment-and-release.md" in index
+
+
 def test_api_frontend_guide_covers_its_roadmap_topics():
     """B-196: the API + frontend chapter covers auth flows as
     sequence diagrams, pagination, every error code in a
