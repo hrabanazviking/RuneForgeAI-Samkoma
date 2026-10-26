@@ -30,6 +30,13 @@ What this module builds, and what it deliberately does not:
   as B-207 → B-212 on this same generated catalogue — B-207
   landed the first of them (groups, members, profile) on five
   operations registered for this surface's sake.
+* **The resource shelf (B-213)** — read-only ``gpa://``
+  resources (``gpa.mcp.resources``) registered on this same
+  server at the end of the build: group data composed from
+  the same operations through the same bridge at member
+  role, plus the product's own OpenAPI document and docs
+  set. Their guard is this module's principal resolution
+  plus the read-scope law, checked per read.
 * **Authentication is B-205's slice, landed on this core.**
   stdio is the local road: a configured seat API key
   (``GPA_MCP_SEAT_API_KEY``) is re-resolved on every call, and
@@ -68,6 +75,7 @@ from gpa.mcp.auth import (
     seat_key_provider,
 )
 from gpa.mcp.bridge import InternalBridge, package_version
+from gpa.mcp.resources import register_resources
 from gpa.mcp.structured import get_logger, log_event, timed
 from gpa.mcp.tools import all_tool_specs
 
@@ -173,6 +181,19 @@ def build_server(
         A refusal raises the backend's AppError, which the tool
         wrappers render as a tool error leading with its code.
         """
+        return _resolve_principal(tool)
+
+    def _resolve_principal(tool: str | None = None) -> McpPrincipal:
+        """Resolve who is calling right now (B-205's order).
+
+        An explicit provider first (the seat-key road
+        re-resolving per call, or a test's hand), then the
+        HTTP request's SDK-verified access token, then the
+        keyless local principal. When ``tool`` is named, its
+        call-time scope check runs too; the resource guard
+        below resolves WITHOUT a tool because resources are
+        not tools — their read-scope law is their own.
+        """
         principal: McpPrincipal | None = None
         if principal_provider is not None:
             principal = principal_provider()
@@ -187,7 +208,28 @@ def build_server(
                 principal = principal_from_access_token(access_token)
         if principal is None:
             principal = LOCAL_PRINCIPAL
-        require_tool_scope(principal, tool)
+        if tool is not None:
+            require_tool_scope(principal, tool)
+        return principal
+
+    def _resource_guard() -> McpPrincipal:
+        """The B-213 resources' per-read scope check.
+
+        A resource read is a read: the resolved principal
+        must carry the ``read`` credential scope (admin
+        carries every lesser scope, as everywhere in this
+        product). The check runs inside every resource
+        function, per read — the tools' call-time law
+        restated for the shelf — and raises AppError, which
+        the resources module renders as a resource error
+        leading with its code, the one refusal language.
+        """
+        principal = _resolve_principal()
+        if "read" not in principal.scopes and "admin" not in principal.scopes:
+            raise AppError(
+                "insufficient_scope",
+                detail="Reading a resource needs the 'read' scope.",
+            )
         return principal
 
     # The two read tools are guarded by the same check as the
@@ -786,10 +828,11 @@ def build_server(
     # up, and hear how it hears from itself — travels one
     # internal operation through one bridge, under one
     # scope law checked at call time. What remains after
-    # B-212 is not more families but the roads and the
-    # proof: the HTTP transport's hardening (B-213), the
-    # conformance suite (B-214+), and the phase gate
-    # (B-220) that runs everything at once.
+    # B-212 is not more families but the shelf and the
+    # proof: the read-only resources (B-213, registered at
+    # the end of this build), subscriptions, prompts, and
+    # hardening (B-214 → B-219), and the phase gate (B-220)
+    # that runs everything at once.
     #
     # The inbox tool deserves its own note, because it is
     # the surface's most intimate read: a person's
@@ -1359,6 +1402,18 @@ def build_server(
             },
             tool="gpa_edit_candidate",
         )
+
+    # --- B-213: the read-only resource shelf -------------------
+    #
+    # Registered last, on the same server object and through
+    # the same bridge: the gpa:// resources (group calendar in
+    # JSON and iCalendar, one event, standing decisions, the
+    # queue summary, the group's memory-map, the OpenAPI
+    # document, and the docs set). Their per-read guard is the
+    # closure above — this module's own principal resolution
+    # plus the read-scope law — so a resource read is checked
+    # exactly as freshly as a tool call, by the same hand.
+    register_resources(server, bridge, _resource_guard)
 
     log_event(
         logger,

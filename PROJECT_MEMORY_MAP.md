@@ -2698,8 +2698,57 @@ parses the model so it cannot drift from the code.
   row added. Contract unchanged: **202 paths / 230
   schemas**. Full suite NOT re-run — a full Phase 19
   green is the B-220 gate's to prove. No ZIP at this
-  slice. Progress: **212/350. Next: B-213 (MCP streamable
-  HTTP transport hardening).**
+  slice. Progress: **212/350. Next: B-213 (MCP resources,
+  per the roadmap — the "streamable HTTP transport
+  hardening" label first written here was a mislabel,
+  corrected at B-213).**
+- **B-213 MCP resources** ✅ (timer crew, 2026-10-26):
+  the read-only `gpa://` shelf, in a new module
+  `src/gpa/mcp/resources.py` registered on the same
+  FastMCP server at the end of `build_server`. NO new
+  internal operations and NO new tools (the catalogue
+  stands at 42 tools / 40 operations): every group
+  resource is a presentation of an existing operation
+  through the one bridge — templates
+  `groups/{group_id}/calendar.json` (application/json)
+  and `calendar.ics` (text/calendar, rendered in the
+  module from `events.list` facts: UTC moments, DATE form
+  for all-day, cancelled as STATUS:CANCELLED, RFC 5545
+  escaping), `groups/{group_id}/events/{event_id}.json`,
+  `groups/{group_id}/decisions.json` (current_only —
+  settled truth), `groups/{group_id}/queue.json` (totals
+  by status/kind + the pending rows), and
+  `groups/{group_id}/memory-map.json` (group facts,
+  roster counts, visible counts, sibling URIs). Plus the
+  static shelf: `gpa://openapi.json` (the shipped
+  contract, verbatim) and `gpa://docs.json` +
+  `gpa://docs/{chapter}` (text/markdown) — the docs set
+  served from the tree's own `docs/` directory, the
+  chapter allow-list being the fresh directory listing
+  itself, so path tricks meet not_found. TWO LAWS ride
+  the shelf: reads happen at MEMBER role (the bright
+  line — a draft is absent from both calendar forms and
+  not_found at its own URI), and the read scope is
+  checked PER READ (server.py's principal resolution was
+  factored into `_resolve_principal`; a new
+  `_resource_guard` demands read/admin, so a draft-only
+  principal is refused insufficient_scope at the
+  resource). Tests: tests/test_mcp_resources.py **7
+  passed** (shelf shape + MIME types, calendar forms
+  agreeing with the draft absent, event bright line,
+  decisions/queue/memory-map, static shelf verbatim,
+  non-chapter names refused, read-scope guard); combined
+  MCP + parity + gates batch **103 passed** with the
+  only 2 failures being the docs gate naming the new
+  files — fixed by the atlas regen + the B-198 inventory
+  row, after which docs + comment gates **31 passed**;
+  internal batch **36 passed**. Ruff E9+F clean on every
+  touched file. Atlas regenerated (414 files), B-198
+  inventory row added. Contract unchanged: **202 paths /
+  230 schemas**. Full suite NOT re-run — a full Phase 19
+  green is the B-220 gate's to prove. No ZIP at this
+  slice. Progress: **213/350. Next: B-214 (MCP
+  subscriptions + notifications).**
 
 ## Decisions & deviations (from the roadmap defaults)
 
