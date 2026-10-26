@@ -1749,6 +1749,54 @@ parses the model so it cannot drift from the code.
   only, no src changes (Phase 18 precedent); a full
   Phase 18 green is the B-200 gate's to prove.
   Next: B-192.
+- **B-192 data-model document + ER pack** ✅:
+  `docs/11-data-model-and-er-pack.md` — every entity of
+  roadmap §4 and every table since: 69 tables in
+  `Base.metadata`, grouped into six Mermaid `erDiagram`
+  packs (identity, sources, events, planning, comms,
+  system), each with a prose walking tour naming every
+  box and arrow; the three store-wide rules (group
+  ownership via `group_id`, VARCHAR(36) UUID keys + UTC
+  storage + integer `amount_cents`/`cost_micros`, JSON
+  payloads as `*_json` TEXT); and the complete appendix
+  inventory (columns in definition order, foreign keys,
+  unique sets, named indexes) generated from the models'
+  own metadata. Sealed vs hashed vs plain is told in
+  full, at field level: field-sealed (`enc:v1:`, B-167)
+  `chunk.text`, `chunk.sender`, `provenance.quote`,
+  `event_link.quote`, `flyer.transcript`; whole-sealed
+  (B-127) `integrations.config_sealed`,
+  `outbound_webhooks.secret_sealed`, `users.totp_secret`;
+  key material `group_keys.wrapped_key` +
+  `recovery_escrow.sealed_master`; hashed-at-rest
+  Argon2id password + the seven `token_hash`/`key_hash`
+  families (shown once, prefix kept); and the honest
+  boundary that most group content rests plain, as the
+  threat model has recorded since B-139. Migration
+  chain 0001–0021 named revision by revision. The
+  model ↔ document checker its roadmap line orders
+  lives in `tests/test_docs_gate.py` (stdlib-only:
+  parses every `__tablename__` out of the model files
+  and fails, naming the table, if any is missing from
+  the chapter). CHECKER REPAIR found by the slice: the
+  B-181 Mermaid gate's naive brace counting read
+  erDiagram crow's-foot cardinality (`o{`, `}|`) as
+  unclosed block braces, so no sound ER diagram could
+  ever pass it — `scripts/check_mermaid.py` now
+  normalises the crow's-foot tokens in erDiagram blocks
+  only, proven both ways by a new gate test (sound ER
+  passes; a truly dropped entity closing brace still
+  fails by file). Mermaid gate now 37 diagrams in
+  docs/. Docs gate now 18 tests. Regression honesty:
+  the first regression batch showed 1 failure in
+  `test_internal_transport.py` (unrelated to this
+  slice's files); that file re-ran 6/6 alone and the
+  full batch (docs gate + architecture + submission +
+  threat model + internal API/audit/identity/profiles/
+  transport) re-ran 71 passed, green. Full suite NOT
+  re-run — docs/tests/checker only (Phase 18 precedent);
+  a full Phase 18 green is the B-200 gate's to prove.
+  Next: B-193.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

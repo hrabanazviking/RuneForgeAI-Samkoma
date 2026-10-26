@@ -322,6 +322,76 @@ def test_internal_api_document_covers_the_protocol():
     assert "10-internal-encrypted-api.md" in index
 
 
+def test_data_model_document_covers_every_table():
+    """B-192: the data-model chapter documents every entity —
+    the model <-> document diff its roadmap line orders. Every
+    __tablename__ parsed out of the live model files must
+    appear in the chapter, the six ER packs (identity,
+    sources, events, planning, comms, system) must each carry
+    an erDiagram, and the sealed / hashed inventories must
+    name the fields the code actually seals and hashes."""
+    import re
+
+    chapter = ROOT / "docs" / "11-data-model-and-er-pack.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8")
+    lowered = text.lower()
+    # The diff itself: model tables, parsed stdlib-only from
+    # the model files (the suite must not need the app import
+    # path to prove a documentation fact).
+    tables: set[str] = set()
+    for model_file in (ROOT / "src" / "gpa" / "models").glob("*.py"):
+        tables.update(
+            re.findall(
+                r'__tablename__\s*=\s*"([^"]+)"',
+                model_file.read_text(encoding="utf-8"),
+            )
+        )
+    assert len(tables) >= 60, "the model parse itself must find the store"
+    missing = sorted(t for t in tables if f"`{t}`" not in text)
+    assert missing == [], f"tables missing from the B-192 chapter: {missing}"
+    for topic in (
+        "erdiagram", "identity", "sources", "events", "planning",
+        "comms", "system", "sealed", "enc:v1:", "chunk.text",
+        "chunk.sender", "provenance.quote", "event_link.quote",
+        "flyer.transcript", "group_keys", "wrapped_key",
+        "config_sealed", "secret_sealed", "totp_secret",
+        "password_hash", "argon2id", "token_hash", "key_hash",
+        "alembic", "0001", "0021", "checker", "base.metadata",
+        "group_id", "varchar(36)", "cost_micros", "amount_cents",
+        "tombstones", "audit_log", "row_hash",
+    ):
+        assert topic in lowered, f"B-192 chapter is missing its topic: {topic}"
+    # Six ER packs, one erDiagram each, no fewer.
+    assert lowered.count("erdiagram") >= 6
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "11-data-model-and-er-pack.md" in index
+
+
+def test_erdiagram_crows_foot_is_not_a_broken_brace(tmp_path):
+    """B-192 checker repair: erDiagram cardinality spends
+    braces as glyphs (o{ is a 'many' foot, not a block), so a
+    sound ER diagram passes — while an entity block whose
+    closing brace is truly dropped still fails, by file."""
+    good = tmp_path / "er_good.md"
+    good.write_text(
+        "```mermaid\nerDiagram\n"
+        '  A ||--o{ B : "has many"\n'
+        "  A {\n    string id PK\n  }\n```\n",
+        encoding="utf-8",
+    )
+    assert checker.check_file(good) == []
+    bad = tmp_path / "er_bad.md"
+    bad.write_text(
+        "```mermaid\nerDiagram\n"
+        '  A ||--o{ B : "has many"\n'
+        "  A {\n    string id PK\n```\n",
+        encoding="utf-8",
+    )
+    failures = checker.check_file(bad)
+    assert failures and str(bad) in failures[0]
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"

@@ -95,10 +95,20 @@ def check_block(body: list[str]) -> str | None:
     if first not in KNOWN_DIAGRAM_TYPES:
         return f"first line does not name a Mermaid diagram type (saw {first!r})"
     # Balance check over the whole body, ignoring %% comment tails.
+    # erDiagram crow's-foot cardinality (B-192) spends braces as
+    # relationship glyphs — o{ and }| are "many" feet, not block
+    # braces — so those two-character tokens are normalised away
+    # before counting; an entity attribute block's own { } pair,
+    # which never touches a | or an o in that spelling, still
+    # counts in full, and a dropped closing brace still fails.
+    is_er = first == "erdiagram"
     stack: list[str] = []
     in_quote = False
     for raw in meaningful:
         line = raw.split("%%", 1)[0]
+        if is_er:
+            for token in ("o{", "}|", "}o", "{|", "|{", "{o"):
+                line = line.replace(token, "x")
         for ch in line:
             if ch == '"':
                 in_quote = not in_quote
