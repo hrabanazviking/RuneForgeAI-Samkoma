@@ -144,6 +144,17 @@ def _pg_reset() -> None:
         connection.execute(
             text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE")
         )
+        # A fresh SQLite file — the thing this reset promises
+        # to mirror — also has no alembic_version table, but
+        # that table is not a model table, so the TRUNCATE
+        # above never touches it. A test that stamps a
+        # revision (B-172's unknown-revision refusal plants
+        # '9999_from_the_future') would otherwise poison every
+        # later test on the shared database — and did, at the
+        # Phase 17 gate: the recovery tests scored 'refuse' on
+        # a healthy database because the stamp outlived the
+        # test that planted it. Drop it with the rest.
+        connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
 
 
 # Modules whose world is MODULE-scoped by design (a fixture
