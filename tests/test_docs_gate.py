@@ -257,6 +257,38 @@ def test_architecture_pack_covers_its_six_diagrams():
     assert "08-architecture-diagram-pack.md" in index
 
 
+def test_module_atlas_covers_every_module():
+    """B-190: the module atlas carries one chapter per module
+    in the B-161 map — each with its job, public surface,
+    tables owned, internal operations offered and consumed,
+    invariants, failure modes, and its diagram — verified
+    against the registry's own operation names and the
+    models' own table names."""
+    chapter = ROOT / "docs" / "09-module-atlas.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "identity", "groups", "sources", "extraction",
+        "events", "calendar", "planning", "nonprofit",
+        "notifications", "integrations", "memory", "truth",
+        "jobs", "audit", "crypto", "internal", "storage",
+        "platform", "privacy", "demo", "composition",
+        "tables owned", "internal operations",
+        "offered", "consumed", "invariants",
+        "failure modes", "public surface",
+        "candidates.create", "events.publish",
+        "notify.request", "notify.rsvp_promotion",
+        "jobs.enqueue", "ai.submit_job", "integrations.emit",
+        "no single `api.py`", "seat_cannot_approve",
+        "commit-before-answer",
+    ):
+        assert topic in text, f"B-190 chapter is missing its topic: {topic}"
+    # One diagram per module chapter: 22 chapters.
+    assert text.count("```mermaid") >= 22
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "09-module-atlas.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"

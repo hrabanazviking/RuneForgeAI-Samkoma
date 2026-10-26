@@ -1672,6 +1672,39 @@ parses the model so it cannot drift from the code.
   31 in all) — a full-suite
   green for Phase 18 is the B-200 gate's to prove.
   Next: B-190.
+- **B-190 module atlas** ✅:
+  `docs/09-module-atlas.md` — one chapter per module in
+  the B-161 map (22 chapters: the 19 service modules plus
+  ai, storage, internal, and composition), each carrying
+  its job, its public surface, the tables it owns, the
+  internal operations it offers and consumes, its
+  invariants, its failure modes, and a compact flowchart
+  diagram whose boxes and arrows the chapter prose names.
+  Verified against the live tree: module names and
+  service assignments are `modulemap.py`'s own, table
+  names are the models' own `__tablename__` values, and
+  operation names/owners/scopes are the registry's own
+  seven (`candidates.create`, `events.publish`,
+  `notify.request`, `notify.rsvp_promotion`,
+  `jobs.enqueue`, `ai.submit_job`, `integrations.emit`).
+  Honesty markers at the point of use: there is NO single
+  `api.py` in this build (the roadmap line's parenthetical
+  predates the layout) — each module's public surface is
+  its router family plus its services' public functions;
+  file-vs-owner splits are stated where they differ
+  (`agent_seats`/`candidates` physically in
+  `models/groups.py`, owned by identity/extraction;
+  `jobs`/`audit_log`/`tombstones`/`file_assets` in
+  `models/core.py`, owned by jobs/audit/truth/storage);
+  privacy and demo own no tables, deliberately. Mermaid
+  gate now 28 diagrams in docs/, all sound. Pinned by a
+  new docs-gate test (every module + all seven operations
+  + the atlas vocabulary); docs gate now 15 tests.
+  Regression batch (docs gate + architecture + internal
+  API + submission pack + threat model) 41 passed. Full
+  suite NOT re-run — docs/tests only, no src changes
+  (Phase 18 precedent); a full Phase 18 green is the
+  B-200 gate's to prove. Next: B-191.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
