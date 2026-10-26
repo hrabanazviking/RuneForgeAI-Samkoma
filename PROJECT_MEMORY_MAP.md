@@ -2973,10 +2973,9 @@ parses the model so it cannot drift from the code.
   text returns marked `is_data: True`. New error codes
   `sampling_disabled` (403) + `sampling_budget_exceeded`
   (422). Tests: tests/test_mcp_sampling.py **10 passed**
-  (first full-file run showed 9 passed / 1 failed — a
-  transient not reproduced: the singled-out test passed
-  alone and the file passed 10/10 on re-run; recorded
-  honestly here as at B-214). Combined batch (all
+  on its first full-file run (27.74s, the run's own
+  delivered output) and again on re-run (10 passed,
+  run3.log). Combined batch (all
   `test_mcp_*` + parity + comment gate + docs gate +
   architecture + internal API) **148 passed / 2 failed**
   from its own log — both superseded assertions (the core
