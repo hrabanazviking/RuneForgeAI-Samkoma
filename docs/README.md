@@ -1,0 +1,93 @@
+# Group Planning Assistant — Documentation
+
+*The documentation set (roadmap §6A.8, D-34). This index is slice
+B-181: the architecture every later Phase 18 slice builds inside.
+The set lives in this repo, is reviewed like code, and ships in
+every release ZIP. A first edition of the full set was authored
+with the roadmap itself (2026-10-24) and is kept beside the
+roadmap in the team's goal files; the slices of Phase 18
+(B-182 → B-200) bring each chapter into this `docs/` tree and
+keep it true as the code lands, file by file.*
+
+## Reading order — by reader
+
+Read top to bottom in your role's column; the set is ordered so
+each reader meets what they need before what they merely want.
+
+### 1. People who use the app (no technical knowledge assumed)
+
+| Order | Chapter | Slice | State |
+|---|---|---|---|
+| 1 | User guide I — start + groups | B-182 | next slice |
+| 2 | User guide II — sources | B-183 | planned |
+| 3 | User guide III — the review queue | B-184 | planned |
+| 4 | User guide IV — calendar + events | B-185 | planned |
+| 5 | User guide V — planning | B-186 | planned |
+| 6 | User guide VI — reminders, digests, memory | B-187 | planned |
+
+### 2. Group admins and whoever runs the server
+
+| Order | Chapter | Slice | State |
+|---|---|---|---|
+| 7 | Admin + operator guide | B-188 | planned |
+| 8 | Deployment + release | B-199 | planned |
+
+### 3. Frontend developers (Geoffrey + Henry's surface)
+
+| Order | Chapter | Slice | State |
+|---|---|---|---|
+| 9 | API + frontend guide | B-196 | planned |
+
+### 4. Backend developers and maintainers
+
+| Order | Chapter | Slice | State |
+|---|---|---|---|
+| 10 | Architecture diagram pack | B-189 | planned |
+| 11 | Module atlas | B-190 | planned |
+| 12 | Internal encrypted API | B-191 | planned |
+| 13 | Data model + ER pack | B-192 | planned |
+| 14 | AI pipeline documents | B-193 | planned |
+| 15 | Security + cryptography | B-194 | planned |
+| 16 | Durability + recovery | B-195 | planned |
+| 17 | Per-code-file atlas | B-197 | planned |
+| 18 | Testing + quality | B-198 | planned |
+
+## Docs-as-code rules (binding on every Phase 18 slice)
+
+1. **Same repo, same review, same ZIP.** Documentation changes
+   are commits like code changes; `scripts/make_release_zip.py`
+   ships `docs/` in the train anatomy, and no release is cut
+   from a tree whose docs gate is red.
+2. **One truth, three depths (§6A.8).** A fact lives in the
+   code's comments first (D-26), in the per-file atlas second
+   (B-197), in the guides third — each layer points up at the
+   one above it. A disagreement between layers is a bug with a
+   slice number, fixed in the release that found it.
+3. **Diagrams are Mermaid, lengthy, and checked.** Every
+   diagram carries a prose walking tour naming every box and
+   arrow (readable by a screen reader, per the alt-text law's
+   spirit). The render check below fails a release on a broken
+   diagram, by file and line.
+4. **User documents are tasks, not topics.** "Photograph a
+   flyer and get it on the calendar" beats "The Flyer
+   Subsystem". Every user chapter states the steps, what the
+   reader should see, what can go wrong, and how to undo it.
+5. **Honesty markers.** A capability that belongs to a later
+   phase says so at the point of use; a thing the system
+   deliberately does not do says so, with the reason.
+
+## The Mermaid gate (B-181 acceptance)
+
+```sh
+python scripts/check_mermaid.py            # whole shipped surface
+python scripts/check_mermaid.py docs/      # one tree
+```
+
+`test.sh` runs the checker before the suite, and
+`tests/test_docs_gate.py` pins the same law inside pytest: a
+deliberately broken diagram fails the gate **by file** — see
+that test's broken-fixture cases. The checker is stdlib-only
+(no Node, no network): it proves fence closure, a known
+diagram type on the first line, and balanced brackets/quotes —
+the breakage class that actually ships. A full JS render is
+not claimed.

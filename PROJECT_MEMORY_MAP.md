@@ -1446,6 +1446,22 @@ parses the model so it cannot drift from the code.
   app's loggers (`612ba7d`) — all recorded in TEST_REPORT's
   Phase 15 addendum.
 
+### Phase 18 — Documentation, diagrams, code atlas (B-181 → B-200): IN PROGRESS
+- **B-181 documentation architecture** ✅: `docs/` tree opened with
+  `docs/README.md` — the index ordering every chapter by reader
+  (user → admin → frontend → backend → operator), the binding
+  docs-as-code rules (same repo/review/ZIP; one truth, three
+  depths; honesty markers), and the slice/state table B-182 →
+  B-199 build inside. Mermaid gate: `scripts/check_mermaid.py`
+  (stdlib-only — fence closure, known diagram type, balanced
+  brackets/quotes) runs in `test.sh` before the suite and is
+  pinned by `tests/test_docs_gate.py` (6 tests): a deliberately
+  broken diagram fails BY FILE (unclosed bracket, unknown type,
+  unterminated fence fixtures), and every diagram already in the
+  shipped surface (docs/ + submission/ + root .md, 3 diagrams)
+  parses. Honest boundary recorded in both the checker and the
+  index: a full JS render is not claimed. Next: B-182.
+
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.
 
