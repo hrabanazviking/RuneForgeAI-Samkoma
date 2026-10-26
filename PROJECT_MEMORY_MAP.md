@@ -1501,6 +1501,30 @@ parses the model so it cannot drift from the code.
   provenance at once, drafts are never deleted (they gain
   `source_deleted_at`), restore whole inside 30 days. Pinned by
   a new docs-gate test; regression batch 14 passed. Next: B-184.
+- **B-184 user guide III — review queue** ✅:
+  `docs/03-user-guide-review-queue.md` — the trust workflow as
+  tasks: reading a candidate (draft, confidence, flags,
+  provenance, prompt name/version, machine authors), provenance
+  quotes under every field with `supported: false` shown never
+  hidden, flyer region boxes with their verdicts, the closed
+  flag vocabulary in plain words (low_confidence /
+  missing_required / unsupported / ambiguous_date /
+  unresolved_date / conflicting on BOTH sides /
+  shared_chunk_unflagged / possible_duplicate with
+  `duplicate_of`), editing (status `edited`, flags recomputed
+  server-side), approve (mint in the same transaction; refusal
+  rolls back; the group's `review_min_role` +
+  `review_approvals_required` distinct-approver policy;
+  `seat_cannot_approve` in-service) / reject, both merges
+  (candidate→candidate kept whole; candidate→event settled by
+  distinct-source support, unsupported never moves, sources
+  linked per field), `event_change` candidates
+  (`change_target_unknown`, approval applies through the
+  change door), and contradiction resolution (pick a said
+  value only; better-sourced arrivals settle their own).
+  Route names verified against the live routers (merge-event,
+  contradictions resolve). Pinned by a new docs-gate test.
+  Next: B-185.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

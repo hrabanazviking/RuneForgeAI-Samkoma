@@ -128,6 +128,27 @@ def test_user_guide_2_covers_every_way_in():
     assert "02-user-guide-sources.md" in index
 
 
+def test_user_guide_3_covers_the_trust_workflow():
+    """B-184: the review-queue chapter covers reading a
+    candidate, confidence and the flag vocabulary, provenance
+    quotes and flyer regions, editing, approve / reject /
+    merge, change candidates, and contradiction resolution."""
+    chapter = ROOT / "docs" / "03-user-guide-review-queue.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "candidate", "confidence", "provenance", "supported: false",
+        "region", "low_confidence", "ambiguous_date", "unresolved_date",
+        "conflicting", "possible_duplicate", "edited", "approve",
+        "reject", "merge", "event_change", "change_target_unknown",
+        "contradiction", "seat_cannot_approve", "review_min_role",
+        "approvals_required", "source_deleted_at",
+    ):
+        assert topic in text, f"B-184 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "03-user-guide-review-queue.md" in index
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"
