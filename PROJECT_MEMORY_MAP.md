@@ -3133,14 +3133,23 @@ parses the model so it cannot drift from the code.
   security **7 passed**, prompts **8 passed**, docs gate
   **25 passed**, comment gate **6 passed**, architecture
   **3 passed**, parity **6 passed**, core **8 passed**.
-  Combined batch (all `tests/test_mcp_*.py`) **163
-  passed** from its own log (batch.log). Atlas
-  regenerated **428 files**; docs/17 inventory rows
-  added for all six new files. Ruff E9+F clean. Contract
-  unchanged: **202 paths / 230 schemas**. Full suite NOT
-  re-run — a full Phase 19 green is the B-220 gate's to
-  prove. No ZIP at this slice. Progress: **219/350.
-  Next: B-220 (Phase gate — the parity proof).**
+  Combined batch (all `tests/test_mcp_*.py`) **117
+  passed** from its own log (batch.log, 320.18s).
+  CORRECTION (same run, on the batch's late delivery):
+  the first writing of this entry and commit 3df9236
+  stated 163 passed — that figure was derived by
+  arithmetic (154 + 9) from B-218's batch, whose file
+  set also carried parity + the gates, and was never
+  read from this run's log; batch.log itself reads 117
+  passed / 0 failed, which the sixteen files' own
+  per-file counts sum to exactly. All other B-219 facts
+  stand. Atlas regenerated **428 files**; docs/17
+  inventory rows added for all six new files. Ruff E9+F
+  clean. Contract unchanged: **202 paths / 230 schemas**.
+  Full suite NOT re-run — a full Phase 19 green is the
+  B-220 gate's to prove. No ZIP at this slice. Progress:
+  **219/350. Next: B-220 (Phase gate — the parity
+  proof).**
 
 ## Decisions & deviations (from the roadmap defaults)
 
