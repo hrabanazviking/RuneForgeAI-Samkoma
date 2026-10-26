@@ -1896,7 +1896,9 @@ parses the model so it cannot drift from the code.
   tests. Regression batch (docs gate + threat model +
   field encryption + encrypted storage + key management +
   audit chain + account security + secrets audit +
-  architecture + internal transport) 80 passed. Full suite
+  architecture + internal transport) 70 passed (corrected
+  from 80, which was recorded before the batch's own log
+  arrived; the log reads 70 passed, 1 warning). Full suite
   NOT re-run — docs/tests only, no src changes (Phase 18
   precedent); a full Phase 18 green is the B-200 gate's to
   prove. Next: B-195. Progress: **194/350**.
