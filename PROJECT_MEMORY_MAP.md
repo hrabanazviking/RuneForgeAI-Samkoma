@@ -1525,6 +1525,27 @@ parses the model so it cannot drift from the code.
   Route names verified against the live routers (merge-event,
   contradictions resolve). Pinned by a new docs-gate test.
   Next: B-185.
+- **B-185 user guide IV — calendar + events** ✅:
+  `docs/04-user-guide-calendar-and-events.md` — the three views
+  as tasks (agenda expanded to occurrences with cursor paging;
+  month as whole Monday-first weeks; tonight = 15:00 → 03:00
+  group-local, pinned locations first, flyer thumbnail +
+  description status riding along), the event page's
+  server-built public/member/organiser projections (member-only
+  fields ABSENT, not blanked) with change history and
+  needs-reannounce, discussion (edit/delete-own tombstones,
+  organiser hide audited, the same thread system as planning),
+  RSVP + the STRICT next-in-line waitlist (promotion notifies,
+  except a self-caused promotion), guest invite answers, taking
+  events away (.ics with STATUS:CANCELLED, server-built Google
+  add link, feed tokens shown once + hashed + revocable, moved
+  occurrences as feed exceptions), the print month (facts only,
+  nothing invented), conflicts (host/place/travel + resource
+  overlaps, strict overlap so back-to-back never flags), and
+  organiser edit/cancel/clone/recurrence (If-Match version law,
+  clone born a draft without RSVPs/discussion/history,
+  occurrences never rules on screen). Pinned by a new docs-gate
+  test. Next: B-186.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

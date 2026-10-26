@@ -149,6 +149,26 @@ def test_user_guide_3_covers_the_trust_workflow():
     assert "03-user-guide-review-queue.md" in index
 
 
+def test_user_guide_4_covers_calendar_and_events():
+    """B-185: the calendar chapter covers the views, agenda,
+    the tonight view, event pages, discussion, RSVP and the
+    waitlist, .ics, Google add, the calendar feed, print."""
+    chapter = ROOT / "docs" / "04-user-guide-calendar-and-events.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "agenda", "month", "tonight", "15:00", "discussion",
+        "rsvp", "waitlist", "next-in-line", ".ics",
+        "google", "calendar feed", "print", "conflicts",
+        "if-match", "cancel", "clone", "recurrence",
+    ):
+        assert topic in text, f"B-185 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "04-user-guide-calendar-and-events.md" in index
+
+
+
+
 def test_sound_diagram_passes(tmp_path):
     """The gate is not a blanket refusal: a sound diagram passes."""
     good = tmp_path / "sound.md"
