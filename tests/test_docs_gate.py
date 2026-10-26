@@ -552,6 +552,36 @@ def test_file_atlas_covers_every_code_file():
     assert "16-per-file-atlas.md" in index
 
 
+def test_testing_quality_document_covers_every_suite():
+    """B-198: the testing + quality chapter explains every
+    suite — what it guards, how to run it, how to read the
+    TEST_REPORT that ships in the ZIP, and how a new failure
+    becomes a new fixture. Every test file in the tree is
+    named in its inventory."""
+    chapter = ROOT / "docs" / "17-testing-and-quality.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8")
+    lowered = text.lower()
+    for topic in (
+        "test.sh", "mermaid gate", "one-page report",
+        "basetemp", "test_report.md", "reconciliation",
+        "superseded", "deliberately imperfect", "not run",
+        "becomes a new fixture", "reproduce it alone",
+        "never commit red", "run's own log",
+        "comment gate", "architecture", "platform audit",
+        "golden", "phase gate",
+    ):
+        assert topic in lowered, f"B-198 chapter is missing its topic: {topic}"
+    missing = sorted(
+        p.name for p in (ROOT / "tests").glob("test_*.py")
+        if f"`tests/{p.name}`" not in text
+    )
+    assert missing == [], f"test files missing from B-198: {missing}"
+    assert text.count("```mermaid") >= 1
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "17-testing-and-quality.md" in index
+
+
 def test_api_frontend_guide_covers_its_roadmap_topics():
     """B-196: the API + frontend chapter covers auth flows as
     sequence diagrams, pagination, every error code in a

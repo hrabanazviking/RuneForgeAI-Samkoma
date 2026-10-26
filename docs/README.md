@@ -50,7 +50,7 @@ each reader meets what they need before what they merely want.
 | 15 | [Security + cryptography](13-security-and-cryptography.md) | B-194 | ✅ built |
 | 16 | [Durability + recovery](14-durability-and-recovery.md) | B-195 | ✅ built |
 | 17 | [Per-code-file atlas](16-per-file-atlas.md) | B-197 | ✅ built |
-| 18 | Testing + quality | B-198 | planned |
+| 18 | [Testing + quality](17-testing-and-quality.md) | B-198 | ✅ built |
 
 ## Docs-as-code rules (binding on every Phase 18 slice)
 
