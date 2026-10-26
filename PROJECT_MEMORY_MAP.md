@@ -2224,6 +2224,67 @@ parses the model so it cannot drift from the code.
   Full suite NOT re-run — a full Phase 19 green is the
   B-220 gate's to prove. Progress: **203/350. Next: B-204
   (MCP server core).**
+- **B-204 MCP server core** ✅ (timer crew, 2026-10-26):
+  new package `src/gpa/mcp/` as its own module (D-30) on the
+  **official MCP Python SDK** (`mcp>=1.25,<2`, locked at
+  1.29.1; the SDK is a runtime dependency and the
+  `gpa-mcp` script is the serving entry). **The bridge law**:
+  `mcp/bridge.py` is the package's ONLY backend door — an
+  `InternalClient` speaking as caller **`mcp`** (a new
+  registry grant spanning the seven operations' scopes, the
+  gateway posture B-205 layers per-principal authorisation
+  over) with the B-165 audit hook installed and a distinct
+  B-164 identity (derived key id proven ≠ core's); every call
+  is one transaction on the wire door's law (commit on
+  success, roll back on refusal). An AST import scan in the
+  acceptance suite pins the package to the law: no
+  `gpa.services` / `gpa.routers` / `gpa.models` /
+  `gpa.schemas` import anywhere in it. **Transports**: one
+  `FastMCP` server object served over **stdio** and
+  **streamable HTTP** (`gpa-mcp --transport …`, loopback
+  8765 by default via `GPA_MCP_HTTP_*`); protocol-version
+  negotiation is the SDK handshake and
+  `supported_protocol_versions()` reads the SDK's own table
+  (2024-11-05 → 2025-11-25). **Core tools** (the catalogue
+  grows B-206 → B-212): `gpa_server_info`,
+  `gpa_list_internal_operations`, plus two real domain tools
+  travelling the whole road — `gpa_create_candidate_draft`
+  (→ `candidates.create`) and `gpa_publish_event`
+  (→ `events.publish`); refusals surface as MCP tool errors
+  leading with the backend problem code. **Structured
+  logging** (`mcp/structured.py`): JSON lines on **stderr**
+  only (stdout is the stdio wire), an allow-list of flat call
+  facts — a payload/secret-shaped field has no road in,
+  proven by a marker test. **Acceptance**
+  (`tests/test_mcp_core.py`, 8 passed): bridge identity +
+  grants, committed-and-audited draft (fresh-session row;
+  `module:mcp` line carries the key id, the draft title
+  appears nowhere in it), the import scan, the log-redaction
+  markers, and BOTH transports driven by the official SDK
+  client as real subprocesses — negotiate, list, call; the
+  stdio run drafts a candidate whose row is read back.
+  Sandbox fact the HTTP test records: this VM's proxy env
+  (bracketed no-proxy entries) breaks httpx's proxy parsing,
+  so the loopback wire strips `*_PROXY` on both ends.
+  Gates: comment gate gained the `mcp` floor measured at
+  landing (100/100/45, zero gaps); the regression batch
+  (architecture + comment gate + parity + internal api /
+  identity / audit + platform + quality) is **46 passed**
+  from its own log, and ruff E9+F is clean. A wider adjacent
+  batch (seat equality + internal transport / profiles) ran
+  49 tests with no failure before this run's 300 s batch
+  timeout cut it — recorded as a partial, not a green; the
+  B-220 gate's full suite is the proof that closes it.
+  Atlas + B-198 inventory extended for the new files.
+  **Honest boundary**: authentication is B-205 — this core
+  claims no auth story; stdio inherits the spawning
+  process's trust and the HTTP transport must not be exposed
+  beyond loopback/proxy until B-205 lands (stated in the
+  server module's header). Contract unchanged: **202 paths
+  / 230 schemas**. Full suite NOT re-run — a full Phase 19
+  green is the B-220 gate's to prove.
+  No ZIP at this slice. Progress: **204/350. Next: B-205
+  (MCP authentication + authorisation).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

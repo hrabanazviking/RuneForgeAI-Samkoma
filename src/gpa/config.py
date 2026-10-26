@@ -127,6 +127,15 @@ class Settings(BaseSettings):
     # Replay window for signed internal messages (B-164).
     internal_replay_window_seconds: int = 300
 
+    # MCP server (B-204, Phase 19): the streamable-HTTP
+    # transport's bind address. The default is loopback — the
+    # remote road is served behind the deployment's proxy, and
+    # B-205's authentication lands before any wider exposure.
+    # The stdio transport ignores both values (its wire is the
+    # spawning process's own pipes).
+    mcp_http_host: str = "127.0.0.1"
+    mcp_http_port: int = 8765
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

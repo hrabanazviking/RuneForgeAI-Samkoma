@@ -319,6 +319,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_migrations_phase7.py` | Phase 7 migration tests (roadmap B-003 discipline). |
 | `tests/test_migrations_phase8.py` | Phase 8 migration tests (roadmap B-003 discipline). |
 | `tests/test_migrations_phase9.py` | Phase 9 migration tests (roadmap B-003 discipline). |
+| `tests/test_mcp_core.py` | MCP server core tests (roadmap B-204, Phase 19). |
 | `tests/test_newsletter.py` | Newsletter ingest tests (roadmap B-026). |
 | `tests/test_notifications_core.py` | Notification core: the outbox (roadmap B-095) + deliverability |
 | `tests/test_openapi_snapshot.py` | Contract snapshot (B-006): the committed OPENAPI.json must equal |

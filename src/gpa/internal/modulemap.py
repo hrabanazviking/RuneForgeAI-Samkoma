@@ -201,6 +201,7 @@ def layer_of(relpath: str) -> str:
         "ai",
         "storage",
         "internal",
+        "mcp",
     ):
         return parts[2]
     return "root"

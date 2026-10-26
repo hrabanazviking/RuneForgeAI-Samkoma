@@ -91,6 +91,24 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
     # directly; this grant exists so the operation is real and
     # exercised, not decorative.
     "core": frozenset({"events:publish"}),
+    # The MCP server process (B-204): the gateway identity.
+    # Its grants span the registered operations because a
+    # gateway's job is to carry an authorised principal's call
+    # to whichever operation the tool names — the per-principal
+    # authorisation (which seat, holding which scopes) is
+    # B-205's check at call time, layered over this door, and
+    # the approval law itself still lives in the operations'
+    # owning services, unchanged for MCP callers.
+    "mcp": frozenset(
+        {
+            "candidates:write",
+            "events:publish",
+            "notify:write",
+            "jobs:write",
+            "ai:submit",
+            "integrations:write",
+        }
+    ),
 }
 
 
