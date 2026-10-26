@@ -15,9 +15,15 @@ the resumable road over the same ingest:
   restart, from a fresh client);
 * ``complete`` assembles the parts in order, verifies the
   whole-file hash, and hands the bytes to the ordinary
-  B-025 ingest — quota, sniffing, and extraction all apply
-  exactly as for a one-shot upload. A hash mismatch refuses
-  completion and leaves the session open for repair.
+  ingest — quota, sniffing, and extraction all apply exactly
+  as for a one-shot upload. The hand-off dispatches on the
+  SNIFFED kind, as the one-shot roads do: image bytes go to
+  the B-027 image ingest (a flyer can arrive resumably —
+  before the B-180 drill, completion sent every file to the
+  text/PDF ingest, which refused PNGs outright, so no flyer
+  could ever complete this road), everything else to B-025.
+  A hash mismatch refuses completion and leaves the session
+  open for repair.
 """
 
 from __future__ import annotations
@@ -36,6 +42,7 @@ from gpa.models.durability import UploadSession
 from gpa.models.groups import Group
 from gpa.models.identity import now_utc
 from gpa.services import files as file_service
+from gpa.services import images as image_service
 
 
 def part_count(row: UploadSession) -> int:
@@ -178,10 +185,26 @@ def complete(
             detail="The assembled file does not match the declared SHA-256; "
             "the session stays open so the bad part can be re-sent.",
         )
-    source = file_service.ingest_file(
-        db, settings=settings, storage=storage, actor_label=actor_label,
-        group=group, filename=row.filename, data=data,
-    )
+    # Dispatch on the sniffed kind (the B-180 drill's find):
+    # image bytes are a flyer, and the file ingest honestly
+    # refuses them — the image ingest is their one-shot road,
+    # so it is this road's completion too. The sniff refuses
+    # nothing here: a non-image simply falls through to files.
+    try:
+        image_service.sniff_image(data)
+        is_image = True
+    except AppError:
+        is_image = False
+    if is_image:
+        source = image_service.ingest_image(
+            db, settings=settings, storage=storage, actor_label=actor_label,
+            group=group, filename=row.filename, data=data,
+        )
+    else:
+        source = file_service.ingest_file(
+            db, settings=settings, storage=storage, actor_label=actor_label,
+            group=group, filename=row.filename, data=data,
+        )
     row.status = "completed"
     row.source_id = source.id
     row.completed_at = now_utc()

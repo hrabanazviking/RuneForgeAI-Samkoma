@@ -66,6 +66,10 @@ PINNED_SERVICE_EDGES = frozenset(
         ("src/gpa/services/extraction.py", "gpa.services.sources"),
         ("src/gpa/services/facebook.py", "gpa.services.ical"),
         ("src/gpa/services/flyers.py", "gpa.services.calendar_views"),
+        # B-180: the wall opens flyer transcripts through the
+        # sources module's sealing funnel (the seal lives with
+        # the data's owner, as with B-167's quote/chunk pins).
+        ("src/gpa/services/flyers.py", "gpa.services.sources"),
         ("src/gpa/services/google_inbound.py", "gpa.services.sources"),
         ("src/gpa/services/groups.py", "gpa.services.digests"),
         ("src/gpa/services/groups.py", "gpa.services.events"),

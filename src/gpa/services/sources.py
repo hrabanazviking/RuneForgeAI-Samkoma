@@ -187,6 +187,50 @@ def seal_chunk_sender(db: Session, group_id: str, sender: str | None) -> str | N
     return _seal_chunk_sender(db, group_id, sender)
 
 
+def seal_flyer_transcript(db: Session, group_id: str, text: str) -> str:
+    """Seal a flyer's transcript for rest (B-180's addition to
+    B-167's field set).
+
+    The transcript is the poster's own words — the same raw
+    material as chunk text — but until the Phase 17 gate drill
+    grepped a live database it rested in PLAINTEXT on the Flyer
+    row while its chunk twin was sealed. One content, one law:
+    it seals under its own field name (``flyer.transcript``),
+    so a seal can never be opened as the wrong field.
+    """
+    from gpa.crypto import fields
+
+    return fields.seal_text(db, group_id, "flyer.transcript", text or "")
+
+
+def open_flyer_transcript(db: Session, group_id: str, stored: str) -> str:
+    """Open a stored flyer transcript; legacy plaintext reads
+    as itself, exactly as every B-167 field does."""
+    from gpa.crypto import fields
+
+    return fields.open_text(db, group_id, "flyer.transcript", stored or "")
+
+
+def opened_flyer_transcript(db: Session, flyer) -> str:
+    """A flyer row's transcript, opened for a reader.
+
+    The one funnel for Flyer.transcript reads (wall, detail,
+    flyer views): resolves the flyer's group through its
+    source and installs the opened value with
+    set_committed_value, the list_chunks discipline — no later
+    flush can write plaintext back over the seal.
+    """
+    from sqlalchemy.orm import attributes
+
+    group_id = getattr(flyer, "group_id", "") or ""
+    if not group_id and flyer.source_id:
+        source = db.get(Source, flyer.source_id)
+        group_id = source.group_id if source is not None else ""
+    opened = open_flyer_transcript(db, group_id, flyer.transcript)
+    attributes.set_committed_value(flyer, "transcript", opened)
+    return opened
+
+
 def list_chunks(db: Session, source: Source) -> list[SourceChunk]:
     """A source's chunks in their one true order: by position.
 

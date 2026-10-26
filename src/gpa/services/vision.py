@@ -281,7 +281,11 @@ def _read_one_flyer(
     # description AND no description exists yet — a person's own
     # words (status already complete) are never overwritten by a
     # machine draft.
-    flyer.transcript = reading.transcript
+    # Sealed at rest like its chunk twin below (B-167's field
+    # set, extended by the B-180 drill — see sources.seal_flyer_transcript).
+    flyer.transcript = source_service.seal_flyer_transcript(
+        db, source.group_id, reading.transcript
+    )
     asset = db.get(FileAsset, flyer.file_asset_id) if flyer.file_asset_id else None
     if flyer.alt_text_status != "complete" and is_genuine_alt(
         reading.alt_text, filename=asset.filename if asset else ""

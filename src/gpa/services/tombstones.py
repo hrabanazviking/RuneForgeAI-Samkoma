@@ -188,6 +188,11 @@ def snapshot_source(db: Session, source: Source) -> str:
                     "region_json": flyer.region_json,
                     "thumbnail_key": flyer.thumbnail_key,
                     "width": flyer.width, "height": flyer.height,
+                    # The transcript snapshots in its STORED
+                    # (sealed, B-180) form and restores verbatim
+                    # below — same group, same field, so the seal
+                    # stays valid and the stone never holds
+                    # plaintext the live row would not.
                     "transcript": flyer.transcript,
                     "alt_text": flyer.alt_text,
                     "alt_text_status": flyer.alt_text_status,

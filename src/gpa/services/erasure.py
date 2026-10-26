@@ -170,6 +170,14 @@ def _open_export_rows(db: Session, group_id: str, payload: dict) -> dict:
         row["quote"] = fields.open_text(
             db, group_id, "event_link.quote", row.get("quote", "")
         )
+    # Flyer transcripts joined the sealed set at B-180 (the
+    # gate drill found them resting in plaintext); the archive
+    # opens them like every other sealed field above.
+    for row in payload.get("flyers", []):
+        if row.get("transcript"):
+            row["transcript"] = fields.open_text(
+                db, group_id, "flyer.transcript", row["transcript"]
+            )
     return payload
 
 

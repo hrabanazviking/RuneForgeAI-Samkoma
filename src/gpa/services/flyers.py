@@ -33,6 +33,7 @@ from gpa.schemas.events import iso_utc
 from gpa.schemas.flyers import FlyerWallEntry, PrintEventRow, WallEventSummary
 from gpa.services import audit
 from gpa.services import calendar_views
+from gpa.services import sources as source_service
 from gpa.services.vision import is_genuine_alt
 
 
@@ -162,7 +163,7 @@ def flyer_wall(
             height=flyer.height,
             alt_text=flyer.alt_text,
             alt_text_status=flyer.alt_text_status,
-            transcript=flyer.transcript,
+            transcript=source_service.opened_flyer_transcript(db, flyer),
             generated=flyer.generated,
             review_status=review_status,
             event=(
