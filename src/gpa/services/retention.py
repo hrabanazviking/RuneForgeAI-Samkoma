@@ -31,7 +31,7 @@ from sqlalchemy.orm import Session
 from gpa.models.identity import now_utc
 from gpa.models.core import FileAsset, Job
 from gpa.models.groups import Candidate, Group
-from gpa.models.sources import Flyer, Source, SourceChunk
+from gpa.models.sources import Flyer, Source
 from gpa.internal.client import call_internal
 from gpa.services import audit
 from gpa.services import jobs as job_service
@@ -54,7 +54,6 @@ def next_run_at(group: Group, *, after: datetime | None = None) -> datetime:
 
 
 def _job_group_id(job: Job) -> str | None:
-    import json
 
     try:
         return job_service.payload_of(job).get("group_id")

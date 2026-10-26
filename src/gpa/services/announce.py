@@ -16,7 +16,7 @@ notification outbox to exactly the event's RSVP'd people.
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session

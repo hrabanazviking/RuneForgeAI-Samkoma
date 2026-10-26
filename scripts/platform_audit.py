@@ -144,7 +144,6 @@ def audit_tree(root: Path) -> list[str]:
                         f"{rel}:{node.lineno}: {name}() without encoding="
                     )
                 for hit in _string_hits(node):
-                    needle = hit.split(":")[0].strip()
                     pin = _pin_needle(text, node, hit, rel)
                     if pin and pin in PINNED:
                         seen_pins.add(pin)

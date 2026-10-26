@@ -43,8 +43,8 @@ from gpa.models.events import (
     Recurrence,
     Rsvp,
     Thread,
-    etag_of,
 )
+from gpa.models.events import etag_of  # noqa: F401 — re-export: routers call event_service.etag_of (B-161)
 from gpa.models.groups import Candidate, Group, role_at_least
 from gpa.models.sources import Provenance, SourceChunk
 from gpa.services import audit

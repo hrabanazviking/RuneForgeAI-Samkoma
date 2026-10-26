@@ -37,7 +37,7 @@ from sqlalchemy.orm import Session
 from gpa.config import Settings, get_settings
 from gpa.errors import AppError
 from gpa.internal import registry
-from gpa.internal.envelope import InternalRequest, utc_now_iso
+from gpa.internal.envelope import InternalRequest, InternalResult, utc_now_iso
 
 
 @dataclass
@@ -148,7 +148,6 @@ class InternalClient:
         per-call and owned by the server, so one call is one
         transaction — commit on success, roll back on refusal
         or error."""
-        from gpa.internal.envelope import InternalResult
 
         try:
             data = self._dispatch(db, envelope)

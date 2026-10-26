@@ -282,7 +282,7 @@ def _one_run(base: Path, index: int, fault: str, template: Path) -> list[str]:
                 raise OSError(28, "No space left on device")
 
             try:
-                source = seed_source(session, group.id)
+                seed_source(session, group.id)
                 _full_disk_write(b"the file that does not fit")
                 session.commit()  # never reached — the write refuses first
             except OSError:

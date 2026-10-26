@@ -27,6 +27,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Install the locked environment
         run: uv sync --extra dev
+      - name: Quality gate (ruff + mypy strict ratchet)
+        run: uv run python scripts/quality_gate.py --mypy
       - name: Run the full suite
         # --basetemp lives under the workspace: some runners'
         # temp filesystems are small, and pytest's default

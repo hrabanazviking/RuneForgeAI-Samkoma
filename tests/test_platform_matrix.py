@@ -75,7 +75,11 @@ def test_utf8_bom_and_crlf_round_trip(tmp_path):
     path = tmp_path / "note.txt"
     path.write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
     read_back = path.read_text(encoding="utf-8-sig")
-    assert read_back == text
+    # Text-mode reads apply universal-newline translation on
+    # EVERY OS (a Python law, not an OS one): CRLF arrives as
+    # \n. The bytes on disk are untouched — pinned below.
+    assert read_back == text.replace("\r\n", "\n")
+    assert path.read_bytes() == b"\xef\xbb\xbf" + text.encode("utf-8")
     # And the plain utf-8 road never guesses a locale encoding:
     plain = path.read_bytes().decode("utf-8")
     assert "Fête" in plain and "naïve" in plain

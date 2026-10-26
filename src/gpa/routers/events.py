@@ -346,7 +346,7 @@ def generate_image(
     photo. An event with a picture already is a 409."""
     from gpa.services import calendar_views
 
-    flyer = event_service.generate_event_image(
+    event_service.generate_event_image(
         db, storage=request.app.state.storage,
         actor_label=principal.label, group=context.group,
         event_id=event_id, description=body.description,

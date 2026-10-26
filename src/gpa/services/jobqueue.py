@@ -52,7 +52,6 @@ The honest edges, stated where they live:
 """
 
 import asyncio
-import json
 from datetime import timezone
 from typing import Protocol
 
@@ -286,7 +285,7 @@ async def arq_startup(ctx: dict) -> None:
     from gpa.services import transcribe as _transcribe  # noqa: F401
     from gpa.services import vision as _vision  # noqa: F401
     from gpa.config import get_settings
-    from gpa.storage import LocalStorage, set_storage
+    from gpa.storage import set_storage
 
     settings = ctx.get("settings") or get_settings()
     ctx["settings"] = settings

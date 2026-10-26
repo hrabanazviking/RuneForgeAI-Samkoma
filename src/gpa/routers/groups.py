@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from gpa.db import get_db
-from gpa.deps import GroupContext, Principal, get_group_context, get_principal, require_group_role, require_scope
+from gpa.deps import GroupContext, Principal, get_group_context, require_group_role, require_scope
 from gpa.errors import AppError
 from gpa.schemas.core import AuditEntryResponse
 from gpa.schemas.groups import (

@@ -14,7 +14,6 @@ own internal kinds; they carry no group data and stay readable
 by any signed-in caller, as B-008 built them.
 """
 
-import json
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session

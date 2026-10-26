@@ -34,7 +34,7 @@ already gone and the snapshot was the last copy.
 """
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 

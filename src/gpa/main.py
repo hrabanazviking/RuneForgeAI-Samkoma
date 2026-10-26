@@ -48,7 +48,6 @@ from gpa.routers import (
     uploads,
     users,
 )
-from gpa.storage.local import LocalStorage
 
 # Path segments after which the NEXT segment is a credential
 # (B-145): calendar feeds, guest invites, the email-in door,

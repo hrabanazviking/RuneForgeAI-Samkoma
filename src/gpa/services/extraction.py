@@ -344,7 +344,6 @@ def handle_extract(db: Session, payload: dict) -> None:
             requested_by=requested_by, job_id=job_id,
         )
     except BudgetPaused:
-        from gpa.config import get_settings
 
         call_internal(
             db, caller="extraction", operation="ai.submit_job",

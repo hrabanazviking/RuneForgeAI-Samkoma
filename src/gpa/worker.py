@@ -27,7 +27,7 @@ from gpa.services import retention as _retention  # noqa: F401 — registers the
 from gpa.services import keymgmt as _keymgmt  # noqa: F401 — registers the crypto.rotate_master handler on import (Phase 17)
 from gpa.services import repair as _repair  # noqa: F401 — registers the data_repair handler on import (B-173)
 from gpa.services import resilience as _resilience  # noqa: F401 — B-173 breakers start closed in a fresh process
-from gpa.storage import LocalStorage, set_storage
+from gpa.storage import set_storage
 
 
 def main() -> None:

@@ -89,6 +89,17 @@ from gpa.models.planning import (
 from gpa.models.sources import Flyer, InboundAddress, Provenance, Source, SourceChunk
 
 __all__ = [
+    "Announcement",
+    "AttendanceMark",
+    "CandidateApproval",
+    "GroupKey",
+    "PruneRun",
+    "RecoveryEscrow",
+    "Resource",
+    "ResourceBooking",
+    "SubGroup",
+    "SubGroupMembership",
+    "Summary",
     "AiUsage",
     "AnnouncementDraft",
     "ApiKey",
