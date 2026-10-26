@@ -2932,6 +2932,62 @@ parses the model so it cannot drift from the code.
   full Phase 19 green is the B-220 gate's to prove. No
   ZIP at this slice. Progress: **216/350. Next: B-217
   (MCP sampling policy).**
+- **B-217 MCP sampling policy** ✅ (timer crew, 2026-10-26):
+  server-initiated sampling is **OFF by default**, in a new
+  module `src/gpa/mcp/sampling.py` (public symbols
+  `DEFAULT_OFF_REASON`, `SAMPLING_OPERATION`,
+  `sampling_policy`, `client_supports_sampling`,
+  `require_sampling_enabled`, `effective_max_tokens`,
+  `authorise_sampling_call`) plus one new internal
+  operation, one new tool, and three settings — the
+  catalogue stands at **44 tools / 42 operations**. The
+  settings: `GPA_MCP_SAMPLING_ENABLED` (default False —
+  sampling spends the CLIENT operator's model budget on
+  server-chosen prompts through a model this deployment
+  does not control, so enabling it is an operator's
+  deliberate act; the reason is also written in Doc 13's
+  new sampling section and in docs/15's error table),
+  `GPA_MCP_SAMPLING_MAX_TOKENS` (512, a caller's larger
+  request is CLAMPED to it, not refused), and
+  `GPA_MCP_SAMPLING_MAX_CALLS_PER_DAY` (20). The tool
+  `gpa_request_sampling` (publish scope; new internal
+  scope `sampling:request` maps only from publish/admin,
+  B-210's commissioning reasoning) authorises BEFORE the
+  ask through `sampling.sample`: the operation checks
+  B-047's ledger both ways — a group whose daily AI
+  budget is spent meets `sampling_budget_exceeded`, as
+  does a group that has used its day's sampling calls
+  (counted on the ledger's `mcp_sampling` rows through
+  usage.count_operation_today) — and writes the call's
+  ledger row (honestly zero server-side cost: the
+  client's model bills the client) and hash-chained audit
+  row (actor, prompt LENGTH, token ceiling — never words)
+  in its transaction, so every authorised attempt is on
+  the record even if the client's model then fails. Only
+  then does the tool ask, via the session's
+  `create_message`, one user message at the authorised
+  ceiling; a client without the sampling capability is
+  reported as data (`sampled: False`,
+  `client_sampling_unsupported`) with NO model substituted
+  — sampling has no degradation road, by design. Sampled
+  text returns marked `is_data: True`. New error codes
+  `sampling_disabled` (403) + `sampling_budget_exceeded`
+  (422). Tests: tests/test_mcp_sampling.py **10 passed**
+  (first full-file run showed 9 passed / 1 failed — a
+  transient not reproduced: the singled-out test passed
+  alone and the file passed 10/10 on re-run; recorded
+  honestly here as at B-214). Combined batch (all
+  `test_mcp_*` + parity + comment gate + docs gate +
+  architecture + internal API) **148 passed / 2 failed**
+  from its own log — both superseded assertions (the core
+  operations set, the docs/15 error table missing the new
+  codes), fixed in place; the affected files re-ran
+  **39 passed**. Atlas regenerated 422 files; docs/17
+  inventory row added. Ruff E9+F clean. Contract
+  unchanged: **202 paths / 230 schemas**. Full suite NOT
+  re-run — a full Phase 19 green is the B-220 gate's to
+  prove. No ZIP at this slice. Progress: **217/350.
+  Next: B-218 (MCP security hardening).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

@@ -257,6 +257,8 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_preview_digest",
         # B-216: the elicitation bridge's one tool.
         "gpa_ask_for_missing_fact",
+        # B-217: the sampling policy's one tool.
+        "gpa_request_sampling",
     }
 
 

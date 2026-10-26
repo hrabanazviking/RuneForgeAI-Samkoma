@@ -57,6 +57,9 @@ from gpa.services import jobs as job_service
 from gpa.services import notifications as notify_service
 from gpa.services import outbound as outbound_service
 from gpa.services import extraction as extraction_service
+from gpa.services import audit as audit_service
+from gpa.services import usage as usage_service
+from gpa.ai.client import ModelResult
 from gpa.services import transcribe as transcribe_service
 from gpa.services import vision as vision_service
 
@@ -1311,6 +1314,124 @@ def _elicitation_ask(db: Session, payload: dict, ctx: CallContext) -> dict:
     return result
 
 
+# --- sampling authorisation + record (B-217) --------------------------------------
+#
+# The backend half of the MCP sampling policy. Sampling
+# itself happens on the CONNECTED CLIENT's model — no
+# handler in this process can perform it — so this
+# operation is the half that belongs here, run BEFORE the
+# server asks the client, in the ask's own transaction:
+#
+# * the BUDGET gates, both read from B-047's ledger (the
+#   AiUsage table): a group whose daily AI budget is already
+#   spent (usage.budget_state says paused) may not commission
+#   more model work through anyone's model; and a group may
+#   make at most ``max_calls_per_day`` sampling calls per UTC
+#   day, counted on the ledger's own sampling rows.
+# * the RECORD of the call: one AiUsage row (operation
+#   ``mcp_sampling`` — the client's model bills the client,
+#   so the server-side cost and token counts are honestly
+#   zero; the row exists so the day cap above can be counted
+#   and the call is visible in the group's spend history)
+#   and one hash-chained audit row (action ``mcp.sampling``)
+#   naming the actor, the prompt's LENGTH, and the token
+#   ceiling — never the prompt's words, exactly as B-204's
+#   logging law keeps payloads out of every record.
+#
+# Because the record is written before the ask, a sampling
+# attempt is on the group's record even when the client's
+# model then refuses or the transport fails — "audit-logged
+# per call" means per call ATTEMPTED under the policy, and a
+# failed attempt that left no trace would be the one worth
+# hiding. The operation's answer states today's sampling
+# count and the group's budget state, so the tool can tell
+# the agent exactly where the group stands.
+
+
+def _sampling_sample(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Authorise and record one MCP sampling call (B-217).
+
+    Budget gates first (a refused call writes nothing — the
+    record is of authorised calls, and a refusal's own trace
+    is the B-165 dispatch audit every internal call leaves),
+    then the ledger row and the audit row land together in
+    this call's transaction, before the client is asked.
+    """
+    _need(payload, "group_id", "actor", "prompt_chars", "max_tokens")
+    group = _group(db, payload["group_id"])
+    # The day cap arrives in the payload from the MCP
+    # policy module (the settings live in that process);
+    # the default matches the setting's own default, so a
+    # caller that omits it still meets a cap, never none.
+    max_calls = int(payload.get("max_calls_per_day", 20))
+    # Gate one: the group's daily AI budget, B-047's own
+    # state — spent is spent, on whichever model the work
+    # would run, and sampling is model work.
+    state = usage_service.budget_state(db, group)
+    if state["paused"]:
+        raise AppError(
+            "sampling_budget_exceeded",
+            detail=(
+                "This group has spent its daily AI budget, so no "
+                "further model work — including sampling — may be "
+                "commissioned today."
+            ),
+        )
+    # Gate two: today's sampling calls, counted on the
+    # ledger's sampling rows through the usage module's own
+    # counter — one table, one definition of "today".
+    todays = usage_service.count_operation_today(db, group.id, "mcp_sampling")
+    if todays >= max_calls:
+        raise AppError(
+            "sampling_budget_exceeded",
+            detail=(
+                f"This group has made its {max_calls} sampling "
+                "calls for today; the cap resets at UTC midnight."
+            ),
+        )
+    # The record: the ledger row first (the count above will
+    # include this call for the next caller), then the audit
+    # row — both inside this transaction, neither committing
+    # here; the bridge owns the commit, as at every door.
+    usage_service.record_usage(
+        db,
+        result=ModelResult(
+            text="",
+            model_id="client-sampled",
+            tier="spark",
+            input_tokens=0,
+            output_tokens=0,
+            cost_micros=0,
+        ),
+        group_id=group.id,
+        operation="mcp_sampling",
+    )
+    audit_service.record(
+        db,
+        actor=str(payload["actor"]),
+        action="mcp.sampling",
+        group_id=group.id,
+        entity_type="group",
+        entity_id=group.id,
+        detail={
+            "prompt_chars": int(payload["prompt_chars"]),
+            "max_tokens": int(payload["max_tokens"]),
+            "calls_today": todays + 1,
+        },
+    )
+    # The answer: what was recorded and where the group
+    # stands — counts and state, no prompt words, as ever.
+    return {
+        "group_id": group.id,
+        "actor": str(payload["actor"]),
+        "calls_today": todays + 1,
+        "max_calls_per_day": max_calls,
+        "budget_paused": False,
+        "spent_today_micros": state["spent_today_micros"],
+        "recorded": True,
+    }
+
+
 # --- notifications / digests / announcements family (B-212) -------------------------
 #
 # The sixth domain family: how the group hears from itself.
@@ -1834,6 +1955,15 @@ def register_all() -> None:
             "File one agent question as an open question and route it to the organiser inbox (never an approval).",
         ),
         _elicitation_ask,
+    )
+    registry.register(
+        Operation(
+            "sampling.sample",
+            "ai",
+            "sampling:request",
+            "Authorise and record one MCP sampling call against the group's AI budget ledger and audit chain (B-217).",
+        ),
+        _sampling_sample,
     )
     registry.register(
         Operation(

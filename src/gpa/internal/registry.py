@@ -142,6 +142,11 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             "announcements:write",
             "notifications:read",
             "notifications:write",
+            # B-217: the sampling authorisation scope — the
+            # gateway carries the policy/record call for an
+            # authorised (publish-grade) principal, under the
+            # same per-principal check as every scope above.
+            "sampling:request",
         }
     ),
 }

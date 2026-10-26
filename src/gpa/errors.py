@@ -55,6 +55,11 @@ ERROR_CODES: dict[str, tuple[int, str]] = {
     "internal_bad_signature": (401, "That internal message's signature did not verify"),
     "internal_replayed": (401, "That internal message was already seen"),
     "internal_bad_key": (500, "The internal key configuration is invalid"),
+    # MCP sampling policy (Phase 19, B-217): sampling is off by
+    # default, and a group at its daily AI budget cap may not
+    # commission more model work through the client's model.
+    "sampling_disabled": (403, "Server-initiated sampling is switched off"),
+    "sampling_budget_exceeded": (422, "That would exceed the sampling budget"),
     # Advanced account security (Phase 17, B-174).
     "account_locked": (423, "This account is temporarily locked"),
     "mfa_code_invalid": (401, "That authentication code did not match"),

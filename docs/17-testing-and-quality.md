@@ -329,6 +329,7 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_mcp_subscriptions.py` | MCP subscriptions + notifications tests (roadmap B-214, Phase 19). |
 | `tests/test_mcp_prompts.py` | MCP prompts tests (roadmap B-215, Phase 19). |
 | `tests/test_mcp_elicitation.py` | MCP elicitation bridge tests (roadmap B-216, Phase 19). |
+| `tests/test_mcp_sampling.py` | MCP sampling policy tests (roadmap B-217, Phase 19). |
 | `tests/test_mcp_planning.py` | MCP planning (tasks / decisions / questions) tool tests (roadmap B-211, Phase 19). |
 | `tests/test_mcp_registry.py` | MCP tool registry tests (roadmap B-206, Phase 19). |
 | `tests/test_mcp_sources.py` | MCP sources / extraction-request tool tests (roadmap B-210, Phase 19). |

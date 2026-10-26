@@ -56,6 +56,17 @@ What this module builds, and what it deliberately does not:
   ``elicitation.ask`` operation. An elicited or filed
   answer can inform a draft; it can never be an approval —
   every result carries ``approval: False``.
+* **Sampling policy (B-217)** — the one tool that asks the
+  client's MODEL to work (``gpa_request_sampling``, policy
+  in ``gpa.mcp.sampling``): server-initiated sampling is
+  OFF by default (``GPA_MCP_SAMPLING_ENABLED``) because it
+  spends the client operator's model budget on server-
+  chosen prompts through a model this deployment does not
+  control; where an operator enables it, the tool is
+  publish-scoped, token- and day-capped on B-047's ledger,
+  and authorised + audit-logged through the
+  ``sampling.sample`` operation BEFORE the client is
+  asked. Sampled text returns marked as data.
 * **Subscriptions + notifications (B-214)** — the shelf's
   watch, in ``gpa.mcp.subscriptions``: protocol handlers
   for ``resources/subscribe`` / ``resources/unsubscribe``
@@ -113,6 +124,11 @@ from gpa.mcp.elicitation import (
     elicitation_message,
 )
 from gpa.mcp.prompts import register_prompts
+from gpa.mcp.sampling import (
+    authorise_sampling_call,
+    client_supports_sampling,
+    sampling_policy,
+)
 from gpa.mcp.resources import register_resources
 from gpa.mcp.structured import get_logger, log_event, timed
 from gpa.mcp.subscriptions import SubscriptionStore, dispatch_frame
@@ -953,6 +969,148 @@ def build_server(
                 )
                 done(result="ok")
                 return {"elicited": False, "note": NOT_AN_APPROVAL, **data}
+            except AppError as exc:
+                done(result="error", error_code=exc.code)
+                raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
+
+    # --- B-217: the sampling policy ----------------------------------------------
+    #
+    # The one tool that asks the CLIENT's model to work.
+    # Its shape is the slice's law in four steps, in order:
+    #
+    # 1. The call-time scope check (publish) — sampling is
+    #    commissioned model work, publish-grade like an
+    #    extraction request (B-210), never a draft act.
+    # 2. Authorisation + record, through the bridge, BEFORE
+    #    any client is asked: the policy module's doors
+    #    (enabled flag, prompt shape, token cap) and then
+    #    the sampling.sample operation's budget gates and
+    #    its ledger + audit rows. A sampling_disabled or
+    #    budget refusal therefore reaches the agent BEFORE
+    #    the client's model spends anything, and every
+    #    authorised attempt is already on the record.
+    # 3. The capability check: a client that never
+    #    advertised sampling cannot be asked. That outcome
+    #    is reported as DATA (sampled: False) — the attempt
+    #    was authorised and recorded; the client simply has
+    #    no model door to knock on, and there is no fallback
+    #    (no other model is substituted, ever).
+    # 4. The ask itself, through the session's
+    #    create_message: one user message carrying the
+    #    prompt, the authorised token ceiling, and nothing
+    #    else — no tools, no context inclusion, the plainest
+    #    sampling request the protocol carries. The returned
+    #    text is marked is_data: True in the result: model
+    #    output is material for the agent, never an
+    #    instruction to this server.
+    #
+    # The tool is async because sampling, like elicitation,
+    # is a server -> client request inside the call.
+
+    @server.tool(description=specs["gpa_request_sampling"].description)
+    async def gpa_request_sampling(
+        group_id: str,
+        prompt: str,
+        actor: str,
+        max_tokens: int | None = None,
+        ctx: Context | None = None,
+    ) -> dict[str, Any]:
+        """Request one sampling generation from the client's model (B-217).
+
+        Off by default; where the operator enabled it, the
+        call is authorised, budget-checked, and recorded
+        before the client is asked, and the answer returns
+        as data — never as instructions to this server.
+        """
+        tool = "gpa_request_sampling"
+        with timed(
+            logger, "mcp.tool", tool=tool, operation="sampling.sample",
+            caller=bridge.caller,
+        ) as done:
+            try:
+                # Step 1: the call-time scope check.
+                _principal(tool)
+                # Step 2: authorise + record before the ask.
+                # AppError refusals (disabled, budget, unknown
+                # group, blank prompt) propagate to the outer
+                # handler below and become tool errors leading
+                # with their code, before any model spend.
+                authorised = authorise_sampling_call(
+                    bridge,
+                    settings=settings,
+                    group_id=group_id,
+                    actor=actor,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                )
+                # Step 3: the capability check, read from
+                # this call's handshake where one is in reach.
+                client_params = None
+                session = None
+                if ctx is not None:
+                    try:
+                        client_params = ctx.request_context.client_params
+                        session = ctx.request_context.session
+                    except Exception:  # noqa: BLE001 — no handshake in reach
+                        client_params = None
+                        session = None
+                if session is None or not client_supports_sampling(client_params):
+                    done(result="ok")
+                    return {
+                        "sampled": False,
+                        "reason": "client_sampling_unsupported",
+                        "group_id": group_id,
+                        "recorded": True,
+                        "policy": sampling_policy(settings),
+                        **{
+                            key: authorised[key]
+                            for key in ("calls_today", "max_calls_per_day")
+                        },
+                    }
+                # Step 4: the ask — the protocol's own shapes,
+                # one user message, the authorised ceiling.
+                from mcp.types import SamplingMessage, TextContent
+
+                try:
+                    sampled = await session.create_message(
+                        messages=[
+                            SamplingMessage(
+                                role="user",
+                                content=TextContent(type="text", text=prompt),
+                            )
+                        ],
+                        max_tokens=authorised["max_tokens"],
+                    )
+                except Exception:  # noqa: BLE001 — a failed ask is reported, not hidden
+                    done(result="ok")
+                    return {
+                        "sampled": False,
+                        "reason": "client_sampling_failed",
+                        "group_id": group_id,
+                        "recorded": True,
+                        "policy": sampling_policy(settings),
+                    }
+                # The answer's own words, extracted plainly:
+                # a text content block gives its text; any
+                # other shape is stringified rather than
+                # dropped — the agent asked for generation
+                # and receives what the model made, as data.
+                content = getattr(sampled, "content", None)
+                text = getattr(content, "text", None)
+                if text is None:
+                    text = "" if content is None else str(content)
+                done(result="ok")
+                return {
+                    "sampled": True,
+                    "group_id": group_id,
+                    "text": text,
+                    "model": getattr(sampled, "model", ""),
+                    "stop_reason": getattr(sampled, "stopReason", None),
+                    "max_tokens": authorised["max_tokens"],
+                    "calls_today": authorised["calls_today"],
+                    "is_data": True,
+                    "recorded": True,
+                }
             except AppError as exc:
                 done(result="error", error_code=exc.code)
                 raise RuntimeError(f"{exc.code}: {exc.detail}") from exc

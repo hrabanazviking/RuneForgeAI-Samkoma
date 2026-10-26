@@ -103,6 +103,8 @@ CORE_TOOLS = {
     # B-216: the elicitation bridge (one tool, async — it can
     # ask the client back mid-call).
     "gpa_ask_for_missing_fact",
+    # B-217: the sampling policy's one tool.
+    "gpa_request_sampling",
 }
 
 
@@ -235,6 +237,10 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         # B-216: the elicitation bridge's degradation operation
         # (rides planning:write, already granted above).
         "elicitation.ask",
+        # B-217: the sampling authorisation + record operation
+        # (its sampling:request scope is granted in the
+        # registry's mcp caller table, beside the families').
+        "sampling.sample",
     }
 
 
@@ -292,7 +298,7 @@ def test_server_builds_with_the_core_tools(app, settings):
     info = bridge.info()
     # B-207: 12; B-208: 17; B-209: 23; B-210: 28; B-211: 34;
     # B-212: 40.
-    assert info["caller"] == "mcp" and info["operations_count"] == 41
+    assert info["caller"] == "mcp" and info["operations_count"] == 42
 
 
 # --- structured logging: no payloads, ever ---------------------------------

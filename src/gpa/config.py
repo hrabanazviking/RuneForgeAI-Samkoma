@@ -151,6 +151,25 @@ class Settings(BaseSettings):
     mcp_oauth_issuer_url: str = ""
     mcp_oauth_secret: str = ""
 
+    # MCP sampling policy (B-217, Phase 19). Server-initiated
+    # sampling — this server asking the CONNECTED CLIENT's model
+    # to generate text — is OFF by default, and this flag is the
+    # only way on: sampling spends the client operator's model
+    # budget on prompts this server chose, through a model this
+    # deployment does not control, so enabling it is an
+    # operator's deliberate act, never a default (the full
+    # reason is written in Doc 13). Where it IS enabled, two
+    # caps ride with it: the largest generation one call may
+    # request (tokens), and the most sampling calls one group
+    # may make per UTC day — the day cap is counted on B-047's
+    # AI usage ledger, and a group already at its daily AI
+    # budget cap may not sample at all (see gpa.mcp.sampling
+    # and the sampling.sample operation). Both caps are
+    # ceilings an operator may lower, never floors.
+    mcp_sampling_enabled: bool = False
+    mcp_sampling_max_tokens: int = 512
+    mcp_sampling_max_calls_per_day: int = 20
+
     # Link ingest (B-029): how long a page fetch may take, and the
     # largest page body the archive will keep. The SSRF guards
     # themselves live in services/linkfetch.py and are not knobs —

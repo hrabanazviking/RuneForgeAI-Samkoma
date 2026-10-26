@@ -44,17 +44,18 @@ from gpa.models.core import Job
 
 
 def test_every_operation_has_exactly_one_generated_tool():
-    """Generation is total: 41 operations, 41 operation tools,
+    """Generation is total: 42 operations, 42 operation tools,
     plus the 2 declared meta tools — and the checker is quiet.
     (B-206 landed at 7 operations; the six families grew the
     registry slice by slice — 12, 17, 23, 28, 34, and B-212's
-    family 40 — B-216's elicitation bridge added operation 41,
-    and generation stayed total over each growth.)"""
+    family 40 — B-216's elicitation bridge added operation 41
+    and B-217's sampling policy operation 42, and generation
+    stayed total over each growth.)"""
     specs = all_tool_specs()
     operation_tools = [s for s in specs if s.kind == "operation"]
     meta_tools = [s for s in specs if s.kind == "meta"]
     assert {s.operation for s in operation_tools} == set(registry.OPERATIONS)
-    assert len(operation_tools) == len(registry.OPERATIONS) == 41
+    assert len(operation_tools) == len(registry.OPERATIONS) == 42
     assert {s.name for s in meta_tools} == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -133,7 +134,7 @@ def test_manifest_entries_and_digest_detect_a_swapped_description():
     description (tool poisoning) breaks both its own hash and
     the whole-list digest a verifier checks."""
     entries = tool_manifest()
-    assert len(entries) == 43  # 41 operation tools + 2 meta (B-216)
+    assert len(entries) == 44  # 42 operation tools + 2 meta (B-217)
     for entry in entries:
         assert entry["description_sha256"] == description_sha256(entry["description"])
     digest = manifest_digest(entries)
@@ -192,7 +193,7 @@ def test_operations_listing_tool_reports_the_registry(app, settings):
 
     result = asyncio.run(call())
     data = result if isinstance(result, dict) else result[1]
-    assert data["count"] == 41  # 12/17/23/28/34/40/41, B-207..B-212+B-216
+    assert data["count"] == 42  # 12/17/23/28/34/40/41/42, B-207..B-212+B-216+B-217
     assert {t["name"] for t in data["tools"]} == {s.name for s in all_tool_specs()}
     covered = {t["operation"] for t in data["tools"] if t["operation"]}
     assert covered == set(registry.OPERATIONS)

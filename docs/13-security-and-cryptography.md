@@ -396,6 +396,50 @@ confirmation, after which the raw database file is vacuumed
 and greps clean, with exactly one audit row keeping only
 the fact of erasure.
 
+## MCP sampling: off by default (B-217)
+
+Server-initiated sampling is the MCP server asking the
+connected client's own model to generate text
+(`sampling/createMessage`). This system ships it **off by
+default** — `GPA_MCP_SAMPLING_ENABLED` defaults to false,
+and no client capability, credential scope, or tool
+argument can switch it on; only the operator who runs the
+server can, deliberately, in the environment.
+
+The reason, stated plainly: sampling spends the **client
+operator's** model budget on prompts **this server**
+chose, through a model this deployment does not control,
+audit, or price. A server that could sample freely could
+farm a connected client's model — quietly and repeatedly,
+at the client's expense — and could route group-adjacent
+prompts out to a model the group never chose. A capability
+whose default direction is "spend someone else's money on
+our say-so" does not get a default of *on*.
+
+Where an operator does enable it, the policy narrows it on
+every side. It is **scoped**: the tool requires the
+publish credential scope at call time, over a dedicated
+internal scope (`sampling:request`) that maps only from
+publish and admin. It is **budget-capped** on the same AI
+usage ledger as every other model call (B-047): one call
+may request at most `GPA_MCP_SAMPLING_MAX_TOKENS` tokens;
+one group may make at most
+`GPA_MCP_SAMPLING_MAX_CALLS_PER_DAY` sampling calls per
+UTC day, counted on the ledger's own rows; and a group
+whose daily AI budget is already spent may not sample at
+all. It is **audit-logged per call**: authorisation writes
+the ledger row and a hash-chained audit row — actor,
+prompt length, and token ceiling, never the prompt's or
+the answer's words — *before* the client is asked, so even
+a failed or refused generation leaves its attempt on the
+record. And the text a client's model returns is treated
+as **data, never instructions**: it goes back to the
+calling agent marked as data, and this server never
+executes, follows, or files it on its own. A client that
+never advertised the sampling capability cannot be asked,
+and there is no fallback: no other model is substituted
+for the client's, ever.
+
 ## Honest boundaries — what is not claimed
 
 This chapter closes where the threat model closes: with

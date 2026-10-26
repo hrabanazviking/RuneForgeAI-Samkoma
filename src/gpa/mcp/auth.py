@@ -204,6 +204,8 @@ INTERNAL_SCOPES = (
     "announcements:write",
     "notifications:read",
     "notifications:write",
+    # B-217: the sampling authorisation scope.
+    "sampling:request",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -271,6 +273,11 @@ EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
         "extraction:request",
         "announcements:write",
         "notifications:write",
+        # B-217: sampling joins this rung for B-210's reason —
+        # commissioning model work over a group's material
+        # (here, through the connected client's model) is
+        # publish-grade at its door, never a draft act.
+        "sampling:request",
     },
     "admin": frozenset(INTERNAL_SCOPES),
 }
@@ -347,6 +354,10 @@ TOOL_SCOPES: dict[str, str] = {
     # is "draft" — planning:write maps from draft, as the
     # checker proves; a read-only credential cannot ask.
     "gpa_ask_for_missing_fact": "draft",
+    # B-217's sampling tool: "publish" — sampling:request maps
+    # only from publish and admin, as the checker proves; a
+    # seat's default read+draft key cannot commission sampling.
+    "gpa_request_sampling": "publish",
     # B-212's family: board/inbox/preferences/digest reads
     # are "read"; announcing and digest-composing are
     # "publish" (organiser acts at their doors).
