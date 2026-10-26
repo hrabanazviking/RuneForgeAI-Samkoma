@@ -153,6 +153,7 @@ SERVICE_MODULES: dict[str, str] = {
     "recovery": "platform",  # B-172: startup assessment & repair
     "resilience": "platform",  # B-173: breakers + bulkheads per dependency
     "repair": "platform",  # B-173: the fix-forward data-repair crew
+    "chaos": "platform",  # B-175: the crash-correction harness core
 }
 
 # Modules whose public functions are their whole surface, open

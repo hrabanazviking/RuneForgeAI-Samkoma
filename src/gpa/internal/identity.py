@@ -165,17 +165,17 @@ def load_store(settings) -> IdentityStore:
         for seed_file in sorted(root.glob("*.seed")):
             name = seed_file.stem
             private = crypto.signing_key_from_seed(
-                seed_file.read_text().strip()
+                seed_file.read_text(encoding="utf-8").strip()
             )
             store.own[name] = Identity(name=name, private_key=private)
         for pub_file in sorted(root.glob("*.pub")):
             name = pub_file.stem
-            keys = [pub_file.read_text().strip()]
+            keys = [pub_file.read_text(encoding="utf-8").strip()]
             prev = root / f"{name}.pub.prev"
             if prev.exists():
                 # Rotation overlap: the previous key still
                 # verifies until the rotation completes.
-                keys.append(prev.read_text().strip())
+                keys.append(prev.read_text(encoding="utf-8").strip())
             store.accepted[name] = keys
         # Own publics are always accepted for their own name
         # (a process must believe its own modules' doors).
