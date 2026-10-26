@@ -1546,6 +1546,28 @@ parses the model so it cannot drift from the code.
   clone born a draft without RSVPs/discussion/history,
   occurrences never rules on screen). Pinned by a new docs-gate
   test. Next: B-186.
+- **B-186 user guide V — planning** ✅:
+  `docs/05-user-guide-planning.md` — tasks (status flow,
+  computed `overdue`/`unclaimed`, day-only due = end of local
+  day, and THE OWNER LAW: extraction words land only in
+  `suggested_owner_label`; a real owner is set solely by a
+  person's act), the decisions log (supersede chains both
+  ways, `?current=true` settled truth, superseding a
+  non-current decision refused), open questions (resolve may
+  mint its decision in the same act; drop is a settled state)
+  + the event gaps list, polls (choice/date, one current vote
+  per person, apply-winner moves or mints through the edit
+  door, tie/zero-votes refused in plain words), checklists +
+  role slots (one-person claims, another's line refused) +
+  the folded supplies view, budget-lite (integer cents end to
+  end, words-only payers keep no member, stops at group truth
+  by design), the availability finder (marks only against
+  proposed slots — the privacy boundary is the shape;
+  deterministic ranking), and templates (day-offset tasks,
+  claims reopen as slots on save/instantiate, the 7 starters
+  named). Route names verified against the live routers
+  (availability/slots, costs vs budget). Pinned by a new
+  docs-gate test; regression batch 17 passed. Next: B-187.
 
 ### Later phases: NOT STARTED (per roadmap order)
 Phase 16 begins at B-157.

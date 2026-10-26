@@ -167,6 +167,24 @@ def test_user_guide_4_covers_calendar_and_events():
     assert "04-user-guide-calendar-and-events.md" in index
 
 
+def test_user_guide_5_covers_planning():
+    """B-186: the planning chapter covers tasks and the owner
+    law, the decisions log, open questions and gaps, polls,
+    checklists and roles, supplies, budget-lite, the
+    availability finder, and templates."""
+    chapter = ROOT / "docs" / "05-user-guide-planning.md"
+    assert chapter.exists()
+    text = chapter.read_text(encoding="utf-8").lower()
+    for topic in (
+        "tasks", "suggested owner", "never assigns a silent victim",
+        "decisions", "supersede", "open question", "gaps",
+        "polls", "apply the winner", "checklists", "role slots",
+        "supplies", "integer cents", "availability",
+        "templates", "club night",
+    ):
+        assert topic in text, f"B-186 chapter is missing its topic: {topic}"
+    index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    assert "05-user-guide-planning.md" in index
 
 
 def test_sound_diagram_passes(tmp_path):
