@@ -8,9 +8,9 @@
 
 | 📍 Where we are | Phases 0–16 complete · Phase 17 (modularity, internal encrypted API, resilience, and craft) next |
 |---|---|
-| 🧩 Roadmap | **160 of 350 slices** built — B-001 → B-160 of a 29-phase roadmap |
+| 🧩 Roadmap | **180 of 350 slices** built — B-001 → B-180 of a 29-phase roadmap |
 | ✅ Tests | **904 passing** on SQLite (888 on PostgreSQL), counted from clean runs against the committed tree |
-| 📜 API contract | **188 paths · 218 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
+| 📜 API contract | **201 paths · 229 schemas**, frozen in [`OPENAPI.json`](OPENAPI.json) |
 | 🐍 Stack | Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · SQLite (WAL) and PostgreSQL, both proven by the same suite |
 | 🏠 Born for | The Meta Global AI Developer Hackathon — a team entry, built Oct 26 → Nov 4, 2026 |
 
@@ -421,8 +421,8 @@ section comes straight out of it.
 
 ## 📜 The API at a glance
 
-The frozen contract is [`OPENAPI.json`](OPENAPI.json) — **188 paths, 218
-schemas** at the Phase 16 gate — with generated TypeScript types in
+The frozen contract is [`OPENAPI.json`](OPENAPI.json) — **201 paths, 229
+schemas** at the Phase 17 gate — with generated TypeScript types in
 [`frontend_types.ts`](frontend_types.ts) and a ready-to-fire Bruno
 collection in [`collections/`](collections/). The frontend crew builds
 against these files, never against our intentions.
@@ -523,11 +523,11 @@ code provably the team's own work).
 | 10 | Context pruning and group memory | B-113 → B-122 | ✅ |
 | 11 | Samtal bridge and live sources | B-123 → B-130 | ✅ |
 | 12 | External publishing integrations | B-131 → B-138 | ✅ |
-| 13 | Security hardening, privacy, and erasure | B-139 → B-146 | ⬜ |
+| 13 | Security hardening, privacy, and erasure | B-139 → B-146 | ✅ |
 | 14 | Submission freeze and demo proof | B-147 → B-151 | ✅ |
 | 15 | Deployment and operations | B-152 → B-156 | ✅ |
 | 16 | Scale and second integrations | B-157 → B-160 | ✅ |
-| 17 | Modularity, internal encrypted API, resilience, and craft | B-161 → B-180 | ⬜ |
+| 17 | Modularity, internal encrypted API, resilience, and craft | B-161 → B-180 | ✅ |
 | 18 | Documentation, diagrams, and the per-file code atlas | B-181 → B-200 | ⬜ |
 | 19 | Equal principals, total API parity, and the advanced MCP server | B-201 → B-220 | ⬜ |
 | 20 | The terminal app: TUI + scriptable CLI | B-221 → B-235 | ⬜ |
@@ -572,8 +572,8 @@ lockfile-recorded packages.
 
 A README that only boasts is marketing. This one keeps the ledger:
 
-- **This README describes the committed tree (Phases 0–16).** Phase 17
-  is next in the forge; everything past B-160 in the roadmap table above
+- **This README describes the committed tree (Phases 0–17).** Phase 18
+  is next in the forge; everything past B-180 in the roadmap table above
   is a plan, not a claim.
 - **No live model endpoint** has been called from this environment (see the
   adapter section). Fixture and mock drivers carry every demo and test.
