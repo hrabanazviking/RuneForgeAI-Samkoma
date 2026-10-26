@@ -1605,7 +1605,7 @@ Phase 16 begins at B-157.
   **160/350 slices, Phases 0–16 complete.** Contract: 188
   paths / 218 schemas.
 
-### Phase 17 — Modularity, internal encrypted API, resilience, craft (B-161 → B-180): IN PROGRESS (2026-10-25)
+### Phase 17 — Modularity, internal encrypted API, resilience, craft (B-161 → B-180): COMPLETE (gate 2026-10-26)
 - **B-161 module boundaries** ✅: `gpa/internal/` opens with
   `modulemap.py` (every services file placed in its §6A.3
   module; composition roots named; audit + crypto recorded as
@@ -2183,6 +2183,47 @@ Phase 16 begins at B-157.
   in-repo key refused at both doors. Batch with release-zip,
   comment-gate and quality-gate suites: 17 passed. Progress:
   **179/350**.
+
+- **B-180 Phase 17 gate — the addendum proof** ✅ (gate
+  closed 2026-10-26, Yrsa): the drill
+  (`tests/test_phase17_gate.py`, log in `PHASE17_DRILL.md`,
+  shipped in the gate ZIP) walks one unbroken story —
+  resumable-upload flyer in, worker dies mid-vision-job,
+  startup recovery requeues, approval over the internal
+  encrypted API, raw-disk greps clean, audit chain verifies.
+  The drill found two root defects in earlier phases' code,
+  both fixed in the gate commit `b0d7ec2` (chunked-upload
+  completion refused image bytes; `Flyer.transcript` rested
+  in plaintext — now sealed). The gate then found three
+  more, all repaired at root before the numbers below were
+  taken: four SQLite-bound Phase 17 tests moved to
+  `PG_FILE_TESTS` with three parity twins added
+  (`0ed3dcd`); a **production** audit-chain head race on
+  PostgreSQL — B-170's read-prev/hash/advance was
+  serialised on SQLite only by the write lock — fixed with
+  FOR UPDATE + nested-transaction head creation
+  (`66f88fb`, concurrent writers 5/5, was ~1/2); and the
+  PG per-test reset now drops `alembic_version`, ending
+  B-172's future-stamp poisoning of later tests on a
+  reused suite database (`50b15bd`). **Full suite, final
+  tree `50b15bd`, collected 1,033 on both engines: SQLite
+  1,026 passed / 7 skipped / 0 failed** (two declared
+  back-to-back halves, 668 + 358 — two single runs died to
+  environment resets mid-suite, zero failures to the cut);
+  **PostgreSQL 1,006 passed / 27 skipped / 0 failed** in
+  PG mode plus the parity file **7/7** against the live
+  engine — **1,013 passed on-engine**; both engines
+  reconcile (1026 + 7 = 1006 + 27 = 1033). PG environment
+  rebuilt as a fresh initdb cluster from the preserved
+  pgserver 16.2 binaries after the workspace-preserved
+  data copy tore (missing `pg_filenode.map`). Named
+  waivers, in the open in `PHASE17_DRILL.md`: second OS
+  NOT RUN (Linux-only builder; B-177 matrix defines it);
+  coverage floors unmeasured at this gate, left unstated
+  rather than invented. Gate ZIP: `gpa-backend-v0.6-
+  2026-10-26.zip` (signed, SBOM inside, drill log inside).
+  Contract: **201 paths / 229 schemas**. Progress:
+  **180/350, Phases 0–17 complete.**
 
 ## Standing laws in force here
 
