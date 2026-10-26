@@ -2921,7 +2921,7 @@ parses the model so it cannot drift from the code.
   `insufficient_scope`, the helper validating pre-call).
   Combined batch (all `test_mcp_*` + parity + comment
   gate + docs gate + architecture + internal API)
-  **146 passed** from its own log — the 2 first-run
+  **140 passed** from its own log — the 2 first-run
   failures were the docs gate naming the new files, fixed
   by atlas regen (420 files) + the docs/17 inventory row;
   superseded count assertions updated in place (registry
