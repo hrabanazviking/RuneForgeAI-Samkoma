@@ -82,6 +82,22 @@ Scopes, and the mapping onto internal scopes:
   but may not commission is a designed posture, not an
   accident: sources arrive from many hands; runs are asked
   for by few.
+* B-211's planning scopes are the quietest placement in
+  the table: reads at read, upkeep at draft, nothing at
+  publish — because that is where the planning doors stand
+  (member role, draft scope for every write). One edge is
+  worth naming: resolving a question WITH decision text
+  mints settled truth, an act that FEELS publish-grade;
+  its door is draft, deliberately — the group decided that
+  closing a question with its answer is ordinary member
+  work, and the audit trail (the question's resolved_by,
+  the decision's created_by, both the resolver's label)
+  carries the accountability instead of a higher rung.
+  Should a future slice move that door to publish, THIS
+  table moves with it in the same commit — the mapping
+  follows the doors, and a divergence between the two is
+  precisely the bug class the registry checker and the
+  parity suite exist to catch.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -157,6 +173,9 @@ INTERNAL_SCOPES = (
     "sources:read",
     "sources:write",
     "extraction:request",
+    # B-211: planning reads and the upkeep write.
+    "planning:read",
+    "planning:write",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -170,7 +189,14 @@ INTERNAL_SCOPES = (
 # scope. Each rung carries the rungs below it, as the ladder
 # always has (publish already carried draft's candidates:write).
 _READ_INTERNAL = frozenset(
-    {"groups:read", "profile:read", "candidates:read", "events:read", "sources:read"}
+    {
+        "groups:read",
+        "profile:read",
+        "candidates:read",
+        "events:read",
+        "sources:read",
+        "planning:read",
+    }
 )
 # B-209: drafting also carries the RSVP write — answering an
 # event is participation, and the HTTP door for it is
@@ -180,11 +206,15 @@ _READ_INTERNAL = frozenset(
 # handing the group material is a member act at its door
 # (member role + draft scope); COMMISSIONING work over it
 # is not (see the publish rung).
+# B-211: drafting also carries the planning upkeep write —
+# retitling, claiming, completing a task and resolving a
+# question are member work at their doors (member + draft).
 _DRAFT_INTERNAL = _READ_INTERNAL | {
     "candidates:write",
     "profile:write",
     "rsvps:write",
     "sources:write",
+    "planning:write",
 }
 EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     "read": _READ_INTERNAL,
@@ -262,6 +292,15 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_create_source": "draft",
     "gpa_append_source_chunks": "draft",
     "gpa_request_extraction": "publish",
+    # B-211's planning family: the three lists and the chain
+    # are "read"; upkeep (task edits, question resolution)
+    # is "draft", as at its doors.
+    "gpa_list_tasks": "read",
+    "gpa_list_decisions": "read",
+    "gpa_get_decision_chain": "read",
+    "gpa_list_questions": "read",
+    "gpa_update_task": "draft",
+    "gpa_resolve_question": "draft",
 }
 
 

@@ -410,6 +410,90 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "queue when it runs — this call commissions the work, "
         "it does not perform it.",
     ),
+    # B-211's family (planning: tasks, decisions, questions):
+    # reads at "read", upkeep at "draft" — the family's doors
+    # are member doors, and the annotations keep two
+    # distinctions visible that an agent could blur: a task's
+    # SUGGESTED owner is evidence from the source words, not
+    # an assignment; and "what did we decide?" is answered by
+    # the CHAIN, not by whichever decision row is newest.
+    #
+    # The resolve annotation states both of its shapes —
+    # with words (truth minted) and without (a plain close)
+    # — because an agent choosing between them is making the
+    # group's epistemic decision for it: some questions end
+    # because they were ANSWERED, and some end because they
+    # stopped mattering, and the record should say which.
+    # The annotation is where that choice is framed; the
+    # service's law (a settled question refuses a second
+    # settling) is what makes the framing consequential.
+    #
+    # The task list's annotation likewise teaches the
+    # owner/suggested-owner distinction at the point of
+    # reading, not only in the model's comments: an agent
+    # that reported "Ben owns the hall booking" from a
+    # suggestion would be inventing an assignment the group
+    # never made — the exact failure this backend's planning
+    # law (draft words are evidence, never assignments) was
+    # written against, restated here because this is the
+    # surface where an agent could commit it.
+    "planning.list_tasks": (
+        "gpa_list_tasks",
+        "read",
+        "List a group's tasks through the internal "
+        "planning.list_tasks operation, soonest-due first "
+        "(undated last). Each row states its owner — and, "
+        "separately, its SUGGESTED owner: the words the "
+        "source used, kept as evidence. A suggestion is "
+        "never an assignment.",
+    ),
+    "planning.list_decisions": (
+        "gpa_list_decisions",
+        "read",
+        "List a group's decisions log through the internal "
+        "planning.list_decisions operation, newest first. "
+        "With current_only, only the standing decisions — "
+        "the settled-truth view; superseded rows remain "
+        "walkable through the chain tool.",
+    ),
+    "planning.decision_chain": (
+        "gpa_get_decision_chain",
+        "read",
+        "Walk one decision's whole supersede chain through "
+        "the internal planning.decision_chain operation, "
+        "oldest first: what was first decided, what replaced "
+        "it, and what stands now. Answer 'what did we "
+        "decide?' from the chain, never from one row.",
+    ),
+    "planning.list_questions": (
+        "gpa_list_questions",
+        "read",
+        "List a group's questions through the internal "
+        "planning.list_questions operation, oldest open "
+        "first — the group's unsettled business in the "
+        "order it was asked.",
+    ),
+    "planning.update_task": (
+        "gpa_update_task",
+        "draft",
+        "Edit one task through the internal "
+        "planning.update_task operation: title, notes, due "
+        "moment, status, owner. Naming an owner ASSIGNS the "
+        "task (a member of the group); an explicit null "
+        "owner unassigns it — both are recorded acts, "
+        "neither is a suggestion.",
+    ),
+    "planning.resolve_question": (
+        "gpa_resolve_question",
+        "draft",
+        "Resolve one open question through the internal "
+        "planning.resolve_question operation. With "
+        "decision_text, the answer is minted as a Decision "
+        "in the same act and linked from the question — "
+        "settled truth, not a note. Without it, the question "
+        "simply closes. A settled question refuses a second "
+        "resolution with conflict.",
+    ),
     "events.publish": (
         "gpa_publish_event",
         "publish",

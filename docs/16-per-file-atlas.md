@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **410 Python code files**: migrations 23, scripts 21, src 195, tests 171. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **411 Python code files**: migrations 23, scripts 21, src 195, tests 172. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -450,7 +450,7 @@ The tree at generation time holds **410 Python code files**: migrations 23, scri
 - **Purpose:** Operation handlers — the internal API's composition root (B-162).
 - **Module:** internal · **Layer:** internal
 - **Public symbols:** `AI_JOB_KINDS`, `register_all`
-- **Dependencies (imports):** `__future__`, `datetime`, `gpa.errors`, `gpa.internal`, `gpa.internal.client`, `gpa.internal.registry`, `gpa.models.events`, `gpa.models.groups`, `gpa.models.identity`, `gpa.models.sources`, `gpa.services`, `sqlalchemy.orm`
+- **Dependencies (imports):** `__future__`, `datetime`, `gpa.errors`, `gpa.internal`, `gpa.internal.client`, `gpa.internal.registry`, `gpa.models.events`, `gpa.models.groups`, `gpa.models.identity`, `gpa.models.planning`, `gpa.models.sources`, `gpa.services`, `sqlalchemy.orm`
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
@@ -562,7 +562,7 @@ The tree at generation time holds **410 Python code files**: migrations 23, scri
 - **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
-- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_events.py`, `tests/test_mcp_groups.py`, `tests/test_mcp_registry.py`
+- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_events.py`, `tests/test_mcp_groups.py`, `tests/test_mcp_planning.py`
 - **Created by:** B-204 — B-204 MCP server core: official SDK server package (src/gpa/mcp) talking only through the 
 
 ### `src/gpa/mcp/server.py`
@@ -598,7 +598,7 @@ The tree at generation time holds **410 Python code files**: migrations 23, scri
 - **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
-- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_groups.py`, `tests/test_mcp_registry.py`, `tests/test_outbound_webhooks.py`
+- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_groups.py`, `tests/test_mcp_planning.py`, `tests/test_mcp_registry.py`
 - **Created by:** B-206 — B-206 MCP tool registry from one source of truth: catalogue generated from the internal op
 
 ### `src/gpa/models/__init__.py`
@@ -3910,6 +3910,18 @@ The tree at generation time holds **410 Python code files**: migrations 23, scri
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-207 — B-207 MCP tools — groups, members, profile: first domain family on the generated catalogue
 
+### `tests/test_mcp_planning.py`
+
+- **Purpose:** MCP planning tool tests (roadmap B-211): tasks, decisions, questions — the things approval mints.
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `test_lists_carry_the_minted_rows_with_provenance`, `test_a_suggested_owner_is_not_an_assignment`, `test_update_task_and_resolve_question_with_truth`, `test_decision_chain_walks_the_supersede_history`, `test_upkeep_tools_refuse_a_read_only_principal`
+- **Dependencies (imports):** `__future__`, `asyncio`, `conftest`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.server`, `pytest`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
+
 ### `tests/test_mcp_registry.py`
 
 - **Purpose:** MCP tool registry tests (roadmap B-206, Phase 19).
@@ -3932,7 +3944,7 @@ The tree at generation time holds **410 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-210 — B-210 MCP tools — sources and extraction requests: fourth domain family — five new interna
 
 ### `tests/test_member_io.py`
 

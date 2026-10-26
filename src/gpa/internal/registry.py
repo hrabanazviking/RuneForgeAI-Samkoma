@@ -131,6 +131,10 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             "sources:read",
             "sources:write",
             "extraction:request",
+            # B-211: planning — the minted things' reads and
+            # their upkeep writes (draft-grade at the mapping).
+            "planning:read",
+            "planning:write",
         }
     ),
 }

@@ -2598,6 +2598,58 @@ parses the model so it cannot drift from the code.
   full Phase 19 green is the B-220 gate's to prove. No
   ZIP at this slice. Progress: **210/350. Next: B-211
   (MCP tools — planning: tasks, decisions, questions).**
+- **B-211 MCP tools — planning: tasks, decisions,
+  questions** ✅ (timer crew, 2026-10-26): the fifth domain
+  family — what approval mints, and its upkeep. Six new
+  internal operations (owner planning): `planning.list_tasks`
+  + `planning.list_decisions` + `planning.list_questions`
+  (`planning:read` → the read rung; the services' own
+  orders: soonest-due, newest-first, oldest-open) and
+  `planning.decision_chain` (the supersede walk, oldest
+  first — the family's conscience: an agent has no clicks,
+  so the chain is a first-class tool and its annotation
+  instructs answering "what did we decide?" from it);
+  `planning.update_task` + `planning.resolve_question`
+  (`planning:write` → **draft**, as at their member doors).
+  The serialisers keep the planning law visible: a task's
+  suggested_owner_label rides SEPARATELY from owner_id
+  (draft words are evidence, never an assignment), and
+  resolve-with-decision-text mints a linked Decision in
+  the service's own transaction — draft-grade by the
+  group's stated law, accountability carried by the audit
+  labels, the reasoning written in auth.py where a
+  rung-widener must read it. Update takes the service's
+  presence-stated changes dict (absent = untouched, null =
+  an act) rather than flattened optional arguments. Direct
+  creation is deliberately out of family: over this
+  surface planning items are born as candidates and
+  approved, so agent-originated work carries provenance.
+  The server serves 36 tools. Superseded assertions
+  updated in place (operations 28→34, parity 30/28→36/34,
+  grants, auth scope set, parity bus note). Tests:
+  tests/test_mcp_planning.py **5 passed** (the world itself
+  built the agent way — drafted + approved candidates
+  minting all three kinds, lists carrying provenance
+  candidate ids, suggested-owner-not-assignment through an
+  edited draft, task upkeep + resolve-with-truth minting
+  the linked decision + second resolution conflict, the
+  chain walked through a real HTTP-door supersede with
+  current_only agreeing, read-only principal refused both
+  upkeep tools); family batch (planning + registry + auth
+  + parity + tasks/decisions/questions APIs) **45 passed**;
+  core + internal batch **44 passed**; gates batch
+  (comment — mcp density repaired to 45.1% by
+  documentation — docs, architecture, signed releases,
+  release-zip, registry, parity, OpenAPI snapshot) +
+  planning/core suites **69 passed** in the final combined
+  run. Ruff E9+F clean on every touched file except the
+  pre-existing F841 in tests/test_mcp_core.py (left as
+  found, as before). Atlas regenerated (411 files),
+  B-198 inventory row added. Contract unchanged:
+  **202 paths / 230 schemas**. Full suite NOT re-run — a
+  full Phase 19 green is the B-220 gate's to prove. No
+  ZIP at this slice. Progress: **211/350. Next: B-212
+  (MCP tools — notifications, digests, and announcements).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

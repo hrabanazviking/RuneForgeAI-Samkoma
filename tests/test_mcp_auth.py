@@ -208,8 +208,9 @@ def test_under_scoped_principal_fails_insufficient_scope():
     # checker now asserts this set equals the registry's own.
     # Grown again by B-207 (groups / members / profile family),
     # B-208 (candidates / review-queue family), B-209
-    # (events / RSVPs / calendar family), and B-210
-    # (sources / extraction-request family).
+    # (events / RSVPs / calendar family), B-210
+    # (sources / extraction-request family), and B-211
+    # (planning family).
     assert set(TOOL_SCOPES) == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -241,6 +242,12 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_create_source",
         "gpa_append_source_chunks",
         "gpa_request_extraction",
+        "gpa_list_tasks",
+        "gpa_list_decisions",
+        "gpa_get_decision_chain",
+        "gpa_list_questions",
+        "gpa_update_task",
+        "gpa_resolve_question",
     }
 
 

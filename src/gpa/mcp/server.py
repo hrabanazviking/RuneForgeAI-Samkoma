@@ -618,6 +618,154 @@ def build_server(
             "extraction.request", payload, tool="gpa_request_extraction"
         )
 
+    # --- B-211 family: planning (tasks, decisions, questions) -------------------
+    #
+    # The minted things' surface. Two shapes worth noting:
+    # the update tool takes a CHANGES dict rather than a
+    # field-per-argument signature, because the service's
+    # vocabulary is presence-stated — a field absent from
+    # changes is untouched, a field present with null is an
+    # act (unassign, clear) — and flattening that into
+    # optional arguments would blur exactly the distinction
+    # the vocabulary exists to keep. And there is no create
+    # tool here by design: over this surface, planning items
+    # are born as candidates and approved (B-204/B-208), so
+    # everything an agent originates carries provenance.
+    #
+    # The chain tool is this family's conscience. Every
+    # other surface in the backend that shows a decision
+    # shows the CURRENT one, with the superseded rows one
+    # click away; an agent has no clicks — it has the calls
+    # it chooses to make. If the only decision tools were
+    # the log and its current view, an agent could answer
+    # "Saturdays" a week after the group moved to Sundays
+    # and never know a chain existed. So the chain is a
+    # first-class tool, its annotation instructs answering
+    # from it, and the acceptance tests walk a real
+    # supersede through it end to end.
+    #
+    # Resolving a question is the family's one minting act,
+    # and it is worth being plain about why it is draft-
+    # grade: the group's own law (stated at its door, member
+    # + draft) treats closing a question with its answer as
+    # ordinary member work, with the audit labels — the
+    # question's resolved_by, the decision's created_by —
+    # carrying who did it. An agent resolving a question is
+    # therefore doing something a member may do, in the
+    # member's name it was given, on the record. The scope
+    # table in gpa.mcp.auth states the same reasoning where
+    # a reviewer widening rungs must read it.
+
+    @server.tool(description=specs["gpa_list_tasks"].description)
+    def gpa_list_tasks(
+        group_id: str, status: str | None = None, event_id: str | None = None
+    ) -> dict[str, Any]:
+        """List a group's tasks, soonest-due first.
+
+        ``status`` and ``event_id`` narrow the list; undated
+        tasks sort last, as the service's order states.
+        """
+        payload: dict[str, Any] = {"group_id": group_id}
+        if status is not None:
+            payload["status"] = status
+        if event_id is not None:
+            payload["event_id"] = event_id
+        return _call("planning.list_tasks", payload, tool="gpa_list_tasks")
+
+    @server.tool(description=specs["gpa_list_decisions"].description)
+    def gpa_list_decisions(
+        group_id: str, current_only: bool | None = None
+    ) -> dict[str, Any]:
+        """List the decisions log, newest first.
+
+        ``current_only`` gives the settled-truth view:
+        standing decisions only, superseded rows left to
+        the chain.
+        """
+        payload: dict[str, Any] = {"group_id": group_id}
+        if current_only is not None:
+            payload["current_only"] = current_only
+        return _call(
+            "planning.list_decisions", payload, tool="gpa_list_decisions"
+        )
+
+    @server.tool(description=specs["gpa_get_decision_chain"].description)
+    def gpa_get_decision_chain(
+        group_id: str, decision_id: str
+    ) -> dict[str, Any]:
+        """Walk one decision's whole supersede chain.
+
+        From any row in the chain — first, middle, or
+        current — the walk returns all of it, oldest first.
+        """
+        return _call(
+            "planning.decision_chain",
+            {"group_id": group_id, "decision_id": decision_id},
+            tool="gpa_get_decision_chain",
+        )
+
+    @server.tool(description=specs["gpa_list_questions"].description)
+    def gpa_list_questions(
+        group_id: str, status: str | None = None
+    ) -> dict[str, Any]:
+        """List the group's questions, oldest open first.
+
+        ``status`` narrows (open / resolved / dropped); the
+        service's order keeps the oldest open business at
+        the top, where a group's attention belongs.
+        """
+        payload: dict[str, Any] = {"group_id": group_id}
+        if status is not None:
+            payload["status"] = status
+        return _call(
+            "planning.list_questions", payload, tool="gpa_list_questions"
+        )
+
+    @server.tool(description=specs["gpa_update_task"].description)
+    def gpa_update_task(
+        group_id: str, task_id: str, actor: str, changes: dict
+    ) -> dict[str, Any]:
+        """Edit one task through the service's changes.
+
+        Presence is meaning: a field in ``changes`` is set
+        (null unassigns an owner); a field absent from it
+        is untouched.
+        """
+        return _call(
+            "planning.update_task",
+            {
+                "group_id": group_id,
+                "task_id": task_id,
+                "actor": actor,
+                "changes": changes,
+            },
+            tool="gpa_update_task",
+        )
+
+    @server.tool(description=specs["gpa_resolve_question"].description)
+    def gpa_resolve_question(
+        group_id: str,
+        question_id: str,
+        actor: str,
+        decision_text: str | None = None,
+    ) -> dict[str, Any]:
+        """Resolve one open question, optionally with truth.
+
+        ``decision_text`` mints the answer as a Decision in
+        the same act; the returned question names it in
+        ``resolution_decision_id``.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "question_id": question_id,
+            "actor": actor,
+        }
+        if decision_text is not None:
+            payload["decision_text"] = decision_text
+        return _call(
+            "planning.resolve_question", payload, tool="gpa_resolve_question"
+        )
+
     # --- The B-206 generated operation tools --------------------------------
     #
     # The five operations B-204's core pair did not cover. Each

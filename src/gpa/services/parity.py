@@ -44,11 +44,15 @@ Honest boundaries, stated at the point of use
   ``candidates.reject``, ``candidates.edit``), B-209 six
   more for events (``events.list``, ``events.get``,
   ``events.cancel``, ``rsvps.list``, ``rsvps.set``,
-  ``calendar.agenda``), and B-210 five more for sources
+  ``calendar.agenda``), B-210 five more for sources
   (``sources.list``, ``sources.get``, ``sources.create``,
-  ``sources.append``, ``extraction.request``); they back no
-  action in this register and are counted by the MCP leg
-  below, not by the ``internal_api`` field here.
+  ``sources.append``, ``extraction.request``), and B-211 six
+  more for planning (``planning.list_tasks``,
+  ``planning.list_decisions``, ``planning.decision_chain``,
+  ``planning.list_questions``, ``planning.update_task``,
+  ``planning.resolve_question``); they back no action in
+  this register and are counted by the MCP leg below, not
+  by the ``internal_api`` field here.
 * MCP and the terminal (Phase 20) are the other surfaces.
   B-206 extended this same checker with its MCP leg (below):
   the generated tool registry in ``gpa.mcp.tools`` is checked

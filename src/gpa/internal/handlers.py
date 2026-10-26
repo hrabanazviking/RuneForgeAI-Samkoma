@@ -39,10 +39,12 @@ from gpa.internal.registry import Operation
 from gpa.models.events import Event, Rsvp
 from gpa.models.groups import Group, role_at_least
 from gpa.models.identity import User
+from gpa.models.planning import Decision, OpenQuestion, Task
 from gpa.models.sources import Source
 from gpa.services import calendar_views as calendar_service
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
+from gpa.services import planning as planning_service
 from gpa.services import sources as source_service
 from gpa.services import rsvps as rsvp_service
 from gpa.services import groups as group_service
@@ -977,6 +979,193 @@ def _extraction_request(db: Session, payload: dict, ctx: CallContext) -> dict:
     }
 
 
+# --- planning family (B-211) -------------------------------------------------------
+#
+# The fifth domain family: what approval MINTED — the
+# group's tasks, its decisions log, and its open questions.
+# B-208's queue decides; this family is where the decided
+# things live and keep changing.
+#
+# * The reads are the planning service's own lists (tasks
+#   soonest-due first, decisions newest first, questions
+#   oldest open first) plus the decision CHAIN — the
+#   supersede walk, which an agent answering "what did we
+#   decide about X?" needs whole: the current text alone
+#   would erase that it replaced something, and when.
+# * The writes are DRAFT-grade, as at their doors: planning
+#   upkeep (retitle a task, claim it, complete it, resolve
+#   a question) is the group's ordinary member work. The
+#   consequential edge is resolve-with-decision: resolving
+#   a question WITH decision text mints a Decision in the
+#   same transaction — settled truth, not a note — and the
+#   operation delegates to the service act that does
+#   exactly that, so the mint's law is the service's.
+# * A task's suggested owner is EVIDENCE, never an
+#   assignment (the model's own law): the serialiser keeps
+#   suggested_owner_label visibly separate from owner_id,
+#   and update passes changes through the service, which
+#   states the same distinction at its door.
+# * Creation of tasks/decisions/questions directly is NOT
+#   here: direct entry exists at the HTTP doors, but over
+#   this surface new planning items are born the agent way
+#   — drafted as candidates (B-204) and approved (B-208) —
+#   so everything an agent originates carries provenance.
+
+
+def _task_data(task: Task) -> dict:
+    """Serialise one task row for the bus: the work, its
+    state, its owner (id + the label captured at assignment)
+    and — separately, as evidence — its suggested owner."""
+    return {
+        "task_id": task.id,
+        "group_id": task.group_id,
+        "event_id": task.event_id,
+        "title": task.title,
+        "notes": task.notes,
+        "status": task.status,
+        "owner_id": task.owner_id,
+        "owner_label": task.owner_label,
+        "suggested_owner_label": task.suggested_owner_label,
+        "due_at": task.due_at.isoformat() if task.due_at else None,
+        "candidate_id": task.candidate_id,
+        "created_by": task.created_by,
+    }
+
+
+def _decision_data(decision: Decision) -> dict:
+    """Serialise one decision row for the bus, with its
+    place in the supersede chain stated by id both ways."""
+    return {
+        "decision_id": decision.id,
+        "group_id": decision.group_id,
+        "event_id": decision.event_id,
+        "text": decision.text,
+        "status": decision.status,
+        "supersedes_id": decision.supersedes_id,
+        "superseded_by_id": decision.superseded_by_id,
+        "candidate_id": decision.candidate_id,
+        "created_by": decision.created_by,
+    }
+
+
+def _question_data(question: OpenQuestion) -> dict:
+    """Serialise one open-question row for the bus: its
+    words, who it is asked of, and — once settled — who
+    settled it and which decision the answer became."""
+    return {
+        "question_id": question.id,
+        "group_id": question.group_id,
+        "event_id": question.event_id,
+        "text": question.text,
+        "status": question.status,
+        "asked_of_id": question.asked_of_id,
+        "asked_of_label": question.asked_of_label,
+        "resolution_decision_id": question.resolution_decision_id,
+        "resolved_by": question.resolved_by,
+        "created_by": question.created_by,
+    }
+
+
+def _planning_list_tasks(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """List the group's tasks (the service's soonest-due
+    order), optionally narrowed by status or event."""
+    _need(payload, "group_id")
+    group = _group(db, payload["group_id"])
+    tasks = planning_service.list_tasks(
+        db, group, status=payload.get("status"), event_id=payload.get("event_id")
+    )
+    return {
+        "group_id": group.id,
+        "tasks": [_task_data(task) for task in tasks],
+        "count": len(tasks),
+    }
+
+
+def _planning_list_decisions(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """List the decisions log, newest first; ``current_only``
+    asks for the settled-truth view (superseded rows left
+    out, the chain still walkable via decision_chain)."""
+    _need(payload, "group_id")
+    group = _group(db, payload["group_id"])
+    decisions = planning_service.list_decisions(
+        db, group, current_only=bool(payload.get("current_only"))
+    )
+    return {
+        "group_id": group.id,
+        "decisions": [_decision_data(row) for row in decisions],
+        "count": len(decisions),
+    }
+
+
+def _planning_decision_chain(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Walk one decision's whole supersede chain, oldest
+    first: what was first decided, what replaced it, and
+    what stands now — the honest answer to 'what did we
+    decide?', which is a history, not a sentence."""
+    _need(payload, "group_id", "decision_id")
+    group = _group(db, payload["group_id"])
+    chain = planning_service.decision_chain(db, group, payload["decision_id"])
+    return {
+        "group_id": group.id,
+        "chain": [_decision_data(row) for row in chain],
+        "count": len(chain),
+    }
+
+
+def _planning_list_questions(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """List the group's questions (the service's oldest-open
+    order), optionally narrowed by status."""
+    _need(payload, "group_id")
+    group = _group(db, payload["group_id"])
+    questions = planning_service.list_questions(
+        db, group, status=payload.get("status")
+    )
+    return {
+        "group_id": group.id,
+        "questions": [_question_data(row) for row in questions],
+        "count": len(questions),
+    }
+
+
+def _planning_update_task(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Edit one task through the service's change vocabulary
+    (title, notes, due moment, status, owner — an explicit
+    ``owner_id: None`` unassigns, recorded like any other
+    act). A ``due_at`` in changes is a payload moment and is
+    converted here, at the bus's edge."""
+    _need(payload, "group_id", "task_id", "actor", "changes")
+    changes = dict(payload["changes"])
+    if isinstance(changes.get("due_at"), str):
+        changes["due_at"] = _moment(changes["due_at"])
+    group = _group(db, payload["group_id"])
+    task = planning_service.update_task(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        task_id=payload["task_id"],
+        changes=changes,
+    )
+    return _task_data(task)
+
+
+def _planning_resolve_question(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Resolve one open question. With ``decision_text`` the
+    service mints the answer as a Decision in the same
+    transaction and links it — the returned row names it in
+    resolution_decision_id, so the caller can tell a
+    settled-with-truth resolution from a plain closing."""
+    _need(payload, "group_id", "question_id", "actor")
+    group = _group(db, payload["group_id"])
+    question = planning_service.resolve_question(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        question_id=payload["question_id"],
+        decision_text=payload.get("decision_text"),
+    )
+    return _question_data(question)
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -1231,4 +1420,58 @@ def register_all() -> None:
             "Queue an extraction run over one source (organiser and above).",
         ),
         _extraction_request,
+    )
+    registry.register(
+        Operation(
+            "planning.list_tasks",
+            "planning",
+            "planning:read",
+            "List a group's tasks, soonest-due first.",
+        ),
+        _planning_list_tasks,
+    )
+    registry.register(
+        Operation(
+            "planning.list_decisions",
+            "planning",
+            "planning:read",
+            "List a group's decisions log, newest first.",
+        ),
+        _planning_list_decisions,
+    )
+    registry.register(
+        Operation(
+            "planning.decision_chain",
+            "planning",
+            "planning:read",
+            "Walk one decision's whole supersede chain, oldest first.",
+        ),
+        _planning_decision_chain,
+    )
+    registry.register(
+        Operation(
+            "planning.list_questions",
+            "planning",
+            "planning:read",
+            "List a group's open questions, oldest open first.",
+        ),
+        _planning_list_questions,
+    )
+    registry.register(
+        Operation(
+            "planning.update_task",
+            "planning",
+            "planning:write",
+            "Edit one task (title, notes, due moment, status, owner).",
+        ),
+        _planning_update_task,
+    )
+    registry.register(
+        Operation(
+            "planning.resolve_question",
+            "planning",
+            "planning:write",
+            "Resolve one open question, optionally minting its answer as a decision.",
+        ),
+        _planning_resolve_question,
     )
