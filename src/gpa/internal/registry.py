@@ -135,6 +135,13 @@ CALLER_GRANTS: dict[str, frozenset[str]] = {
             # their upkeep writes (draft-grade at the mapping).
             "planning:read",
             "planning:write",
+            # B-212: announcements, inboxes/preferences, and
+            # digests — reads, plus the two publish-grade
+            # writes (announcing, composing the digest).
+            "announcements:read",
+            "announcements:write",
+            "notifications:read",
+            "notifications:write",
         }
     ),
 }

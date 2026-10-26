@@ -93,6 +93,13 @@ CORE_TOOLS = {
     "gpa_list_questions",
     "gpa_update_task",
     "gpa_resolve_question",
+    # B-212: the notifications / digests / announcements family.
+    "gpa_list_announcements",
+    "gpa_create_announcement",
+    "gpa_get_inbox",
+    "gpa_get_notification_preferences",
+    "gpa_list_digests",
+    "gpa_preview_digest",
 }
 
 
@@ -167,6 +174,11 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         # B-211: planning reads + upkeep write.
         "planning:read",
         "planning:write",
+        # B-212: board + notification reads, announce/compose.
+        "announcements:read",
+        "announcements:write",
+        "notifications:read",
+        "notifications:write",
     ):
         assert registry.caller_may("mcp", scope), scope
     operations = {op["name"] for op in bridge.operations()}
@@ -210,6 +222,13 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "planning.list_questions",
         "planning.update_task",
         "planning.resolve_question",
+        # B-212: the hear-from-itself family's operations.
+        "announcements.list",
+        "announcements.create",
+        "notifications.inbox",
+        "notifications.preferences",
+        "digests.list",
+        "digests.preview",
     }
 
 
@@ -265,8 +284,9 @@ def test_server_builds_with_the_core_tools(app, settings):
     tools = asyncio.run(server.list_tools())
     assert {tool.name for tool in tools} == CORE_TOOLS
     info = bridge.info()
-    # B-207: 12; B-208: 17; B-209: 23; B-210: 28; B-211: 34.
-    assert info["caller"] == "mcp" and info["operations_count"] == 34
+    # B-207: 12; B-208: 17; B-209: 23; B-210: 28; B-211: 34;
+    # B-212: 40.
+    assert info["caller"] == "mcp" and info["operations_count"] == 40
 
 
 # --- structured logging: no payloads, ever ---------------------------------

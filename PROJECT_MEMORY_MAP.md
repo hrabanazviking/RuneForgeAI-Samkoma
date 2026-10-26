@@ -2650,6 +2650,56 @@ parses the model so it cannot drift from the code.
   full Phase 19 green is the B-220 gate's to prove. No
   ZIP at this slice. Progress: **211/350. Next: B-212
   (MCP tools — notifications, digests, and announcements).**
+- **B-212 MCP tools — notifications, digests, and
+  announcements** ✅ (timer crew, 2026-10-26): the sixth
+  and last domain family of the B-207 → B-212 ladder. Six
+  new internal operations: `announcements.list`
+  (`announcements:read` → read; the board pinned-first,
+  expired posts honoured only at organiser role, the
+  door's rule) and `announcements.create`
+  (`announcements:write` → **publish**; the role law stated
+  in the operation, the PERSON law passed through to the
+  announcements service, which refuses a seat in its own
+  words — B-043's law, unprefaced by any paraphrase here);
+  `notifications.inbox` + `notifications.preferences`
+  (`notifications:read`; a person's own rows and effective
+  policy — no seat form exists to offer, so none is);
+  `digests.list` (`notifications:read`) and
+  `digests.preview` (`notifications:write` → publish +
+  organiser role law): compose-and-store UNSENT — the
+  digest SEND stays at the human door in this slice,
+  recorded as the deliberate line (an agent surface earns
+  the preview before the send). With B-212 the MCP domain
+  surface stands complete as Phase 19 promised: 42 tools
+  over 40 registered operations, every one through the
+  one bridge under the call-time scope law. The server
+  header's "what remains" now names them: transport
+  hardening, the conformance suite, and the B-220 phase
+  gate. Superseded assertions updated in place (operations
+  34→40, parity 36/34→42/40, grants, auth scope set,
+  parity bus note). Tests: tests/test_mcp_notifications.py
+  **6 passed** (organiser person announces + pinned-first
+  board, seat refused in the service's own words + board
+  stays empty, member-role person refused at the
+  operation, honestly-empty inbox + full preferences grid
+  + missing person not_found, digest preview composes
+  unsent and lists + member refused, draft principal
+  refused both write tools at the guard); family batch
+  (all six MCP families) **46 passed** with the
+  announcements/notifications/digest API suites; core +
+  internal batch **44 passed**; gates batch (comment —
+  mcp density repaired to 45.0% by documentation — docs,
+  architecture, signed releases, release-zip, registry,
+  parity, OpenAPI snapshot) + notifications/core suites
+  **70 passed** in the final combined run. Ruff E9+F
+  clean on every touched file except the pre-existing
+  F841 in tests/test_mcp_core.py (left as found, as
+  before). Atlas regenerated (412 files), B-198 inventory
+  row added. Contract unchanged: **202 paths / 230
+  schemas**. Full suite NOT re-run — a full Phase 19
+  green is the B-220 gate's to prove. No ZIP at this
+  slice. Progress: **212/350. Next: B-213 (MCP streamable
+  HTTP transport hardening).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

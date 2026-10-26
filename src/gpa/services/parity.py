@@ -50,9 +50,13 @@ Honest boundaries, stated at the point of use
   more for planning (``planning.list_tasks``,
   ``planning.list_decisions``, ``planning.decision_chain``,
   ``planning.list_questions``, ``planning.update_task``,
-  ``planning.resolve_question``); they back no action in
-  this register and are counted by the MCP leg below, not
-  by the ``internal_api`` field here.
+  ``planning.resolve_question``), and B-212 six more for
+  how the group hears from itself (``announcements.list``,
+  ``announcements.create``, ``notifications.inbox``,
+  ``notifications.preferences``, ``digests.list``,
+  ``digests.preview``); they back no action in this
+  register and are counted by the MCP leg below, not by
+  the ``internal_api`` field here.
 * MCP and the terminal (Phase 20) are the other surfaces.
   B-206 extended this same checker with its MCP leg (below):
   the generated tool registry in ``gpa.mcp.tools`` is checked

@@ -209,8 +209,9 @@ def test_under_scoped_principal_fails_insufficient_scope():
     # Grown again by B-207 (groups / members / profile family),
     # B-208 (candidates / review-queue family), B-209
     # (events / RSVPs / calendar family), B-210
-    # (sources / extraction-request family), and B-211
-    # (planning family).
+    # (sources / extraction-request family), B-211
+    # (planning family), and B-212 (notifications / digests /
+    # announcements family).
     assert set(TOOL_SCOPES) == {
         "gpa_server_info",
         "gpa_list_internal_operations",
@@ -248,6 +249,12 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_list_questions",
         "gpa_update_task",
         "gpa_resolve_question",
+        "gpa_list_announcements",
+        "gpa_create_announcement",
+        "gpa_get_inbox",
+        "gpa_get_notification_preferences",
+        "gpa_list_digests",
+        "gpa_preview_digest",
     }
 
 

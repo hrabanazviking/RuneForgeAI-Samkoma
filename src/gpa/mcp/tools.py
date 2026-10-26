@@ -494,6 +494,83 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "simply closes. A settled question refuses a second "
         "resolution with conflict.",
     ),
+    # B-212's family (announcements / notifications /
+    # digests): reads at "read", the two organiser acts at
+    # "publish". The create annotation states the person law
+    # BEFORE the caller tries it: announcing as a seat is
+    # refused by the backend's own law, and the description
+    # is where an agent learns that — not from a failed call
+    # it might retry under a borrowed label.
+    #
+    # The preferences annotation is written as a question —
+    # "what WOULD reach them, and when would it be held" —
+    # because that is the question the read exists to
+    # answer: not the raw switches (a screen renders those)
+    # but their consequence for one person in one group,
+    # quiet hours included. An agent planning to notify
+    # someone reads this first and learns whether the
+    # message would land now, land later, or not land —
+    # and the digest preview annotation likewise closes
+    # with its limit ("nothing is delivered by this call")
+    # rather than its capability, since the dangerous
+    # misunderstanding here is overreach, not underuse.
+    "announcements.list": (
+        "gpa_list_announcements",
+        "read",
+        "List a group's announcement board through the "
+        "internal announcements.list operation: pinned "
+        "first, then newest. Expired posts appear only when "
+        "include_expired is asked AND the given role is "
+        "organiser or above — the board's own rule.",
+    ),
+    "announcements.create": (
+        "gpa_create_announcement",
+        "publish",
+        "Post one announcement through the internal "
+        "announcements.create operation. Announcing is a "
+        "PERSON's act: the caller must name a person "
+        "(user_id) standing at organiser role or above — a "
+        "seat is refused by the backend's own law, in its "
+        "own words, however the call is dressed.",
+    ),
+    "notifications.inbox": (
+        "gpa_get_inbox",
+        "read",
+        "Read one person's notification inbox through the "
+        "internal notifications.inbox operation: the same "
+        "rows the email channel sends from, across their "
+        "groups, with the unread count stated. Inboxes "
+        "belong to people — there is no seat inbox to read.",
+    ),
+    "notifications.preferences": (
+        "gpa_get_notification_preferences",
+        "read",
+        "Read one person's effective notification policy in "
+        "one group through the internal "
+        "notifications.preferences operation: every channel "
+        "× category switch with defaults filled in, plus "
+        "their quiet hours — what WOULD reach them, and "
+        "when it would be held.",
+    ),
+    "digests.list": (
+        "gpa_list_digests",
+        "read",
+        "List a group's stored digests through the internal "
+        "digests.list operation, newest first — composed "
+        "previews and sent runs alike, told apart by "
+        "sent_at.",
+    ),
+    "digests.preview": (
+        "gpa_preview_digest",
+        "publish",
+        "Compose this week's digest through the internal "
+        "digests.preview operation and store it UNSENT "
+        "(organiser role and above): the week's published "
+        "events, unclaimed tasks, open questions and "
+        "undecided polls, in the digest's own words. Nothing "
+        "is delivered by this call — sending stays at the "
+        "human door.",
+    ),
     "events.publish": (
         "gpa_publish_event",
         "publish",

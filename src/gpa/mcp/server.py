@@ -766,6 +766,150 @@ def build_server(
             "planning.resolve_question", payload, tool="gpa_resolve_question"
         )
 
+    # --- B-212 family: notifications, digests, announcements --------------------
+    #
+    # The last of the B-207 → B-212 domain families. Its
+    # create tool is the one place on this surface where the
+    # SERVICE refuses a whole class of caller: announcing is
+    # a person's act (B-043's law), so the tool passes the
+    # caller's seat-ness through honestly and lets the
+    # service's refusal speak — a seat that wants a board
+    # post drafts a candidate or asks its person, exactly as
+    # the law intends. The digest tool is a preview by
+    # contract: compose-and-store, never send.
+    #
+    # With this family the domain surface is complete in the
+    # shape Phase 19 promised: every act an agent may do
+    # for a group — read its shape, draft into its queue,
+    # review and decide, read and answer its events, file
+    # and commission over its material, keep its planning
+    # up, and hear how it hears from itself — travels one
+    # internal operation through one bridge, under one
+    # scope law checked at call time. What remains after
+    # B-212 is not more families but the roads and the
+    # proof: the HTTP transport's hardening (B-213), the
+    # conformance suite (B-214+), and the phase gate
+    # (B-220) that runs everything at once.
+    #
+    # The inbox tool deserves its own note, because it is
+    # the surface's most intimate read: a person's
+    # notifications are the record of what the group told
+    # THEM. It is offered because a person's own agent
+    # triaging their inbox is the use this whole server
+    # exists for — and it is shaped accordingly: the read
+    # names the person explicitly, there is no group-wide
+    # or seat form of it, and the rows returned are the
+    # person's own, never a neighbour's.
+
+    @server.tool(description=specs["gpa_list_announcements"].description)
+    def gpa_list_announcements(
+        group_id: str, role: str, include_expired: bool | None = None
+    ) -> dict[str, Any]:
+        """List the board: pinned first, then newest.
+
+        ``include_expired`` is honoured only at organiser
+        role and above — the door's rule, restated here so
+        the ask is never silently half-granted.
+        """
+        payload: dict[str, Any] = {"group_id": group_id, "role": role}
+        if include_expired is not None:
+            payload["include_expired"] = include_expired
+        return _call(
+            "announcements.list", payload, tool="gpa_list_announcements"
+        )
+
+    @server.tool(description=specs["gpa_create_announcement"].description)
+    def gpa_create_announcement(
+        group_id: str,
+        actor: str,
+        role: str,
+        title: str,
+        body: str,
+        user_id: str | None = None,
+        seat_id: str | None = None,
+        pinned: bool | None = None,
+    ) -> dict[str, Any]:
+        """Post to the board — a person's organiser act.
+
+        Name the person (``user_id``) and their standing
+        (``role``): the service refuses a seat outright,
+        and this operation refuses a role below organiser.
+        """
+        payload: dict[str, Any] = {
+            "group_id": group_id,
+            "actor": actor,
+            "role": role,
+            "title": title,
+            "body": body,
+        }
+        if user_id is not None:
+            payload["user_id"] = user_id
+        if seat_id is not None:
+            payload["seat_id"] = seat_id
+        if pinned is not None:
+            payload["pinned"] = pinned
+        return _call(
+            "announcements.create", payload, tool="gpa_create_announcement"
+        )
+
+    @server.tool(description=specs["gpa_get_inbox"].description)
+    def gpa_get_inbox(
+        user_id: str, unread_only: bool | None = None
+    ) -> dict[str, Any]:
+        """Read one person's inbox across their groups.
+
+        The same rows the email channel sends from — the
+        two can never disagree about what was sent.
+        ``unread_only`` narrows to the unread.
+        """
+        payload: dict[str, Any] = {"user_id": user_id}
+        if unread_only is not None:
+            payload["unread_only"] = unread_only
+        return _call("notifications.inbox", payload, tool="gpa_get_inbox")
+
+    @server.tool(
+        description=specs["gpa_get_notification_preferences"].description
+    )
+    def gpa_get_notification_preferences(
+        group_id: str, user_id: str
+    ) -> dict[str, Any]:
+        """Read one person's effective policy in a group.
+
+        Every switch with defaults filled in, plus quiet
+        hours — the policy as it WILL act, not as it was
+        last typed.
+        """
+        return _call(
+            "notifications.preferences",
+            {"group_id": group_id, "user_id": user_id},
+            tool="gpa_get_notification_preferences",
+        )
+
+    @server.tool(description=specs["gpa_list_digests"].description)
+    def gpa_list_digests(group_id: str) -> dict[str, Any]:
+        """List the group's stored digests, newest first.
+
+        Previews and sent runs in one list; ``sent_at``
+        tells them apart.
+        """
+        return _call(
+            "digests.list", {"group_id": group_id}, tool="gpa_list_digests"
+        )
+
+    @server.tool(description=specs["gpa_preview_digest"].description)
+    def gpa_preview_digest(group_id: str, role: str) -> dict[str, Any]:
+        """Compose this week's digest; store it UNSENT.
+
+        Organiser role and above. The stored preview is
+        listed by gpa_list_digests with ``sent_at`` empty —
+        the mark that nothing was delivered.
+        """
+        return _call(
+            "digests.preview",
+            {"group_id": group_id, "role": role},
+            tool="gpa_preview_digest",
+        )
+
     # --- The B-206 generated operation tools --------------------------------
     #
     # The five operations B-204's core pair did not cover. Each

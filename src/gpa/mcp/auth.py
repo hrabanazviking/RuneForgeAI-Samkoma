@@ -98,6 +98,28 @@ Scopes, and the mapping onto internal scopes:
   follows the doors, and a divergence between the two is
   precisely the bug class the registry checker and the
   parity suite exist to catch.
+* B-212 places announcing where its door stands —
+  organiser role and publish scope, the only family whose
+  write door names publish outright — and digest-composing
+  beside it: compose renders the group's whole week and
+  its run door is organiser-gated, while the SEND half of
+  that door is not carried by any B-212 operation at all.
+  If a later slice adds a send tool, it starts at publish
+  and argues its way from there; it does not inherit a
+  lower rung from the preview's existence. The family's
+  reads (board, inbox, preferences, digest list) sit at
+  read like every family's reads — including the inbox,
+  whose sensitivity is carried not by a higher rung but by
+  its shape: it names one person and returns only their
+  own rows, so a read credential exercised over it learns
+  about its own principal, not about the group at large.
+  B-212 completes the B-207 → B-212 family ladder this
+  module's table was built for: every rung now carries
+  real operations at every level, and the table's shape —
+  reads at read, participation and upkeep at draft,
+  decisions and organiser acts at publish, the bus-only
+  machinery at admin — is the whole credential law in one
+  view, which is what B-205 asked this file to be.
 
 The MCP-correct errors: authentication failures raise the
 backend's own registry codes — ``token_expired`` for an
@@ -176,6 +198,12 @@ INTERNAL_SCOPES = (
     # B-211: planning reads and the upkeep write.
     "planning:read",
     "planning:write",
+    # B-212: announcement reads/writes, notification reads,
+    # and the digest-compose write.
+    "announcements:read",
+    "announcements:write",
+    "notifications:read",
+    "notifications:write",
 )
 
 # Credential scope -> the internal scopes it maps onto. This is
@@ -196,6 +224,8 @@ _READ_INTERNAL = frozenset(
         "events:read",
         "sources:read",
         "planning:read",
+        "announcements:read",
+        "notifications:read",
     }
 )
 # B-209: drafting also carries the RSVP write — answering an
@@ -228,8 +258,20 @@ EXTERNAL_TO_INTERNAL: dict[str, frozenset[str]] = {
     # B-210: and the extraction-request scope — asking the
     # pipeline to judge people's words spends the group's AI
     # budget, publish-grade at its door as here.
+    # B-212: the publish rung also carries announcing and
+    # digest-composing — both are organiser acts at their
+    # doors (announce: organiser + publish scope outright;
+    # the digest run: organiser, its send still human-only
+    # in B-212, the compose step publish-grade here).
     "publish": _DRAFT_INTERNAL
-    | {"events:publish", "candidates:decide", "events:write", "extraction:request"},
+    | {
+        "events:publish",
+        "candidates:decide",
+        "events:write",
+        "extraction:request",
+        "announcements:write",
+        "notifications:write",
+    },
     "admin": frozenset(INTERNAL_SCOPES),
 }
 
@@ -301,6 +343,15 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_list_questions": "read",
     "gpa_update_task": "draft",
     "gpa_resolve_question": "draft",
+    # B-212's family: board/inbox/preferences/digest reads
+    # are "read"; announcing and digest-composing are
+    # "publish" (organiser acts at their doors).
+    "gpa_list_announcements": "read",
+    "gpa_create_announcement": "publish",
+    "gpa_get_inbox": "read",
+    "gpa_get_notification_preferences": "read",
+    "gpa_list_digests": "read",
+    "gpa_preview_digest": "publish",
 }
 
 

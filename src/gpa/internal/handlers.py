@@ -39,11 +39,15 @@ from gpa.internal.registry import Operation
 from gpa.models.events import Event, Rsvp
 from gpa.models.groups import Group, role_at_least
 from gpa.models.identity import User
+from gpa.models.nonprofit import Announcement
+from gpa.models.notifications import Digest, Notification
 from gpa.models.planning import Decision, OpenQuestion, Task
 from gpa.models.sources import Source
 from gpa.services import calendar_views as calendar_service
 from gpa.services import candidates as candidate_service
 from gpa.services import events as event_service
+from gpa.services import announcements as announcement_service
+from gpa.services import digests as digest_service
 from gpa.services import planning as planning_service
 from gpa.services import sources as source_service
 from gpa.services import rsvps as rsvp_service
@@ -1166,6 +1170,212 @@ def _planning_resolve_question(db: Session, payload: dict, ctx: CallContext) -> 
     return _question_data(question)
 
 
+# --- notifications / digests / announcements family (B-212) -------------------------
+#
+# The sixth domain family: how the group hears from itself.
+# Three different person-laws meet here, and the operations
+# are shaped by them:
+#
+# * ANNOUNCING is a PERSON's act (the B-043 law, enforced in
+#   the announcements service itself): a seat may draft for
+#   the queue but may never announce. The create operation
+#   therefore passes the caller's seat-ness THROUGH to the
+#   service, which refuses a seat in its own words — this
+#   surface adds no second, weaker rule, and an agent
+#   holding a person's publish credential may announce in
+#   that person's name, on the record, exactly as the
+#   HTTP door (organiser + publish) allows the person.
+# * INBOXES and PREFERENCES belong to a person, never to a
+#   seat (the notifications doors state it outright), so
+#   those operations name a USER — there is no seat form of
+#   them to offer, and the payload has no seat_id to give.
+# * The digest PREVIEW composes and stores an UNSENT
+#   digest (compose only). Running one — composing AND
+#   delivering to every member — stays at the human door
+#   in this slice: delivery is the consequential half, and
+#   an agent surface should earn the preview before it
+#   earns the send. The organiser role law rides along
+#   anyway, as at the run door.
+
+
+def _announcement_data(row: Announcement) -> dict:
+    """Serialise one announcement for the bus: the board's
+    words, its pin, its expiry, and its author of record."""
+    return {
+        "announcement_id": row.id,
+        "group_id": row.group_id,
+        "subgroup_id": row.subgroup_id,
+        "title": row.title,
+        "body": row.body,
+        "pinned": row.pinned,
+        "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+        "expired": announcement_service.is_expired(row),
+        "created_by": row.created_by,
+        "author_user_id": row.author_user_id,
+    }
+
+
+def _announcements_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """The board as the service orders it (pinned first,
+    then newest). Expired posts are honoured only for an
+    organiser role — the door's own rule, stated here."""
+    _need(payload, "group_id", "role")
+    group = _group(db, payload["group_id"])
+    include_expired = bool(payload.get("include_expired")) and role_at_least(
+        payload["role"], "organiser"
+    )
+    rows = announcement_service.list_announcements(
+        db, group, visible_ids=None, include_expired=include_expired
+    )
+    return {
+        "group_id": group.id,
+        "announcements": [_announcement_data(row) for row in rows],
+        "count": len(rows),
+    }
+
+
+def _announcements_create(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Post to the board. Two laws, each in its own place:
+    the ROLE law (organiser and above) is the door's,
+    stated here; the PERSON law (never a seat) is the
+    service's, passed through untouched — a seat caller
+    meets the service's own refusal, not a paraphrase."""
+    _need(payload, "group_id", "actor", "role", "title", "body")
+    if not payload.get("seat_id") and not payload.get("user_id"):
+        raise AppError(
+            "internal_bad_payload",
+            detail="announcements.create names a seat_id or a user_id: an announcement has an author.",
+        )
+    if not role_at_least(payload["role"], "organiser"):
+        raise AppError(
+            "forbidden",
+            detail="Only an organiser or above may announce.",
+        )
+    group = _group(db, payload["group_id"])
+    row = announcement_service.create_announcement(
+        db,
+        actor_label=payload["actor"],
+        actor_user_id=payload.get("user_id"),
+        actor_is_seat=bool(payload.get("seat_id")),
+        group=group,
+        title=payload["title"],
+        body=payload["body"],
+        pinned=bool(payload.get("pinned")),
+        expires_at=(
+            _utc_naive(payload["expires_at"]) if payload.get("expires_at") else None
+        ),
+    )
+    return _announcement_data(row)
+
+
+def _person(db: Session, user_id: str) -> User:
+    """Fetch the payload's person, or refuse a dangling id
+    (inboxes and preferences belong to people; a missing
+    person is a not_found, never an empty inbox)."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise AppError("not_found", detail="That person could not be found.")
+    return user
+
+
+def _notification_data(row: Notification) -> dict:
+    """Serialise one inbox row for the bus: what was sent,
+    to whom, its kind and state, and whether it is read —
+    the words an agent triaging a person's inbox works
+    from (bodies ride along; the inbox IS the record)."""
+    return {
+        "notification_id": row.id,
+        "group_id": row.group_id,
+        "event_id": row.event_id,
+        "kind": row.kind,
+        "subject": row.subject,
+        "body_text": row.body_text,
+        "status": row.status,
+        "urgent": row.urgent,
+        "read_at": row.read_at.isoformat() if row.read_at else None,
+    }
+
+
+def _notifications_inbox(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """One person's inbox across their groups (the service's
+    own read: the same rows the email channel sends from),
+    with the unread count stated, not derived by the caller."""
+    _need(payload, "user_id")
+    user = _person(db, payload["user_id"])
+    rows = notify_service.inbox(
+        db, user=user, unread_only=bool(payload.get("unread_only"))
+    )
+    return {
+        "user_id": user.id,
+        "items": [_notification_data(row) for row in rows],
+        "unread": sum(1 for row in rows if row.read_at is None),
+    }
+
+
+def _notifications_preferences(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """One person's effective notification policy in one
+    group: every channel × category switch with defaults
+    filled in, plus their quiet hours — the service's view,
+    returned as the service states it."""
+    _need(payload, "group_id", "user_id")
+    group = _group(db, payload["group_id"])
+    user = _person(db, payload["user_id"])
+    return notify_service.preferences_view(db, user=user, group=group)
+
+
+def _digest_data(row: Digest) -> dict:
+    """Serialise one stored digest for the bus: its week,
+    its subject and text, and whether it was ever sent. The
+    HTML rendering stays at the surfaces that render; the
+    bus carries the words."""
+    return {
+        "digest_id": row.id,
+        "group_id": row.group_id,
+        "week_start": row.week_start.isoformat() if row.week_start else None,
+        "week_end": row.week_end.isoformat() if row.week_end else None,
+        "subject": row.subject,
+        "body_text": row.body_text,
+        "created_by": row.created_by,
+        "sent_at": row.sent_at.isoformat() if row.sent_at else None,
+    }
+
+
+def _digests_list(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """The group's stored digests, newest first — composed
+    previews and sent runs alike, told apart by sent_at."""
+    _need(payload, "group_id")
+    group = _group(db, payload["group_id"])
+    rows = (
+        db.query(Digest)
+        .filter(Digest.group_id == group.id)
+        .order_by(Digest.created_at.desc(), Digest.id.desc())
+        .all()
+    )
+    return {
+        "group_id": group.id,
+        "digests": [_digest_data(row) for row in rows],
+        "count": len(rows),
+    }
+
+
+def _digests_preview(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """Compose this week's digest and store it UNSENT (the
+    digest service's compose step only — delivery is not in
+    this operation). The organiser role law rides from the
+    run door: the preview renders the group's whole week,
+    and that is organiser-grade sight."""
+    _need(payload, "group_id", "role")
+    if not role_at_least(payload["role"], "organiser"):
+        raise AppError(
+            "forbidden",
+            detail="Only an organiser or above may compose the digest.",
+        )
+    group = _group(db, payload["group_id"])
+    digest = digest_service.compose_digest(db, group=group)
+    db.commit()
+    return _digest_data(digest)
+
+
 def register_all() -> None:
     """Register every operation (idempotent). Called lazily by
     the client's first call and eagerly by composition roots."""
@@ -1474,4 +1684,58 @@ def register_all() -> None:
             "Resolve one open question, optionally minting its answer as a decision.",
         ),
         _planning_resolve_question,
+    )
+    registry.register(
+        Operation(
+            "announcements.list",
+            "announcements",
+            "announcements:read",
+            "List a group's announcement board, pinned first.",
+        ),
+        _announcements_list,
+    )
+    registry.register(
+        Operation(
+            "announcements.create",
+            "announcements",
+            "announcements:write",
+            "Post one announcement to the board (organiser person only).",
+        ),
+        _announcements_create,
+    )
+    registry.register(
+        Operation(
+            "notifications.inbox",
+            "notifications",
+            "notifications:read",
+            "Read one person's notification inbox across their groups.",
+        ),
+        _notifications_inbox,
+    )
+    registry.register(
+        Operation(
+            "notifications.preferences",
+            "notifications",
+            "notifications:read",
+            "Read one person's effective notification policy in a group.",
+        ),
+        _notifications_preferences,
+    )
+    registry.register(
+        Operation(
+            "digests.list",
+            "notifications",
+            "notifications:read",
+            "List a group's stored digests, newest first.",
+        ),
+        _digests_list,
+    )
+    registry.register(
+        Operation(
+            "digests.preview",
+            "notifications",
+            "notifications:write",
+            "Compose this week's digest and store it UNSENT (organiser and above).",
+        ),
+        _digests_preview,
     )
