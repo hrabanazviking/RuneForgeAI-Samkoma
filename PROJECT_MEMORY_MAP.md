@@ -1668,7 +1668,8 @@ parses the model so it cannot drift from the code.
   attempt was killed by a service restart at ~68% with
   zero failures in its log; the slice committed on the
   docs-slice regression pattern (docs gate + architecture
-  + submission + threat model, 27 passed) — a full-suite
+  + submission batch 25 passed, threat model 6 passed —
+  31 in all) — a full-suite
   green for Phase 18 is the B-200 gate's to prove.
   Next: B-190.
 
