@@ -85,8 +85,8 @@ def test_parity_report_counts_and_pending_surfaces(app):
     # family to 25 tools / 23 operations; B-210's sources
     # family to 30 tools / 28 operations; B-211's planning
     # family to 36 tools / 34 operations; B-212's family to
-    # 42 tools / 40 operations.
-    assert report["mcp_tools"] == 42
-    assert report["mcp_operations_covered"] == 40
+    # 43 tools / 41 operations (B-216's bridge added one of each).
+    assert report["mcp_tools"] == 43
+    assert report["mcp_operations_covered"] == 41
     assert "MCP tool registry (B-206)" in text
     assert "Pending surface, not yet built: terminal (B-221)" in text

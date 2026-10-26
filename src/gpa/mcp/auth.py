@@ -343,6 +343,10 @@ TOOL_SCOPES: dict[str, str] = {
     "gpa_list_questions": "read",
     "gpa_update_task": "draft",
     "gpa_resolve_question": "draft",
+    # B-216's elicitation bridge: asking for a missing fact
+    # is "draft" — planning:write maps from draft, as the
+    # checker proves; a read-only credential cannot ask.
+    "gpa_ask_for_missing_fact": "draft",
     # B-212's family: board/inbox/preferences/digest reads
     # are "read"; announcing and digest-composing are
     # "publish" (organiser acts at their doors).

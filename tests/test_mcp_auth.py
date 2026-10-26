@@ -255,6 +255,8 @@ def test_under_scoped_principal_fails_insufficient_scope():
         "gpa_get_notification_preferences",
         "gpa_list_digests",
         "gpa_preview_digest",
+        # B-216: the elicitation bridge's one tool.
+        "gpa_ask_for_missing_fact",
     }
 
 

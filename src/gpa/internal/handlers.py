@@ -37,7 +37,7 @@ from gpa.internal import registry
 from gpa.internal.client import CallContext
 from gpa.internal.registry import Operation
 from gpa.models.events import Event, Rsvp
-from gpa.models.groups import Group, role_at_least
+from gpa.models.groups import Group, Membership, role_at_least
 from gpa.models.identity import User
 from gpa.models.nonprofit import Announcement
 from gpa.models.notifications import Digest, Notification
@@ -1170,6 +1170,147 @@ def _planning_resolve_question(db: Session, payload: dict, ctx: CallContext) -> 
     return _question_data(question)
 
 
+# --- elicitation degradation (B-216) ---------------------------------------------
+#
+# The fallback half of the MCP elicitation bridge: when a
+# client cannot be asked (no elicitation capability, or the
+# human declined or cancelled), the agent's question must not
+# evaporate. This operation files it as one of the group's
+# OPEN questions (B-086) — the planning service's own create
+# door, so the row carries the same shape and audit as a
+# question a person asked — with the asking agent's identity
+# (the payload's ``actor``) as its author of record, and then
+# routes it to the organiser inbox: one notification per
+# active organiser-and-above PERSON member, naming the agent
+# and the question. Seats are not notified (an inbox belongs
+# to a person, B-212's law); a group with no organiser person
+# still keeps the question — the queue is the durable home,
+# the inbox is the routing, in that order.
+#
+# The fact-kind vocabulary is closed HERE as at the MCP
+# module's door (the two doors state the same set in their
+# own words: ``place``, ``time``, ``yes_no``, ``free_text``)
+# because this operation is reachable without the MCP module
+# in between. And the operation's answer carries the slice's
+# law as data: ``approval`` is False, always — filing or
+# answering this question approves nothing, ever; a linked
+# candidate (the draft the fact would inform) is checked to
+# be still pending and is then left exactly as it was.
+
+# The closed fact-kind vocabulary, stated at this door too
+# (see the family comment above): the kinds an agent may be
+# missing, each with an answer shape a human can fill in.
+_ELICITATION_FACT_KINDS = ("place", "time", "yes_no", "free_text")
+
+
+def _elicitation_ask(db: Session, payload: dict, ctx: CallContext) -> dict:
+    """File one agent question as an open question (B-216).
+
+    Creates the OpenQuestion through the planning service
+    (which commits, as its direct form does — the bridge's
+    own commit afterwards is the documented no-op second
+    commit), then writes the organiser notifications inside
+    this call's transaction. A named candidate must exist in
+    this group and still be pending: informing a draft that
+    has already been decided is a question with no home, and
+    it is refused as a conflict rather than filed loose.
+    """
+    _need(payload, "group_id", "actor", "question", "fact_kind")
+    # The vocabulary door: an invented kind is refused before
+    # any row exists, in the same words at either door.
+    if payload["fact_kind"] not in _ELICITATION_FACT_KINDS:
+        raise AppError(
+            "validation_error",
+            detail=(
+                f"Unknown fact kind {payload['fact_kind']!r}: an elicitation "
+                f"can ask about one of {', '.join(_ELICITATION_FACT_KINDS)}."
+            ),
+        )
+    group = _group(db, payload["group_id"])
+    # The context check: a candidate named as the question's
+    # reason must be this group's and still undecided. The
+    # candidate is READ here and never written — informing is
+    # not deciding, and this operation holds no approval act.
+    candidate = None
+    if payload.get("candidate_id") is not None:
+        candidate = candidate_service.get_candidate(
+            db, group, payload["candidate_id"]
+        )
+        if candidate.status != "pending":
+            raise AppError(
+                "conflict",
+                detail=(
+                    "That draft has already been decided, so a missing "
+                    "fact can no longer inform it."
+                ),
+            )
+    # The durable half: the question itself, asked by the
+    # agent (its label is the author of record), optionally
+    # tied to the event it belongs to. The service validates
+    # the words and the event's visibility at organiser
+    # sight — the routing role, since organisers receive it.
+    question = planning_service.create_question(
+        db,
+        actor_label=payload["actor"],
+        group=group,
+        viewer_role="organiser",
+        text=str(payload["question"]),
+        event_id=payload.get("event_id"),
+    )
+    # The routing half: one inbox notification per active
+    # organiser-and-above person. The kind's first segment
+    # ("elicitation") is its preference category — a category
+    # with no switches set defaults to on, as every kind's
+    # does, so the routing reaches organisers by default.
+    organisers = (
+        db.query(Membership)
+        .filter(
+            Membership.group_id == group.id,
+            Membership.status == "active",
+        )
+        .all()
+    )
+    notified = 0
+    for membership in organisers:
+        # Role is a ladder, not a label match: owner, admin,
+        # and organiser all receive the group's questions.
+        if not role_at_least(membership.role, "organiser"):
+            continue
+        user = db.get(User, membership.user_id)
+        if user is None:
+            continue
+        row = notify_service.create_notification(
+            db,
+            group=group,
+            recipient_user=user,
+            recipient_label=f"user:{user.id}",
+            kind="elicitation.question",
+            subject=f"A question from {payload['actor']}",
+            body_text=(
+                f"{payload['actor']} is missing a fact "
+                f"({payload['fact_kind']}) and asks: {question.text}\n\n"
+                "An answer can inform a draft; it can never be an approval."
+            ),
+            event_id=payload.get("event_id"),
+        )
+        if row is not None:
+            notified += 1
+    # The answer's shape states the law as data: which road
+    # was taken (the filed question IS the degradation), who
+    # was told, and — explicitly — that nothing was approved.
+    result = _question_data(question)
+    result.update(
+        {
+            "fact_kind": payload["fact_kind"],
+            "candidate_id": candidate.id if candidate is not None else None,
+            "notified_organisers": notified,
+            "degraded": True,
+            "approval": False,
+        }
+    )
+    return result
+
+
 # --- notifications / digests / announcements family (B-212) -------------------------
 #
 # The sixth domain family: how the group hears from itself.
@@ -1684,6 +1825,15 @@ def register_all() -> None:
             "Resolve one open question, optionally minting its answer as a decision.",
         ),
         _planning_resolve_question,
+    )
+    registry.register(
+        Operation(
+            "elicitation.ask",
+            "planning",
+            "planning:write",
+            "File one agent question as an open question and route it to the organiser inbox (never an approval).",
+        ),
+        _elicitation_ask,
     )
     registry.register(
         Operation(

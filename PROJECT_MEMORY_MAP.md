@@ -2876,6 +2876,62 @@ parses the model so it cannot drift from the code.
   B-220 gate's to prove. No ZIP at this slice.
   Progress: **215/350. Next: B-216 (MCP elicitation
   bridge).**
+- **B-216 MCP elicitation bridge** ✅ (timer crew, 2026-10-26):
+  the server may ASK the human for one missing fact, in a
+  new module `src/gpa/mcp/elicitation.py` (public symbols
+  `FACT_KINDS`, `NOT_AN_APPROVAL`, the four answer models,
+  `answer_schema`, `client_supports_elicitation`,
+  `elicitation_message`, `degrade_to_open_question`) plus
+  one new internal operation and one new tool — the
+  catalogue stands at **43 tools / 41 operations**. The
+  fact kinds are a closed vocabulary (place / time /
+  yes_no / free_text), each with a one-field typed answer
+  schema (a boolean for yes_no, words for the rest); an
+  invented kind is refused `validation_error` at the
+  module's door, the operation's door, and the tool's,
+  before anything is asked or filed. The tool
+  `gpa_ask_for_missing_fact` (draft scope; rides the
+  existing `planning:write` internal scope — no grant
+  widened) is the server's one async tool: where the
+  calling client's initialize handshake advertised FORM
+  elicitation it asks live through the SDK context and
+  returns the human's answer AS DATA with
+  `approval: False` stated in the result — nothing is
+  written, minted, or decided by an accepted elicitation.
+  **Every other outcome degrades, by design**: no context,
+  no capability, a decline, a cancel, or a failed ask all
+  file the SAME question through `elicitation.ask`, which
+  creates an OpenQuestion via the planning service's own
+  create door (author = the asking agent's label, B-086's
+  row and audit) and routes it to the organiser inbox —
+  one `elicitation.question` notification per active
+  organiser-and-above person. A named candidate context
+  must be this group's and still pending (unknown =
+  `not_found`, decided = `conflict`); the candidate is
+  read, never written — **an answer can inform a draft;
+  it can never be an approval**, and the operation stamps
+  `approval: False` on its own answer. Tests:
+  tests/test_mcp_elicitation.py **10 passed** (vocabulary
+  + typed schemas, handshake detection in object and dict
+  shapes, the filed/authored/routed degradation with the
+  notification row asserted in the DB, a linked candidate
+  staying pending, unknown-candidate refusal filing
+  nothing, the accepted live ask filing nothing, a
+  declined ask still filing, read-only principal refused
+  `insufficient_scope`, the helper validating pre-call).
+  Combined batch (all `test_mcp_*` + parity + comment
+  gate + docs gate + architecture + internal API)
+  **146 passed** from its own log — the 2 first-run
+  failures were the docs gate naming the new files, fixed
+  by atlas regen (420 files) + the docs/17 inventory row;
+  superseded count assertions updated in place (registry
+  40→41 operations, manifest 42→43 entries, parity
+  42/40→43/41, core operations set + CORE_TOOLS, auth
+  TOOL_SCOPES set). Ruff E9+F clean. Contract unchanged:
+  **202 paths / 230 schemas**. Full suite NOT re-run — a
+  full Phase 19 green is the B-220 gate's to prove. No
+  ZIP at this slice. Progress: **216/350. Next: B-217
+  (MCP sampling policy).**
 
 ## Decisions & deviations (from the roadmap defaults)
 

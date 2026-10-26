@@ -483,6 +483,27 @@ ANNOTATIONS: dict[str, tuple[str, str, str]] = {
         "owner unassigns it — both are recorded acts, "
         "neither is a suggestion.",
     ),
+    # B-216's bridge (elicitation): asking is a draft-grade
+    # act — it files a question and informs drafts, and its
+    # annotation closes with the limit, like B-212's digest
+    # annotation did, because the dangerous misunderstanding
+    # here is identical: an agent mistaking a human's ANSWER
+    # for a human's APPROVAL. The operation rides the
+    # planning write scope (it creates a planning row — an
+    # open question — through the planning service's door).
+    "elicitation.ask": (
+        "gpa_ask_for_missing_fact",
+        "draft",
+        "Ask the human for one missing fact through the "
+        "internal elicitation.ask operation: where the "
+        "client supports elicitation the server asks live; "
+        "otherwise the question is filed as one of the "
+        "group's open questions with your identity attached "
+        "and routed to the organiser inbox. Kinds: place, "
+        "time, yes_no, free_text. An answer can inform a "
+        "draft; it can never be an approval — the draft "
+        "still faces the review queue.",
+    ),
     "planning.resolve_question": (
         "gpa_resolve_question",
         "draft",

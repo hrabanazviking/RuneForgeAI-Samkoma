@@ -45,6 +45,17 @@ What this module builds, and what it deliberately does not:
   resources and tools in its text and stating in its text
   that drafts go to the queue. A prompt holds no capability
   of its own — rendering one calls nothing.
+* **Elicitation bridge (B-216)** — the one tool that asks
+  back (``gpa_ask_for_missing_fact``, in ``gpa.mcp.
+  elicitation``): where the calling client advertised form
+  elicitation, the server asks the human live for one
+  missing fact (place, time, yes/no, free text) and returns
+  the answer as data; everywhere else the same question is
+  filed as an open question with the agent's identity
+  attached and routed to the organiser inbox, through the
+  ``elicitation.ask`` operation. An elicited or filed
+  answer can inform a draft; it can never be an approval —
+  every result carries ``approval: False``.
 * **Subscriptions + notifications (B-214)** — the shelf's
   watch, in ``gpa.mcp.subscriptions``: protocol handlers
   for ``resources/subscribe`` / ``resources/unsubscribe``
@@ -79,7 +90,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
 from gpa.config import Settings, get_settings
 from gpa.errors import AppError
@@ -94,6 +105,13 @@ from gpa.mcp.auth import (
     seat_key_provider,
 )
 from gpa.mcp.bridge import InternalBridge, package_version
+from gpa.mcp.elicitation import (
+    NOT_AN_APPROVAL,
+    answer_schema,
+    client_supports_elicitation,
+    degrade_to_open_question,
+    elicitation_message,
+)
 from gpa.mcp.prompts import register_prompts
 from gpa.mcp.resources import register_resources
 from gpa.mcp.structured import get_logger, log_event, timed
@@ -828,6 +846,116 @@ def build_server(
         return _call(
             "planning.resolve_question", payload, tool="gpa_resolve_question"
         )
+
+    # --- B-216: the elicitation bridge -------------------------------------------
+    #
+    # The one tool on this server that can ASK BACK. Its shape
+    # is the slice's law in three steps, in this order:
+    #
+    # 1. The vocabulary door first (``answer_schema`` refuses
+    #    an invented fact kind as validation_error) — no
+    #    elicitation is attempted and no question is filed for
+    #    a kind with no answer shape.
+    # 2. Where THIS call's client advertised form elicitation
+    #    in its initialize handshake, the server asks live
+    #    through the SDK context: the human's answer returns
+    #    as DATA in this tool's result, for the agent to use
+    #    in its next draft edit. Nothing is written, minted,
+    #    or decided by an accepted elicitation — the result
+    #    carries ``approval: False`` so the shape itself says
+    #    so, not only this comment.
+    # 3. Every other outcome — no context in reach, no
+    #    elicitation capability, a declined or cancelled
+    #    form, a transport error mid-ask — degrades to the
+    #    durable road: the question is filed as an open
+    #    question (B-086) with the agent's identity attached
+    #    and routed to the organiser inbox, through the
+    #    ``elicitation.ask`` operation. A question is never
+    #    lost because a client could not be asked.
+    #
+    # The tool is async because elicitation is a server ->
+    # client REQUEST inside the call — the one place this
+    # server's tools wait on the client, rather than the
+    # backend. Its scope law is unchanged: ``_principal``
+    # runs the same call-time check (draft) as every tool.
+
+    @server.tool(description=specs["gpa_ask_for_missing_fact"].description)
+    async def gpa_ask_for_missing_fact(
+        group_id: str,
+        question: str,
+        fact_kind: str,
+        actor: str,
+        candidate_id: str | None = None,
+        event_id: str | None = None,
+        ctx: Context | None = None,
+    ) -> dict[str, Any]:
+        """Ask the human for one missing fact (B-216).
+
+        Live elicitation where the client supports it; the
+        filed open question everywhere else. Either way the
+        result states ``approval: False`` — an answer informs
+        a draft, it never approves one.
+        """
+        tool = "gpa_ask_for_missing_fact"
+        with timed(
+            logger, "mcp.tool", tool=tool, operation="elicitation.ask",
+            caller=bridge.caller,
+        ) as done:
+            try:
+                # The call-time scope check, as at every door.
+                _principal(tool)
+                # Step 1: the vocabulary door (raises AppError
+                # for an invented kind, before anything else).
+                schema = answer_schema(fact_kind)
+                # Step 2: the live ask, only where a context
+                # exists AND its handshake offered form mode.
+                client_params = None
+                if ctx is not None:
+                    try:
+                        client_params = ctx.request_context.client_params
+                    except Exception:  # noqa: BLE001 — no handshake in reach
+                        client_params = None
+                if ctx is not None and client_supports_elicitation(client_params):
+                    result = None
+                    try:
+                        result = await ctx.elicit(
+                            message=elicitation_message(question, fact_kind),
+                            schema=schema,
+                        )
+                    except Exception:  # noqa: BLE001 — a failed ask degrades
+                        result = None
+                    if (
+                        result is not None
+                        and getattr(result, "action", None) == "accept"
+                        and getattr(result, "data", None) is not None
+                    ):
+                        done(result="ok")
+                        return {
+                            "elicited": True,
+                            "degraded": False,
+                            "group_id": group_id,
+                            "fact_kind": fact_kind,
+                            "answer": result.data.answer,
+                            "approval": False,
+                            "note": NOT_AN_APPROVAL,
+                        }
+                # Step 3: the durable degradation — the same
+                # question, filed where the group keeps its
+                # questions, the agent's identity attached.
+                data = degrade_to_open_question(
+                    bridge,
+                    group_id=group_id,
+                    actor=actor,
+                    question=question,
+                    fact_kind=fact_kind,
+                    candidate_id=candidate_id,
+                    event_id=event_id,
+                )
+                done(result="ok")
+                return {"elicited": False, "note": NOT_AN_APPROVAL, **data}
+            except AppError as exc:
+                done(result="error", error_code=exc.code)
+                raise RuntimeError(f"{exc.code}: {exc.detail}") from exc
 
     # --- B-212 family: notifications, digests, announcements --------------------
     #

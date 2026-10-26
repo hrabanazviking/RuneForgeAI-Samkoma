@@ -100,6 +100,9 @@ CORE_TOOLS = {
     "gpa_get_notification_preferences",
     "gpa_list_digests",
     "gpa_preview_digest",
+    # B-216: the elicitation bridge (one tool, async — it can
+    # ask the client back mid-call).
+    "gpa_ask_for_missing_fact",
 }
 
 
@@ -229,6 +232,9 @@ def test_bridge_identity_is_the_mcp_service_identity(app, settings):
         "notifications.preferences",
         "digests.list",
         "digests.preview",
+        # B-216: the elicitation bridge's degradation operation
+        # (rides planning:write, already granted above).
+        "elicitation.ask",
     }
 
 
@@ -286,7 +292,7 @@ def test_server_builds_with_the_core_tools(app, settings):
     info = bridge.info()
     # B-207: 12; B-208: 17; B-209: 23; B-210: 28; B-211: 34;
     # B-212: 40.
-    assert info["caller"] == "mcp" and info["operations_count"] == 40
+    assert info["caller"] == "mcp" and info["operations_count"] == 41
 
 
 # --- structured logging: no payloads, ever ---------------------------------

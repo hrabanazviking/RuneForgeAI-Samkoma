@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **418 Python code files**: migrations 23, scripts 21, src 198, tests 176. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **420 Python code files**: migrations 23, scripts 21, src 199, tests 177. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -562,8 +562,20 @@ The tree at generation time holds **418 Python code files**: migrations 23, scri
 - **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
-- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_events.py`, `tests/test_mcp_groups.py`, `tests/test_mcp_notifications.py`
+- **Tests that name it:** `tests/test_mcp_auth.py`, `tests/test_mcp_candidates.py`, `tests/test_mcp_core.py`, `tests/test_mcp_elicitation.py`, `tests/test_mcp_events.py`, `tests/test_mcp_groups.py`
 - **Created by:** B-204 — B-204 MCP server core: official SDK server package (src/gpa/mcp) talking only through the 
+
+### `src/gpa/mcp/elicitation.py`
+
+- **Purpose:** MCP elicitation bridge — asking the human (roadmap B-216).
+- **Module:** mcp · **Layer:** mcp
+- **Public symbols:** `NOT_AN_APPROVAL`, `PlaceAnswer`, `TimeAnswer`, `YesNoAnswer`, `FreeTextAnswer`, `require_fact_kind`, `answer_schema`, `client_supports_elicitation`, `elicitation_message`, `degrade_to_open_question`
+- **Dependencies (imports):** `__future__`, `gpa.errors`, `pydantic`, `typing`
+- **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
+- **Tests that name it:** `tests/test_mcp_elicitation.py`, `tests/test_mcp_registry.py`
+- **Created by:** pre-git or generated (see git history)
 
 ### `src/gpa/mcp/prompts.py`
 
@@ -575,7 +587,7 @@ The tree at generation time holds **418 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
 - **Tests that name it:** `tests/extraction_world.py`, `tests/test_comment_gate.py`, `tests/test_extraction.py`, `tests/test_mcp_prompts.py`, `tests/test_mcp_subscriptions.py`, `tests/test_prompts.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-215 — B-215 MCP prompts: curated versioned workflow templates — five roadmap jobs (plan_event, b
 
 ### `src/gpa/mcp/resources.py`
 
@@ -594,7 +606,7 @@ The tree at generation time holds **418 Python code files**: migrations 23, scri
 - **Purpose:** The MCP server core (roadmap B-204, Phase 19).
 - **Module:** mcp · **Layer:** mcp
 - **Public symbols:** `SERVER_NAME`, `INSTRUCTIONS`, `supported_protocol_versions`, `build_server`, `bridge_of`, `create_http_app`, `main`
-- **Dependencies (imports):** `__future__`, `argparse`, `gpa.config`, `gpa.errors`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.prompts`, `gpa.mcp.resources`, `gpa.mcp.structured`, `gpa.mcp.subscriptions`, `gpa.mcp.tools`, `mcp.server.auth.middleware.auth_context`, `mcp.server.auth.settings`, `mcp.server.fastmcp`, `mcp.server.lowlevel.server`, `mcp.shared.version`, `typing`
+- **Dependencies (imports):** `__future__`, `argparse`, `gpa.config`, `gpa.errors`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.elicitation`, `gpa.mcp.prompts`, `gpa.mcp.resources`, `gpa.mcp.structured`, `gpa.mcp.subscriptions`, `gpa.mcp.tools`, `mcp.server.auth.middleware.auth_context`, `mcp.server.auth.settings`, `mcp.server.fastmcp`, `mcp.server.lowlevel.server`, `mcp.shared.version`, `typing`
 - **Allowed / forbidden:** May import: stdlib, the MCP SDK, the internal API, and the foundation files (config, db, errors). Forbidden: services, routers, models, schemas — the internal API is this surface's only door (B-204).
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals travel as MCP tool errors carrying the backend's problem code; log lines carry call facts only, never payloads or secrets.
@@ -3922,6 +3934,18 @@ The tree at generation time holds **418 Python code files**: migrations 23, scri
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-204 — B-204 MCP server core: official SDK server package (src/gpa/mcp) talking only through the 
 
+### `tests/test_mcp_elicitation.py`
+
+- **Purpose:** MCP elicitation bridge tests (roadmap B-216).
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `test_fact_kinds_carry_typed_answer_schemas`, `test_an_invented_fact_kind_is_a_typed_refusal`, `test_capability_detection_reads_the_handshake`, `test_no_context_degrades_to_a_filed_question`, `test_degradation_leaves_a_linked_candidate_pending`, `test_a_decided_or_unknown_candidate_refuses_the_filing`, `test_an_accepted_elicitation_returns_data_and_files_nothing`, `test_a_declined_elicitation_still_files_the_question`, `test_a_read_only_principal_cannot_ask`, `test_the_helper_validates_before_it_calls`
+- **Dependencies (imports):** `__future__`, `asyncio`, `conftest`, `gpa.errors`, `gpa.mcp.auth`, `gpa.mcp.bridge`, `gpa.mcp.elicitation`, `gpa.mcp.server`, `gpa.models.notifications`, `pytest`, `types`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
+
 ### `tests/test_mcp_events.py`
 
 - **Purpose:** MCP events / RSVPs / calendar tool tests (roadmap B-209).
@@ -3980,7 +4004,7 @@ The tree at generation time holds **418 Python code files**: migrations 23, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-215 — B-215 MCP prompts: curated versioned workflow templates — five roadmap jobs (plan_event, b
 
 ### `tests/test_mcp_registry.py`
 
