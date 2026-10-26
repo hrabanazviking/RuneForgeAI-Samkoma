@@ -68,7 +68,7 @@ durability (B-195), AI pipeline (B-193) — and the prompt
 templates carry their own name+version front-matter under
 the B-038 discipline.
 
-The tree at generation time holds **391 Python code files**: migrations 22, scripts 20, src 188, tests 161. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
+The tree at generation time holds **392 Python code files**: migrations 22, scripts 20, src 188, tests 162. Every one has an entry below; the B-197 checker in `tests/test_docs_gate.py` re-derives this list from the live tree and fails, naming the file, if any file lacks an entry or any entry names a file that no longer exists.
 
 
 ## Files under `src/`
@@ -382,7 +382,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
-- **Tests that name it:** `tests/test_architecture.py`, `tests/test_docs_gate.py`, `tests/test_submission_pack.py`
+- **Tests that name it:** `tests/test_architecture.py`, `tests/test_docs_gate.py`, `tests/test_phase18_gate.py`, `tests/test_submission_pack.py`
 - **Created by:** B-161 — B-161 Module boundaries: module map + architecture checker, pinned edge inventories, priva
 
 ### `src/gpa/internal/auditing.py`
@@ -454,7 +454,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
-- **Tests that name it:** `tests/test_chaos.py`, `tests/test_internal_api.py`, `tests/test_internal_identity.py`, `tests/test_internal_profiles.py`
+- **Tests that name it:** `tests/test_chaos.py`, `tests/test_internal_api.py`, `tests/test_internal_identity.py`, `tests/test_internal_profiles.py`, `tests/test_phase18_gate.py`
 - **Created by:** B-162 — B-162 Internal API core: typed envelope, operation registry with caller scopes, handlers i
 
 ### `src/gpa/internal/identity.py`
@@ -478,7 +478,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: stdlib, cryptography, models, the audit writer. Forbidden: routers; payload content in logs or audit detail.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Refusals are the internal_* registry codes, signed even on the wire door; dispatch happens in the caller's transaction or not at all.
-- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Tests that name it:** `tests/test_phase18_gate.py`
 - **Created by:** B-161 — B-161 Module boundaries: module map + architecture checker, pinned edge inventories, priva
 
 ### `src/gpa/internal/registry.py`
@@ -1942,7 +1942,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: models, schemas, sibling services through the pinned architecture inventory, the internal API. Forbidden: routers; private names of other files.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Domain refusals are AppError problem+json with a registry code; unexpected errors propagate to the chassis and roll the transaction back.
-- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_quality_gate.py`, `tests/test_quality_report.py`
+- **Tests that name it:** `tests/test_architecture.py`, `tests/test_authz_fuzz.py`, `tests/test_docs_gate.py`, `tests/test_quality_gate.py`, `tests/test_quality_report.py`
 - **Created by:** B-043 — Phase 3 (part 5): review queue, extraction jobs, budget (B-043/044/045/047)
 
 ### `src/gpa/services/reconcile.py`
@@ -2302,7 +2302,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** May import: stdlib, cryptography (encrypted driver). Forbidden: everything above the data layer.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Writes are atomic (temp + rename); a bad key is refused by the strict key pattern before any byte moves.
-- **Tests that name it:** `tests/test_docs_gate.py`, `tests/test_encrypted_storage.py`, `tests/test_internal_transport.py`, `tests/test_jobqueue.py`, `tests/test_phase17_gate.py`
+- **Tests that name it:** `tests/test_docs_gate.py`, `tests/test_encrypted_storage.py`, `tests/test_internal_transport.py`, `tests/test_jobqueue.py`, `tests/test_phase17_gate.py`, `tests/test_phase18_gate.py`
 - **Created by:** B-168 — B-168 Encrypted file storage: EncryptedStorage driver (per-file keys wrapped under the mas
 
 ### `src/gpa/storage/local.py`
@@ -2621,7 +2621,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
 - **Tests that name it:** `tests/test_docs_gate.py`
-- **Created by:** pre-git or generated (see git history)
+- **Created by:** B-197 — B-197 Per-code-file atlas: generated docs/16 chapter with one entry per code file (391 fil
 
 ### `scripts/chaos_report.py`
 
@@ -2644,7 +2644,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** Operator tools: may import the package and stdlib. Forbidden: shipping in the request path; secrets in output.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
-- **Tests that name it:** `tests/test_docs_gate.py`
+- **Tests that name it:** `tests/test_docs_gate.py`, `tests/test_phase18_gate.py`
 - **Created by:** B-181 — B-181 Documentation architecture: docs/ tree + reader-ordered index + docs-as-code rules, 
 
 ### `scripts/comment_gate.py`
@@ -2764,7 +2764,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** Operator tools: may import the package and stdlib. Forbidden: shipping in the request path; secrets in output.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
-- **Tests that name it:** `tests/test_signed_releases.py`
+- **Tests that name it:** `tests/test_docs_gate.py`, `tests/test_signed_releases.py`
 - **Created by:** B-179 — B-179 Signed releases + SBOM: SPDX 2.3 bill of materials generated from uv.lock inside eve
 
 ### `scripts/requeue_stuck_jobs.py`
@@ -2824,7 +2824,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Allowed / forbidden:** Operator tools: may import the package and stdlib. Forbidden: shipping in the request path; secrets in output.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
 - **Failure behaviour:** Tools refuse in plain words and exit non-zero; destructive tools verify before they place or delete.
-- **Tests that name it:** `tests/test_comment_gate.py`, `tests/test_field_encryption.py`, `tests/test_internal_profiles.py`, `tests/test_migrations_phase10.py`, `tests/test_migrations_phase11.py`, `tests/test_migrations_phase12.py`
+- **Tests that name it:** `tests/test_comment_gate.py`, `tests/test_docs_gate.py`, `tests/test_field_encryption.py`, `tests/test_internal_profiles.py`, `tests/test_migrations_phase10.py`, `tests/test_migrations_phase11.py`
 - **Created by:** B-152 — Phase 15 / B-152: PostgreSQL promotion — real parity suite, verified mover
 
 ### `scripts/upgrade_drill.py`
@@ -3242,7 +3242,7 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 
 - **Purpose:** B-181 documentation gate: index present, diagrams sound.
 - **Module:** tests · **Layer:** tests
-- **Public symbols:** `ROOT`, `test_docs_index_orders_every_reader`, `test_shipped_diagrams_all_parse`, `test_broken_diagram_fails_by_file`, `test_unknown_diagram_type_fails_by_file`, `test_unterminated_fence_fails_by_file`, `test_user_guide_1_covers_its_roadmap_topics`, `test_user_guide_2_covers_every_way_in`, `test_user_guide_3_covers_the_trust_workflow`, `test_user_guide_4_covers_calendar_and_events`, `test_user_guide_5_covers_planning`, `test_user_guide_6_covers_reminders_digests_memory`, `test_admin_guide_8_covers_dangerous_buttons_consequence_first`, `test_architecture_pack_covers_its_six_diagrams`, `test_module_atlas_covers_every_module`, `test_internal_api_document_covers_the_protocol`, `test_data_model_document_covers_every_table`, `test_ai_pipeline_document_covers_its_pipelines`, `test_erdiagram_crows_foot_is_not_a_broken_brace`, `test_sound_diagram_passes`, `test_security_document_covers_threat_crypto_account_audit`, `test_durability_document_covers_recovery_machinery`, `test_file_atlas_covers_every_code_file`, `test_api_frontend_guide_covers_its_roadmap_topics`
+- **Public symbols:** `ROOT`, `test_docs_index_orders_every_reader`, `test_shipped_diagrams_all_parse`, `test_broken_diagram_fails_by_file`, `test_unknown_diagram_type_fails_by_file`, `test_unterminated_fence_fails_by_file`, `test_user_guide_1_covers_its_roadmap_topics`, `test_user_guide_2_covers_every_way_in`, `test_user_guide_3_covers_the_trust_workflow`, `test_user_guide_4_covers_calendar_and_events`, `test_user_guide_5_covers_planning`, `test_user_guide_6_covers_reminders_digests_memory`, `test_admin_guide_8_covers_dangerous_buttons_consequence_first`, `test_architecture_pack_covers_its_six_diagrams`, `test_module_atlas_covers_every_module`, `test_internal_api_document_covers_the_protocol`, `test_data_model_document_covers_every_table`, `test_ai_pipeline_document_covers_its_pipelines`, `test_erdiagram_crows_foot_is_not_a_broken_brace`, `test_sound_diagram_passes`, `test_security_document_covers_threat_crypto_account_audit`, `test_durability_document_covers_recovery_machinery`, `test_file_atlas_covers_every_code_file`, `test_testing_quality_document_covers_every_suite`, `test_deployment_release_document_covers_operations` (+1 more)
 - **Dependencies (imports):** `__future__`, `importlib.util`, `pathlib`, `re`
 - **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
 - **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
@@ -4065,6 +4065,18 @@ The tree at generation time holds **391 Python code files**: migrations 22, scri
 - **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
 - **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
 - **Created by:** B-180 — B-180 Phase 17 gate drill: resumable-upload flyer -> worker dies mid-vision-job -> startup
+
+### `tests/test_phase18_gate.py`
+
+- **Purpose:** Phase 18 gate (B-200): the documentation proof.
+- **Module:** tests · **Layer:** tests
+- **Public symbols:** `ROOT`, `DOCS`, `test_cold_read_user_golden_tasks_execute_from_the_guide`, `test_cold_read_frontend_claims_rederived_from_live_contract`, `test_cold_read_backend_publish_flow_matches_the_registry`, `test_diagram_accuracy_and_module_names_are_the_live_ones`, `test_every_phase18_chapter_is_present_and_indexed`
+- **Dependencies (imports):** `__future__`, `conftest`, `gpa.internal.modulemap`, `importlib.util`, `json`, `pathlib`, `re`, `sys`
+- **Allowed / forbidden:** May import: the whole tree, through public surfaces and fixtures. Forbidden: touching the real network or a real third-party account.
+- **Data:** Owns no tables (layer law); touches data only through the models/services named in its dependencies.
+- **Failure behaviour:** A failure here is the gate working: the suite is red until the code or the superseded assertion is fixed.
+- **Tests that name it:** — (no test module names it; covered indirectly or a fixture/helper)
+- **Created by:** pre-git or generated (see git history)
 
 ### `tests/test_phase3_gate.py`
 

@@ -388,3 +388,4 @@ Generated from each file's header docstring (first line) at the B-198 landing.
 | `tests/test_vision_pipeline.py` | Vision pipeline tests (roadmap B-063, B-064) — the pure half. |
 | `tests/test_voice_live.py` | Voice-note and live-chat source tests (roadmap B-031/B-032). |
 | `tests/test_webhooks_in.py` | Generic webhook source (roadmap B-126): signature + replay. |
+| `tests/test_phase18_gate.py` | Phase 18 gate (B-200): the documentation proof. |
