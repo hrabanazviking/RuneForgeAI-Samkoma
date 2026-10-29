@@ -147,12 +147,21 @@ def test_cold_read_backend_publish_flow_matches_the_registry():
     ).read_text(encoding="utf-8")
     assert "seat_cannot_approve" in groups_src
     # Finding of this gate, recorded: docs/08 states the law
-    # in prose ("can never approve, a refusal enforced in the
-    # service", its system-context tour) while the code name
+    # in prose in its system-context tour while the code name
     # itself lives in docs/09's atlas. Both statements are
     # checked against the service's own code here.
-    assert "can never approve" in arch
-    assert "enforced in the service" in arch
+    # Supersession, recorded: as written at B-200 this gate
+    # pinned B-018's blanket-ban prose ("can never approve,
+    # a refusal enforced in the service"). B-203 superseded
+    # that law — the one approval law for every principal:
+    # a seat below the group's review floor is refused in
+    # the service layer (seat_cannot_approve, asserted
+    # above); a seat at the floor, holding publish, approves
+    # through the same door, audited as itself. B-220
+    # restated docs/08 to match but left these pins behind;
+    # they now pin the B-203 statement the service enforces.
+    assert "one approval law" in arch
+    assert "refused in the service layer" in arch
 
 
 def test_diagram_accuracy_and_module_names_are_the_live_ones():
