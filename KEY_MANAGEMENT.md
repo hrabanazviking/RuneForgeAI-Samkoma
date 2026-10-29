@@ -1,7 +1,7 @@
 # Key management
 
 *Group Planning Assistant — the B-167/B-169 key hierarchy,
-in one page. GPLv2.*
+in one page. GPLv3.*
 
 ## The hierarchy
 

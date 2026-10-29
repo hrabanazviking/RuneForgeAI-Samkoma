@@ -97,7 +97,7 @@ the freeze drill verifies it by listing and grep).
 
 ## Licence
 
-Licence: GNU General Public License version 2 (GPLv2).
+Licence: GNU General Public License version 3 (GPLv3).
 
 The licence covers the jointly built work in this repository.
 It asserts nothing over the pre-existing projects named above,

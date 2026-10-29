@@ -3952,11 +3952,15 @@ parses the model so it cannot drift from the code.
 - No Docker, anywhere, ever (native installs + uv only).
 - All code is the team's own original work (D-46); third-party
   software enters only as installed, locked dependencies.
-- Licence: **GPLv2** — "Licence: GNU General Public License
-  version 2 (GPLv2)." Ruled by Volmarr on 2026-10-24 ("GPLv2 is
-  the project liscense"), superseding the earlier undecided
-  posture; local statements aligned by Yrsa at the Phase 9
-  checkpoint (README line, pyproject licence field).
+- Licence: **GPLv3** — "Licence: GNU General Public License
+  version 3 (GPLv3)." Originally GPLv2, ruled by Volmarr on
+  2026-10-24 ("GPLv2 is the project liscense"), superseding the
+  earlier undecided posture, with local statements aligned by
+  Yrsa at the Phase 9 checkpoint (README line, pyproject licence
+  field); relicensed to GPL-3.0 by Volmarr's explicit ruling on
+  2026-10-29, when the work carried on as Samkoma, and every
+  current licence declaration aligned again (README section,
+  pyproject licence field, SDK package field, submission pack).
 - Commit-before-answer (services commit, then routers respond);
   entered data is sacred (WAL + FULL).
 - Heavy plain-words comments (D-26): header on every file,

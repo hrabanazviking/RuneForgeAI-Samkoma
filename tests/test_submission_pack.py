@@ -28,7 +28,7 @@ DOCS = (
     "WAIVER_AND_SCOPE.md",
 )
 
-LICENCE_LINE = "Licence: GNU General Public License version 2 (GPLv2)."
+LICENCE_LINE = "Licence: GNU General Public License version 3 (GPLv3)."
 
 
 def _read(name: str) -> str:
@@ -41,9 +41,10 @@ def test_pack_documents_exist():
 
 
 def test_licence_is_stated_in_its_ruled_words():
-    # The licence was decided by ruling (GPLv2); the cover and
-    # the waiver both carry the statement verbatim, the same
-    # words the repository README carries.
+    # The licence was decided by ruling (GPLv2 on 2026-10-24,
+    # lifted to GPLv3 by the author's ruling on 2026-10-29);
+    # the cover and the waiver both carry the statement
+    # verbatim, the same words the repository README carries.
     for name in ("README.md", "WAIVER_AND_SCOPE.md"):
         assert LICENCE_LINE in _read(name), f"{name} must state the licence verbatim"
 

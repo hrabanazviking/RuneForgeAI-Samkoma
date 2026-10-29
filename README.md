@@ -168,16 +168,17 @@ every honest count. Nothing was rewritten and nothing was hidden.
 
 ## Licence
 
-Samkoma is free software under the **GNU General Public License** —
-see the [`LICENSE`](LICENSE) file in this repo.
+Licence: GNU General Public License version 3 (GPLv3).
 
-One honest wrinkle, stated plainly until Volmarr settles it: the
-`LICENSE` file here is the GPL **version 3** text, placed by Volmarr
-when he created this repo, while the carried-over codebase's own
-recorded licence declaration (in `pyproject.toml`, decided by Volmarr
-on 2026-10-24) reads **GPL-2.0-only**. Both facts stand in the open;
-the reconciliation is his word to give, and this note comes out the
-day he gives it.
+Samkoma is free software under the **GNU General Public License
+version 3** — see the [`LICENSE`](LICENSE) file in this repo, the
+GPL **version 3** text Volmarr placed here when he created it.
+
+The project began under GPL version 2, decided by Volmarr on
+2026-10-24. On 2026-10-29 he lifted it to version 3 by his own
+explicit ruling as the project's author, and every licence
+declaration in the codebase — this README, `pyproject.toml`, the
+SDK package, the submission pack — now reads GPL-3.0 to match.
 
 ## Repository map
 

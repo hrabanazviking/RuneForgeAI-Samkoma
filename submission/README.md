@@ -80,7 +80,7 @@ are in `RESULTS.md`.
 
 ## Licence
 
-Licence: GNU General Public License version 2 (GPLv2).
+Licence: GNU General Public License version 3 (GPLv3).
 
 The licence is decided and stated the same way in the
 repository README and in `pyproject.toml`. The scope note —

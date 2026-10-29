@@ -88,7 +88,7 @@ def test_typescript_package_packs():
     package = json.loads((TS_DIR / "package.json").read_text(encoding="utf-8"))
     assert package["name"] == "gpa-types"
     assert package["types"] == "index.d.ts"
-    assert package["license"] == "GPL-2.0-only"
+    assert package["license"] == "GPL-3.0-only"
     npm = shutil.which("npm")
     if npm is None:
         pytest.skip("npm is not installed in this environment")
